@@ -1,0 +1,380 @@
+import React, { useState } from "react";
+import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy } from "lucide-react";
+import { Language, Course, Lesson, StudentProgress } from "../types";
+import { TRANSLATIONS } from "../data/translations";
+import { motion } from "motion/react";
+
+interface CourseDetailsProps {
+  lang: Language;
+  course: Course;
+  progress: StudentProgress;
+  onBack: () => void;
+  onMarkLessonComplete: (lessonId: string, quizScore?: number) => void;
+  onViewCertificate: (course: Course) => void;
+  isLoggedIn?: boolean;
+  onOpenAuth?: () => void;
+}
+
+export default function CourseDetails({
+  lang,
+  course,
+  progress,
+  onBack,
+  onMarkLessonComplete,
+  onViewCertificate,
+  isLoggedIn = false,
+  onOpenAuth,
+}: CourseDetailsProps) {
+  const t = TRANSLATIONS[lang];
+  const [activeLesson, setActiveLesson] = useState<Lesson>(course.lessons[0]);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
+  const [quizCorrect, setQuizCorrect] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<"about" | "materials">("about");
+
+  const isLessonCompleted = (lessonId: string) => progress.completedLessons.includes(lessonId);
+
+  // Calculate course completion %
+  const completedCount = course.lessons.filter((l) => isLessonCompleted(l.id)).length;
+  const completionPct = Math.round((completedCount / course.lessons.length) * 100);
+  const isCourseComplete = completionPct === 100;
+
+  const handleQuizSubmit = () => {
+    if (selectedAnswer === null || !activeLesson.quiz) return;
+
+    const isCorrect = selectedAnswer === activeLesson.quiz.answerIndex;
+    setQuizCorrect(isCorrect);
+    setQuizSubmitted(true);
+
+    if (isCorrect) {
+      // Mark lesson completed
+      onMarkLessonComplete(activeLesson.id, 100);
+    }
+  };
+
+  const handleLessonSelect = (lesson: Lesson) => {
+    setActiveLesson(lesson);
+    setSelectedAnswer(null);
+    setQuizSubmitted(false);
+    setQuizCorrect(null);
+  };
+
+  return (
+    <div id="course-details-section" className="space-y-6 py-6">
+      {/* Back Header with Editorial Touch */}
+      <div id="course-details-header" className="flex items-center justify-between pb-3 border-b border-editorial-border">
+        <button
+          id="back-to-dashboard-btn"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[#1A1A1A] hover:text-editorial-accent font-bold uppercase tracking-widest text-xs transition cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t.backToDashboard}
+        </button>
+        <div className="text-right">
+          <span className="text-[10px] uppercase font-sans text-slate-400 block font-bold tracking-wider">
+            {t.courseProgression}
+          </span>
+          <span className="text-xs sm:text-sm font-bold font-mono text-editorial-accent">
+            {completedCount}/{course.lessons.length} {lang === "en" ? "Modules Done" : "টি সমাপ্ত"} ({completionPct}%)
+          </span>
+        </div>
+      </div>
+
+      {!isLoggedIn && (
+        <div className="bg-[#F7F5F0] border border-editorial-border p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-left">
+          <div className="space-y-1">
+            <h4 className="font-serif font-bold text-sm text-editorial-dark">
+              {lang === "en" ? "✨ Academic Guest Preview" : "✨ একাডেমিক গেস্ট প্রিভিউ"}
+            </h4>
+            <p className="text-xs text-slate-500 font-sans leading-relaxed">
+              {lang === "en"
+                ? "You are viewing this masterclass as a guest. Sign up or log in to track your lessons, submit theory quizzes, and unlock your physical certificate."
+                : "আপনি একজন অতিথি হিসেবে এই মাস্টারক্লাসটি দেখছেন। আপনার লেকচার ট্র্যাকিং, কুইজ সাবমিট করা এবং সার্টিফিকেট আনলক করতে সাইন আপ বা লগইন করুন।"}
+            </p>
+          </div>
+          {onOpenAuth && (
+            <button
+              onClick={onOpenAuth}
+              className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex-shrink-0"
+            >
+              {lang === "en" ? "Sign Up / Log In" : "সাইন আপ / লগইন"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Main Grid: Player vs. Sidebar */}
+      <div id="course-details-grid" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left 2 Columns: Video Player & Quizzes */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Embedded YouTube Player */}
+          <div
+            id="video-player-container"
+            className="relative w-full rounded-none bg-black border border-editorial-dark aspect-video shadow-xs"
+          >
+            <iframe
+              id="chef-video-frame"
+              src={activeLesson.videoUrl}
+              title={lang === "en" ? activeLesson.titleEn : activeLesson.titleBn}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+
+          {/* Active Lesson Text Header */}
+          <div id="lesson-info-box" className="bg-white p-5 sm:p-6 rounded-none border border-editorial-border space-y-3 text-left">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg sm:text-2xl font-serif font-bold text-editorial-dark leading-snug">
+                {lang === "en" ? activeLesson.titleEn : activeLesson.titleBn}
+              </h2>
+              {isLessonCompleted(activeLesson.id) && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {t.completed}
+                </span>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+              {lang === "en" ? activeLesson.descriptionEn : activeLesson.descriptionBn}
+            </p>
+
+            <div className="flex border-b border-editorial-border mt-6">
+              <button
+                onClick={() => setActiveTab("about")}
+                className={`pb-2.5 text-xs font-bold uppercase tracking-widest border-b-2 mr-6 transition cursor-pointer ${
+                  activeTab === "about" ? "border-editorial-accent text-editorial-accent" : "border-transparent text-slate-400 hover:text-editorial-dark"
+                }`}
+              >
+                {lang === "en" ? "About This Module" : "এই মডিউল সম্পর্কে"}
+              </button>
+              <button
+                onClick={() => setActiveTab("materials")}
+                className={`pb-2.5 text-xs font-bold uppercase tracking-widest border-b-2 transition cursor-pointer ${
+                  activeTab === "materials" ? "border-editorial-accent text-editorial-accent" : "border-transparent text-slate-400 hover:text-editorial-dark"
+                }`}
+              >
+                {lang === "en" ? "Resource Materials" : "প্রয়োজনীয় রিসোর্স ও বই"}
+              </button>
+            </div>
+
+            <div className="pt-4 text-xs sm:text-sm text-slate-600 leading-relaxed min-h-[60px] font-sans">
+              {activeTab === "about" ? (
+                <div className="space-y-2">
+                  <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px]">
+                    {lang === "en" ? "Academy Directives:" : "একাডেমির নির্দেশনাবলী:"}
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
+                    <li>{lang === "en" ? "Watch the complete step-by-step video lecture." : "সম্পূর্ণ ভিডিও লেকচারটি মনোযোগ সহকারে দেখুন।"}</li>
+                    <li>{lang === "en" ? "Take note of key temperatures, mixing speed and secret spices." : "तापমাত্রা, মিশ্রণ এবং মশলার অনুপাত খাতায় নোট করে রাখুন।"}</li>
+                    <li>{lang === "en" ? "Pass the multiple choice theory quiz down below." : "নিচের বহুনির্বাচনী তত্ত্ব কুইজে উত্তীর্ণ হোন।"}</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-none bg-[#F7F5F0] border border-editorial-border">
+                    <FileText className="h-5 w-5 text-editorial-accent" />
+                    <div>
+                      <p className="font-bold text-editorial-dark text-xs font-sans uppercase tracking-wider">
+                        {lang === "en" ? `${activeLesson.titleEn} - Formulation Guide.pdf` : `${activeLesson.titleBn} - রেসিপি গাইড.pdf`}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-mono">PDF DOCUMENT • 2.4 MB</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-none bg-[#F7F5F0] border border-editorial-border">
+                    <FileText className="h-5 w-5 text-editorial-accent" />
+                    <div>
+                      <p className="font-bold text-editorial-dark text-xs font-sans uppercase tracking-wider">
+                        {lang === "en" ? "Commercial Culinary Safety Guidelines.pdf" : "বাণিজ্যিক রান্নাঘর নিরাপত্তা নির্দেশিকা.pdf"}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-mono">PDF DOCUMENT • 1.1 MB</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Lesson Quiz */}
+          {activeLesson.quiz && (
+            <div
+              id={`quiz-container-${activeLesson.id}`}
+              className="bg-[#F7F5F0] p-5 sm:p-6 rounded-none border border-editorial-border space-y-4 text-left"
+            >
+              <div className="flex items-center gap-2 text-editorial-accent pb-2 border-b border-editorial-border/65">
+                <HelpCircle className="h-5 w-5" />
+                <h3 className="font-serif font-bold text-editorial-dark text-sm sm:text-base italic">
+                  {t.quizUnlocked}
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 font-sans font-medium">
+                {t.quizInstruction}
+              </p>
+
+              <div className="pt-2">
+                <h4 className="font-serif font-bold text-editorial-dark text-base sm:text-lg leading-snug mb-4 italic">
+                  {lang === "en" ? activeLesson.quiz.questionEn : activeLesson.quiz.questionBn}
+                </h4>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {(lang === "en" ? activeLesson.quiz.optionsEn : activeLesson.quiz.optionsBn).map((option, index) => (
+                    <button
+                      key={index}
+                      id={`quiz-option-${index}`}
+                      disabled={quizSubmitted && quizCorrect === true}
+                      onClick={() => setSelectedAnswer(index)}
+                      className={`w-full text-left p-3.5 text-xs sm:text-sm rounded-none border font-sans font-semibold transition flex items-center justify-between cursor-pointer ${
+                        selectedAnswer === index
+                          ? "border-editorial-dark bg-white text-editorial-accent font-bold"
+                          : "border-editorial-border bg-white hover:bg-[#F7F5F0] text-[#1A1A1A]"
+                      }`}
+                    >
+                      <span>{option}</span>
+                      {selectedAnswer === index && <Check className="h-4 w-4 text-editorial-accent" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {quizSubmitted && (
+                <div
+                  id="quiz-result-banner"
+                  className={`p-3.5 rounded-none border text-xs sm:text-sm font-bold flex items-center gap-2 font-sans ${
+                    quizCorrect
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                      : "bg-red-50 border-red-200 text-red-800"
+                  }`}
+                >
+                  {quizCorrect ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 flex-shrink-0 text-emerald-600" />
+                      <span>{t.quizPassed} 100%! {lang === "en" ? "Lesson marked as complete." : "মডিউলটি সফলভাবে শেষ হয়েছে।"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <HelpCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
+                      <span>{t.quizFailed} 0%. {t.wrongAnswer}</span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {!(quizSubmitted && quizCorrect === true) && (
+                <div className="pt-2 flex justify-end">
+                  <button
+                    id="submit-quiz-btn"
+                    disabled={selectedAnswer === null}
+                    onClick={handleQuizSubmit}
+                    className="px-6 py-3 bg-[#1A1A1A] text-white hover:bg-slate-800 text-xs font-bold uppercase tracking-widest rounded-none transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {t.submitQuiz}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick manual mark as complete bypass if lesson has no quiz */}
+          {!activeLesson.quiz && (
+            <div className="flex justify-end pt-2">
+              <button
+                id="manual-complete-btn"
+                onClick={() => onMarkLessonComplete(activeLesson.id)}
+                disabled={isLessonCompleted(activeLesson.id)}
+                className={`px-6 py-3 text-xs font-bold uppercase tracking-widest rounded-none transition flex items-center gap-1.5 cursor-pointer border ${
+                  isLessonCompleted(activeLesson.id)
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default"
+                    : "bg-[#1A1A1A] hover:bg-slate-800 text-white border-editorial-dark"
+                }`}
+              >
+                <Check className="h-4 w-4" />
+                {isLessonCompleted(activeLesson.id) ? t.completed : t.markComplete}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right 1 Column: Lessons List Sidebar */}
+        <div className="space-y-4 text-left">
+          <div className="flex items-center justify-between pb-2 border-b border-editorial-border">
+            <h3 className="text-xs uppercase tracking-widest font-extrabold text-slate-400 font-sans">
+              {lang === "en" ? "Course Syllabus" : "কোর্সের পাঠ্যসূচী"}
+            </h3>
+            <span className="text-xs text-[#1A1A1A] font-bold font-mono">
+              {course.lessons.length} {t.lessonsCount}
+            </span>
+          </div>
+
+          <div
+            id="lessons-sidebar-list"
+            className="rounded-none border border-editorial-border bg-white p-3 space-y-2.5 max-h-[360px] sm:max-h-[460px] overflow-y-auto"
+          >
+            {course.lessons.map((lesson, idx) => {
+              const isCurrent = lesson.id === activeLesson.id;
+              const isCompleted = isLessonCompleted(lesson.id);
+
+              return (
+                <button
+                  key={lesson.id}
+                  id={`syllabus-item-${lesson.id}`}
+                  onClick={() => handleLessonSelect(lesson)}
+                  className={`w-full text-left p-3.5 rounded-none transition duration-150 flex items-center justify-between border cursor-pointer ${
+                    isCurrent
+                      ? "bg-[#F7F5F0] border-editorial-dark text-editorial-accent font-bold"
+                      : "bg-white hover:bg-[#F7F5F0] border-editorial-border text-slate-700"
+                  }`}
+                >
+                  <div className="flex gap-3 items-center min-w-0">
+                    <span className="text-xs font-serif font-bold text-editorial-dark bg-[#F7F5F0] h-6 w-6 rounded-none border border-editorial-border flex items-center justify-center flex-shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h4 className="font-serif font-bold text-xs sm:text-sm truncate leading-tight">
+                        {lang === "en" ? lesson.titleEn : lesson.titleBn}
+                      </h4>
+                      <span className="text-[9px] text-slate-400 block mt-1 font-mono uppercase">{lesson.duration}</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 ml-2">
+                    {isCompleted ? (
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    ) : (
+                      <Play className="h-4 w-4 text-slate-400" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Certificate Award Banner if complete */}
+          {isCourseComplete && (
+            <div
+              id="course-complete-award-banner"
+              className="p-5 rounded-none bg-[#1A1A1A] text-white space-y-4 text-center border-2 border-editorial-accent shadow-lg"
+            >
+              <div className="inline-flex items-center justify-center h-12 w-12 bg-white/10 rounded-none border border-white/20 mb-1">
+                <Trophy className="h-6 w-6 text-editorial-accent" />
+              </div>
+              <h4 className="font-serif font-bold text-base sm:text-lg leading-snug italic">
+                {lang === "en" ? "Curriculum Completed!" : "পাঠ্যসূচী সম্পন্ন হয়েছে!"}
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed font-sans px-2">
+                {t.courseCompletedText}
+              </p>
+              <button
+                id="claim-certificate-bottom-btn"
+                onClick={() => onViewCertificate(course)}
+                className="w-full py-3 bg-white text-[#1A1A1A] hover:bg-slate-100 rounded-none text-xs font-bold uppercase tracking-widest shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Award className="h-4 w-4 text-editorial-accent" />
+                {t.claimCertificate}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
