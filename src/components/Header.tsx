@@ -35,6 +35,7 @@ export default function Header({
     { id: "dashboard", label: t.studentDashboard },
     { id: "courses", label: t.ourCourses },
     { id: "recipes", label: t.myRecipes },
+    { id: "chefs", label: t.ourChefs },
     { id: "live", label: t.liveMasterclass },
     { id: "blogs", label: t.blogs },
   ];

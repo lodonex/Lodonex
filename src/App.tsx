@@ -25,6 +25,7 @@ import AuthModal from "./components/AuthModal";
 import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
 import AdminSimulationPanel from "./components/AdminSimulationPanel";
+import { OurChefs } from "./components/OurChefs";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
@@ -448,6 +449,20 @@ export default function App() {
                 blogs={MOCK_BLOGS}
               />
             )}
+
+            {currentTab === "chefs" && (
+              <OurChefs
+                lang={lang}
+                onSelectCourse={(courseId) => {
+                  const target = INITIAL_COURSES.find((c) => c.id === courseId);
+                  if (target) {
+                    setSelectedCourse(target);
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              />
+            )}
           </>
         )}
       </main>
@@ -518,6 +533,7 @@ export default function App() {
                   { id: "dashboard", label: t.studentDashboard },
                   { id: "courses", label: t.ourCourses },
                   { id: "recipes", label: t.myRecipes },
+                  { id: "chefs", label: t.ourChefs },
                   { id: "live", label: t.liveMasterclass },
                   { id: "blogs", label: t.blogs },
                 ].map((link) => (
