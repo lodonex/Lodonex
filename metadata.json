@@ -1,5 +1,5 @@
 {
-  "name": "Professional Cooking Academy",
+  "name": "Lodonex",
   "description": "An interactive cooking academy platform featuring video tutorials, recipe management, live class schedules, course selling, and progress tracking with English and Bangla language support.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

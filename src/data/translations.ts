@@ -1,6 +1,6 @@
 export const TRANSLATIONS = {
   en: {
-    academyName: "Lodonex Cooking Academy",
+    academyName: "Lodonex",
     academyShort: "Lodonex",
     tagline: "Master the Art of Gastronomy with Lodonex's Premier Culinary Experts",
     studentDashboard: "Home",
@@ -105,7 +105,7 @@ export const TRANSLATIONS = {
     pricingInfo: "All course prices are in USD ($)"
   },
   bn: {
-    academyName: "লোডোনেক্স কুকিং একাডেমি",
+    academyName: "লোডোনেক্স",
     academyShort: "লোডোনেক্স",
     tagline: "লোডোনেক্সের সেরা রন্ধন বিশেষজ্ঞদের সাথে রান্নার শিল্পে পারদর্শী হয়ে উঠুন",
     studentDashboard: "হোম",

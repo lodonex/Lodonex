@@ -1,5 +1,5 @@
-import React from "react";
-import { ShoppingBag, Globe, User, LogOut, ShieldAlert, CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { ShoppingBag, Globe, User, LogOut, ShieldAlert, CheckCircle, Menu, X } from "lucide-react";
 import { Language, Course, UserAccount } from "../types";
 import { TRANSLATIONS } from "../data/translations";
 
@@ -29,6 +29,7 @@ export default function Header({
   onLogOut,
 }: HeaderProps) {
   const t = TRANSLATIONS[lang];
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { id: "dashboard", label: t.studentDashboard },
@@ -62,9 +63,6 @@ export default function Header({
             <div>
               <span className="font-serif font-extrabold text-xl sm:text-2xl tracking-tight text-editorial-dark block">
                 Lodonex
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 block">
-                {lang === "en" ? "Cooking Academy" : "কুকিং একাডেমি"}
               </span>
             </div>
           </div>
@@ -168,29 +166,48 @@ export default function Header({
                 </button>
               </div>
             )}
+
+            {/* Mobile Menu Toggle (Hamburger / 3 lines) */}
+            <button
+              id="mobile-menu-toggle"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 border border-editorial-border bg-white text-editorial-dark hover:bg-[#F7F5F0] transition duration-200 rounded-none shadow-xs cursor-pointer flex items-center justify-center"
+              title="Menu"
+            >
+              {isMobileMenuOpen ? <X className="h-4.5 w-4.5 text-editorial-accent" /> : <Menu className="h-4.5 w-4.5" />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile Navigation Bar */}
-        <div id="mobile-nav" className="md:hidden flex items-center justify-around py-2 border-t border-editorial-border bg-white">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              id={`nav-mob-${item.id}`}
-              onClick={() => {
-                setCurrentTab(item.id);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`px-2 py-1 text-[11px] uppercase tracking-wider font-bold transition-all duration-200 cursor-pointer ${
-                currentTab === item.id
-                  ? "text-editorial-accent border-b border-editorial-accent"
-                  : "text-slate-500"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {/* Collapsible Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div
+            id="mobile-nav"
+            className="md:hidden border-t border-editorial-border bg-[#FDFCF9] divide-y divide-editorial-border/60"
+          >
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                id={`nav-mob-${item.id}`}
+                onClick={() => {
+                  setCurrentTab(item.id);
+                  setIsMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`w-full text-left px-6 py-3.5 text-xs uppercase tracking-widest font-bold transition-all duration-200 cursor-pointer flex items-center justify-between ${
+                  currentTab === item.id
+                    ? "bg-[#F7F5F0] text-editorial-accent"
+                    : "text-slate-600 hover:bg-[#F7F5F0]/40 hover:text-editorial-dark"
+                }`}
+              >
+                <span>{item.label}</span>
+                {currentTab === item.id && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-editorial-accent" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </header>
   );

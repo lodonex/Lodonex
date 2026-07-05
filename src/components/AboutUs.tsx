@@ -15,7 +15,7 @@ export default function AboutUs({ lang }: AboutUsProps) {
       <div className="space-y-2">
         <h2 className="text-sm sm:text-base uppercase tracking-[0.25em] font-extrabold text-slate-400 flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-editorial-accent"></span>
-          {isEn ? "About Lodonex Cooking Academy" : "লোডোনেক্স কুকিং একাডেমি সম্পর্কে"}
+          {isEn ? "About Lodonex" : "লোডোনেক্স সম্পর্কে"}
         </h2>
         <p className="font-serif italic text-xl sm:text-2xl text-editorial-dark">
           {isEn ? "Nurturing Gastronomic Talents & Culinary Mastery Since 2021" : "২০২১ সাল থেকে রন্ধন প্রতিভা এবং রন্ধন শিল্পে দক্ষতা বিকাশ"}
@@ -28,8 +28,8 @@ export default function AboutUs({ lang }: AboutUsProps) {
         <div className="lg:col-span-7 space-y-4 text-slate-600 text-xs sm:text-sm leading-relaxed font-sans">
           <p>
             {isEn
-              ? "Founded by award-winning gastronomy experts and professional culinary creators, Lodonex Cooking Academy is Bangladesh's premier accredited gastronomy institution. We bridge the gap between passion and professional expertise, providing structured masterclasses with state-of-the-art virtual workspaces, lesson quizzes, and secure digital certifications."
-              : "পুরস্কারপ্রাপ্ত রন্ধন বিশেষজ্ঞ এবং পেশাদার শেফদের দ্বারা প্রতিষ্ঠিত, লোডোনেক্স কুকিং একাডেমি হলো বাংলাদেশের শীর্ষস্থানীয় অ্যাক্রেডিটেড কালিনারি ইনস্টিটিউট। আমরা রন্ধনপ্রেমীদের আগ্রহকে পেশাদার দক্ষতায় রূপান্তর করতে অনলাইন ভিডিও টিউটোরিয়াল, ইন্টারঅ্যাক্টিভ কুইজ এবং স্বীকৃত সার্টিফিকেটের ব্যবস্থা করেছি।"}
+              ? "Founded by award-winning gastronomy experts and professional culinary creators, Lodonex is Bangladesh's premier accredited gastronomy institution. We bridge the gap between passion and professional expertise, providing structured masterclasses with state-of-the-art virtual workspaces, lesson quizzes, and secure digital certifications."
+              : "পুরস্কারপ্রাপ্ত রন্ধন বিশেষজ্ঞ এবং পেশাদার শেফদের দ্বারা প্রতিষ্ঠিত, লোডোনেক্স হলো বাংলাদেশের শীর্ষস্থানীয় অ্যাক্রেডিটেড কালিনারি ইনস্টিটিউট। আমরা রন্ধনপ্রেমীদের আগ্রহকে পেশাদার দক্ষতায় রূপান্তর করতে অনলাইন ভিডিও টিউটোরিয়াল, ইন্টারঅ্যাক্টিভ কুইজ এবং স্বীকৃত সার্টিফিকেটের ব্যবস্থা করেছি।"}
           </p>
           <p>
             {isEn

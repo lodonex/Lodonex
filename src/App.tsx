@@ -491,9 +491,6 @@ export default function App() {
                   <span className="font-serif font-extrabold text-base tracking-tight text-white block">
                     Lodonex
                   </span>
-                  <span className="text-[9px] uppercase tracking-widest text-[#E5E2D9]/60">
-                    {lang === "en" ? "Cooking Academy" : "কুকিং একাডেমি"}
-                  </span>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -647,14 +644,16 @@ export default function App() {
       />
 
       {/* Floating Sandbox Administration Panel */}
-      <AdminSimulationPanel
-        lang={lang}
-        users={users}
-        currentUser={currentUser}
-        onUpdateUserStatus={handleUpdateUserStatus}
-        onAddSimulatedUser={handleAddSimulatedUser}
-        onResetSimulation={handleResetSimulation}
-      />
+      {currentUser && (
+        <AdminSimulationPanel
+          lang={lang}
+          users={users}
+          currentUser={currentUser}
+          onUpdateUserStatus={handleUpdateUserStatus}
+          onAddSimulatedUser={handleAddSimulatedUser}
+          onResetSimulation={handleResetSimulation}
+        />
+      )}
     </div>
   );
 }
