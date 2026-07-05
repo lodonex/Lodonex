@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Trash, CreditCard, ShieldCheck, CheckCircle, Smartphone, Key, Lock, ArrowLeft } from "lucide-react";
+import { X, Trash, CreditCard, ShieldCheck, CheckCircle, Smartphone, Key, Lock, ArrowLeft, User } from "lucide-react";
 import { Language, Course } from "../types";
 import { TRANSLATIONS } from "../data/translations";
 import { motion, AnimatePresence } from "motion/react";
@@ -29,11 +29,56 @@ export default function PaymentModal({
   // Branded Input simulations
   const [accountNumber, setAccountNumber] = useState("");
   const [securePin, setSecurePin] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
   const [simulatedOTP, setSimulatedOTP] = useState("");
   const [userOTPInput, setUserOTPInput] = useState("");
   const [errorText, setErrorText] = useState("");
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+
+  const getCardType = (num: string) => {
+    const clean = num.replace(/\D/g, "");
+    if (clean.startsWith("4")) return "visa";
+    if (/^5[1-5]/.test(clean)) return "mastercard";
+    if (/^3[47]/.test(clean)) return "amex";
+    return "unknown";
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    value = value.substring(0, 16);
+    const matches = value.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || "";
+    const parts = [];
+
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+
+    if (parts.length > 0) {
+      setAccountNumber(parts.join(" "));
+    } else {
+      setAccountNumber(value);
+    }
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 4) value = value.substring(0, 4);
+    
+    if (value.length > 2) {
+      setCardExpiry(`${value.substring(0, 2)}/${value.substring(2)}`);
+    } else {
+      setCardExpiry(value);
+    }
+  };
+
+  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 4);
+    setCardCvc(value);
+  };
 
   const handleStartCheckout = () => {
     if (cart.length === 0) return;
@@ -43,9 +88,30 @@ export default function PaymentModal({
 
   const handleProcessGateway = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountNumber.trim() || (selectedGateway !== "card" && !securePin.trim())) {
-      setErrorText(lang === "en" ? "Please fill in all security fields." : "দয়া করে সবগুলো নিরাপত্তা ঘর পূরণ করুন।");
-      return;
+    
+    if (selectedGateway === "card") {
+      if (!accountNumber.trim() || !cardHolder.trim() || !cardExpiry.trim() || !cardCvc.trim()) {
+        setErrorText(lang === "en" ? "Please fill in all card details." : "দয়া করে সবগুলো কার্ডের তথ্য পূরণ করুন।");
+        return;
+      }
+      const cleanNum = accountNumber.replace(/\s+/g, "");
+      if (cleanNum.length < 13 || cleanNum.length > 19) {
+        setErrorText(lang === "en" ? "Invalid Card Number." : "ভুল কার্ড নম্বর।");
+        return;
+      }
+      if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+        setErrorText(lang === "en" ? "Invalid Expiry Date (MM/YY)." : "ভুল মেয়াদোত্তীর্ণের তারিখ (MM/YY)।");
+        return;
+      }
+      if (cardCvc.length < 3) {
+        setErrorText(lang === "en" ? "Invalid CVC/CVV." : "ভুল CVC/CVV কোড।");
+        return;
+      }
+    } else {
+      if (!accountNumber.trim() || !securePin.trim()) {
+        setErrorText(lang === "en" ? "Please fill in all security fields." : "দয়া করে সবগুলো নিরাপত্তা ঘর পূরণ করুন।");
+        return;
+      }
     }
 
     // Generate a random 6 digit OTP for simulation
@@ -70,6 +136,9 @@ export default function PaymentModal({
       setStep("cart");
       setAccountNumber("");
       setSecurePin("");
+      setCardHolder("");
+      setCardExpiry("");
+      setCardCvc("");
       setSimulatedOTP("");
       setUserOTPInput("");
       onClose();
@@ -208,45 +277,173 @@ export default function PaymentModal({
 
               {/* Secure simulated payment input fields with paper feel */}
               <form onSubmit={handleProcessGateway} className="space-y-4 pt-2 font-sans">
+                {selectedGateway === "card" && (
+                  <div className="relative h-36 w-full rounded-lg bg-gradient-to-br from-slate-900 via-zinc-800 to-stone-900 text-white p-4 flex flex-col justify-between shadow-md border border-zinc-700 font-mono select-none overflow-hidden mb-3">
+                    {/* Abstract background graphics to make it look hyper-realistic and beautiful */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-20 h-20 bg-editorial-accent/10 rounded-full blur-xl pointer-events-none" />
+                    
+                    {/* Top Row: Chip and Card Brand Logo */}
+                    <div className="flex justify-between items-center z-10">
+                      {/* Simulated Gold Card Chip */}
+                      <div className="w-9 h-7 rounded bg-gradient-to-tr from-[#e5c158] via-[#ffd700] to-[#f9e8a2] relative overflow-hidden shadow-inner border border-yellow-600/30">
+                        <div className="absolute inset-x-2 top-0 bottom-0 border-x border-yellow-700/20" />
+                        <div className="absolute inset-y-1.5 left-0 right-0 border-y border-yellow-700/20" />
+                      </div>
+                      
+                      {/* Dynamic Card Brand */}
+                      <div className="flex items-center">
+                        {getCardType(accountNumber) === "visa" && (
+                          <span className="text-sm font-black italic tracking-widest text-[#F5F2EB] drop-shadow-xs">VISA</span>
+                        )}
+                        {getCardType(accountNumber) === "mastercard" && (
+                          <div className="flex -space-x-1.5 items-center">
+                            <div className="w-5 h-5 rounded-full bg-red-500 opacity-90" />
+                            <div className="w-5 h-5 rounded-full bg-amber-500 opacity-90" />
+                          </div>
+                        )}
+                        {getCardType(accountNumber) === "amex" && (
+                          <span className="text-xs font-bold tracking-widest bg-blue-600 px-1 py-0.5 rounded text-white font-sans">AMEX</span>
+                        )}
+                        {getCardType(accountNumber) === "unknown" && (
+                          <CreditCard className="h-5 w-5 text-zinc-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle Row: Card Number */}
+                    <div className="text-base tracking-[0.18em] font-medium text-zinc-100 z-10 drop-shadow-sm min-h-[24px]">
+                      {accountNumber || "•••• •••• •••• ••••"}
+                    </div>
+
+                    {/* Bottom Row: Card Holder & Expiry */}
+                    <div className="flex justify-between items-end z-10">
+                      <div className="max-w-[70%] truncate">
+                        <span className="text-[7px] uppercase tracking-wider text-zinc-400 block mb-0.5">Cardholder Name</span>
+                        <span className="text-[10px] uppercase tracking-wide text-zinc-200 block truncate font-sans">
+                          {cardHolder || "YOUR NAME"}
+                        </span>
+                      </div>
+                      <div className="text-right flex-shrink-0 font-sans">
+                        <span className="text-[7px] uppercase tracking-wider text-zinc-400 block mb-0.5">Expires</span>
+                        <span className="text-[10px] text-zinc-200 block">
+                          {cardExpiry || "MM/YY"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="p-4 rounded-none border border-editorial-border bg-[#F7F5F0]">
                   <span className="text-[9px] font-bold block uppercase tracking-widest text-slate-400 mb-3">
                     {selectedGateway.toUpperCase()} SECURE PORTAL
                   </span>
 
                   <div className="space-y-3.5 text-xs">
-                    <div className="space-y-1.5">
-                      <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                        {selectedGateway === "card" ? (lang === "en" ? "16-Digit Card Number" : "১৬-সংখ্যার কার্ড নম্বর") : t.enterNumber} *
-                      </label>
-                      <div className="relative">
-                        <Smartphone className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                        <input
-                          type="text"
-                          required
-                          placeholder={selectedGateway === "card" ? "4111 2222 3333 4444" : "01712345678"}
-                          value={accountNumber}
-                          onChange={(e) => setAccountNumber(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
-                        />
-                      </div>
-                    </div>
+                    {selectedGateway === "card" ? (
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                            {lang === "en" ? "Cardholder Name" : "কার্ডধারীর নাম"} *
+                          </label>
+                          <div className="relative">
+                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. TASNIM AHMED"
+                              value={cardHolder}
+                              onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
+                            />
+                          </div>
+                        </div>
 
-                    {selectedGateway !== "card" && (
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                          {t.enterPin} *
-                        </label>
-                        <div className="relative">
-                          <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                          <input
-                            type="password"
-                            required
-                            placeholder="••••"
-                            maxLength={4}
-                            value={securePin}
-                            onChange={(e) => setSecurePin(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
-                          />
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                            {lang === "en" ? "Card Number" : "কার্ড নম্বর"} *
+                          </label>
+                          <div className="relative">
+                            <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                            <input
+                              type="text"
+                              required
+                              placeholder="4111 2222 3333 4444"
+                              value={accountNumber}
+                              onChange={handleCardNumberChange}
+                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3.5">
+                          <div className="space-y-1.5">
+                            <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                              {lang === "en" ? "Expiration Date" : "মেয়াদোত্তীর্ণের তারিখ"} *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="MM/YY"
+                              value={cardExpiry}
+                              onChange={handleExpiryChange}
+                              className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                              {lang === "en" ? "CVC / CVV" : "সিভিসি / সিভিভি"} *
+                            </label>
+                            <div className="relative">
+                              <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                              <input
+                                type="password"
+                                required
+                                placeholder="•••"
+                                maxLength={4}
+                                value={cardCvc}
+                                onChange={handleCvcChange}
+                                className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                            {t.enterNumber} *
+                          </label>
+                          <div className="relative">
+                            <Smartphone className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                            <input
+                              type="text"
+                              required
+                              placeholder="01712345678"
+                              value={accountNumber}
+                              onChange={(e) => setAccountNumber(e.target.value)}
+                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                            {t.enterPin} *
+                          </label>
+                          <div className="relative">
+                            <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                            <input
+                              type="password"
+                              required
+                              placeholder="••••"
+                              maxLength={4}
+                              value={securePin}
+                              onChange={(e) => setSecurePin(e.target.value)}
+                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
