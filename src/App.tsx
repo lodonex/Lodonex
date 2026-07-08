@@ -31,7 +31,7 @@ import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Loc
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
 import { INITIAL_COURSES, INITIAL_RECIPES, INITIAL_LIVE_CLASSES, BADGES, MOCK_BLOGS } from "./data/mockData";
 import { TRANSLATIONS } from "./data/translations";
-import { db, auth } from "./utils/firebase";
+import { db, auth, handleFirestoreError, OperationType } from "./utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
 
@@ -91,7 +91,14 @@ export default function App() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "users"));
+        let querySnapshot;
+        try {
+          querySnapshot = await getDocs(collection(db, "users"));
+        } catch (dbErr) {
+          handleFirestoreError(dbErr, OperationType.LIST, "users");
+          return;
+        }
+
         if (querySnapshot.empty) {
           // Seed initial default user
           const defaultUser: UserAccount = {
@@ -107,7 +114,11 @@ export default function App() {
               badges: [BADGES[0]],
             },
           };
-          await setDoc(doc(db, "users", defaultUser.id), defaultUser);
+          try {
+            await setDoc(doc(db, "users", defaultUser.id), defaultUser);
+          } catch (dbErr) {
+            handleFirestoreError(dbErr, OperationType.WRITE, `users/${defaultUser.id}`);
+          }
           setUsers([defaultUser]);
         } else {
           const loadedUsers: UserAccount[] = [];
@@ -152,8 +163,15 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (userDoc.exists()) {
+          let userDoc;
+          try {
+            userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          } catch (dbErr) {
+            handleFirestoreError(dbErr, OperationType.GET, `users/${firebaseUser.uid}`);
+            return;
+          }
+
+          if (userDoc && userDoc.exists()) {
             setCurrentUser(userDoc.data() as UserAccount);
           }
         } catch (err) {
@@ -192,6 +210,7 @@ export default function App() {
       await setDoc(doc(db, "users", currentUser.id), updatedUser);
     } catch (err) {
       console.error("Error updating user progress in Firestore:", err);
+      handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.id}`);
     }
   };
 
@@ -205,6 +224,7 @@ export default function App() {
         await setDoc(doc(db, "users", user.id), user);
       } catch (err) {
         console.error("Error saving user to Firestore in auth success:", err);
+        handleFirestoreError(err, OperationType.WRITE, `users/${user.id}`);
       }
     }
     setCurrentUser(user);
@@ -369,9 +389,20 @@ export default function App() {
 
     try {
       const userDocRef = doc(db, "users", userId);
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        await setDoc(userDocRef, { ...docSnap.data(), status }, { merge: true });
+      let docSnap;
+      try {
+        docSnap = await getDoc(userDocRef);
+      } catch (dbErr) {
+        handleFirestoreError(dbErr, OperationType.GET, `users/${userId}`);
+        return;
+      }
+
+      if (docSnap && docSnap.exists()) {
+        try {
+          await setDoc(userDocRef, { ...docSnap.data(), status }, { merge: true });
+        } catch (dbErr) {
+          handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
+        }
       }
     } catch (err) {
       console.error("Error updating user status in Firestore:", err);
@@ -399,6 +430,7 @@ export default function App() {
       await setDoc(doc(db, "users", simulated.id), simulated);
     } catch (err) {
       console.error("Error creating simulated user in Firestore:", err);
+      handleFirestoreError(err, OperationType.WRITE, `users/${simulated.id}`);
     }
   };
 
@@ -440,6 +472,7 @@ export default function App() {
             onViewCertificate={(course) => setSelectedCertCourse(course)}
             isLoggedIn={!!currentUser}
             onOpenAuth={() => setIsAuthOpen(true)}
+            currentUser={currentUser}
           />
         ) : (
           <>

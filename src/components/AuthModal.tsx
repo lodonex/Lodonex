@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Mail, Lock, User, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
 import { Language, UserAccount } from "../types";
-import { auth, db } from "../utils/firebase";
+import { auth, db, handleFirestoreError, OperationType } from "../utils/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -63,7 +63,11 @@ export default function AuthModal({
           },
         };
 
-        await setDoc(doc(db, "users", userId), newUser);
+        try {
+          await setDoc(doc(db, "users", userId), newUser);
+        } catch (dbErr) {
+          handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
+        }
         onAuthSuccess(newUser);
         onClose();
       } else {
@@ -72,15 +76,25 @@ export default function AuthModal({
         const userId = userCredential.user.uid;
 
         // Fetch user from Firestore
-        const docSnap = await getDoc(doc(db, "users", userId));
-        if (docSnap.exists()) {
+        let docSnap;
+        try {
+          docSnap = await getDoc(doc(db, "users", userId));
+        } catch (dbErr) {
+          handleFirestoreError(dbErr, OperationType.GET, `users/${userId}`);
+        }
+
+        if (docSnap && docSnap.exists()) {
           onAuthSuccess(docSnap.data() as UserAccount);
         } else {
           // Check if user exists in pre-existing LocalStorage list and migrate them
           const emailUser = existingUsers.find((u) => u.email.toLowerCase() === emailLower);
           if (emailUser) {
             const migratedUser = { ...emailUser, id: userId };
-            await setDoc(doc(db, "users", userId), migratedUser);
+            try {
+              await setDoc(doc(db, "users", userId), migratedUser);
+            } catch (dbErr) {
+              handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
+            }
             onAuthSuccess(migratedUser);
           } else {
             // Create a default approved student profile
@@ -97,7 +111,11 @@ export default function AuthModal({
                 badges: [],
               },
             };
-            await setDoc(doc(db, "users", userId), newUser);
+            try {
+              await setDoc(doc(db, "users", userId), newUser);
+            } catch (dbErr) {
+              handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
+            }
             onAuthSuccess(newUser);
           }
         }

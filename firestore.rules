@@ -24,6 +24,18 @@ service cloud.firestore {
              user.progress is map;
     }
 
+    function isValidReview(review) {
+      return review.keys().hasAll(['id', 'courseId', 'studentId', 'studentName', 'studentEmail', 'rating', 'feedback', 'createdAt']) &&
+             review.id is string && review.id.size() <= 128 &&
+             review.courseId is string && review.courseId.size() <= 128 &&
+             review.studentId is string && review.studentId == request.auth.uid &&
+             review.studentName is string && review.studentName.size() <= 100 &&
+             review.studentEmail is string && review.studentEmail.size() <= 150 &&
+             review.rating is int && review.rating >= 1 && review.rating <= 5 &&
+             review.feedback is string && review.feedback.size() <= 1000 &&
+             review.createdAt is string;
+    }
+
     // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
@@ -43,6 +55,21 @@ service cloud.firestore {
       );
 
       allow delete: if false; // Block document deletions via client
+    }
+
+    // Reviews Collection rules
+    match /reviews/{reviewId} {
+      // Anyone can read course reviews
+      allow read: if true;
+      
+      // Enrolled students can write their own reviews
+      allow create: if isSignedIn() && isValidId(reviewId) && isValidReview(request.resource.data);
+      
+      // Allow user to edit their own review or admin update
+      allow update: if isSignedIn() && request.auth.uid == resource.data.studentId && isValidReview(request.resource.data);
+      
+      // Allow user to delete their own review
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.studentId;
     }
   }
 }

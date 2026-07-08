@@ -109,3 +109,15 @@ export interface UserAccount {
   progress: StudentProgress;
 }
 
+export interface CourseReview {
+  id: string;
+  courseId: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  rating: number; // 1 to 5
+  feedback: string;
+  createdAt: string; // ISO string
+}
+
+

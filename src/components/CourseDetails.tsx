@@ -1,8 +1,10 @@
-import React, { useState } from "react";
-import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy } from "lucide-react";
-import { Language, Course, Lesson, StudentProgress } from "../types";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy, Star, MessageSquare, Trash2, Send } from "lucide-react";
+import { Language, Course, Lesson, StudentProgress, CourseReview, UserAccount } from "../types";
 import { TRANSLATIONS } from "../data/translations";
 import { motion } from "motion/react";
+import { db } from "../utils/firebase";
+import { collection, query, where, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 
 interface CourseDetailsProps {
   lang: Language;
@@ -13,6 +15,7 @@ interface CourseDetailsProps {
   onViewCertificate: (course: Course) => void;
   isLoggedIn?: boolean;
   onOpenAuth?: () => void;
+  currentUser?: UserAccount | null;
 }
 
 export default function CourseDetails({
@@ -24,6 +27,7 @@ export default function CourseDetails({
   onViewCertificate,
   isLoggedIn = false,
   onOpenAuth,
+  currentUser = null,
 }: CourseDetailsProps) {
   const t = TRANSLATIONS[lang];
   const [activeLesson, setActiveLesson] = useState<Lesson>(course.lessons[0]);
@@ -31,6 +35,130 @@ export default function CourseDetails({
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
   const [quizCorrect, setQuizCorrect] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<"about" | "materials">("about");
+
+  // Reviews integration states
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState<boolean>(true);
+  const [userRating, setUserRating] = useState<number>(5);
+  const [feedback, setFeedback] = useState<string>("");
+  const [submittingReview, setSubmittingReview] = useState<boolean>(false);
+  const [reviewError, setReviewError] = useState<string>("");
+  const [reviewSuccess, setReviewSuccess] = useState<string>("");
+
+  useEffect(() => {
+    let active = true;
+    const fetchReviews = async () => {
+      setLoadingReviews(true);
+      setReviewError("");
+      setReviewSuccess("");
+      try {
+        const q = query(
+          collection(db, "reviews"),
+          where("courseId", "==", course.id)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!active) return;
+
+        const loadedReviews: CourseReview[] = [];
+        querySnapshot.forEach((docSnap) => {
+          loadedReviews.push(docSnap.data() as CourseReview);
+        });
+
+        // Sort reviews by createdAt descending
+        loadedReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        setReviews(loadedReviews);
+        localStorage.setItem(`lodonex_reviews_${course.id}`, JSON.stringify(loadedReviews));
+      } catch (err) {
+        console.error("Error loading reviews from Firestore:", err);
+        // Fallback to local storage cache
+        const cached = localStorage.getItem(`lodonex_reviews_${course.id}`);
+        if (cached && active) {
+          try {
+            setReviews(JSON.parse(cached));
+          } catch (e) {
+            setReviews([]);
+          }
+        }
+      } finally {
+        if (active) setLoadingReviews(false);
+      }
+    };
+
+    fetchReviews();
+    return () => {
+      active = false;
+    };
+  }, [course.id]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    if (feedback.trim().length === 0) {
+      setReviewError(lang === "en" ? "Please write some feedback." : "অনুগ্রহ করে আপনার ফিডব্যাক লিখুন।");
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewError("");
+    setReviewSuccess("");
+
+    const newReview: CourseReview = {
+      id: `review-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      courseId: course.id,
+      studentId: currentUser.id,
+      studentName: currentUser.name || currentUser.email.split("@")[0],
+      studentEmail: currentUser.email,
+      rating: userRating,
+      feedback: feedback.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      // Save to Firestore
+      await setDoc(doc(db, "reviews", newReview.id), newReview);
+      
+      setReviews((prev) => [newReview, ...prev]);
+      setFeedback("");
+      setUserRating(5);
+      setReviewSuccess(lang === "en" ? "Thank you for your feedback!" : "আপনার মূল্যবান ফিডব্যাকের জন্য ধন্যবাদ!");
+
+      // Update local storage cache
+      const updatedReviews = [newReview, ...reviews];
+      localStorage.setItem(`lodonex_reviews_${course.id}`, JSON.stringify(updatedReviews));
+    } catch (err) {
+      console.error("Error saving review to Firestore:", err);
+      // Fallback: save locally
+      setReviews((prev) => [newReview, ...prev]);
+      setFeedback("");
+      setUserRating(5);
+      setReviewSuccess(lang === "en" ? "Review saved (Local Mode)." : "রিভিউ সেভ করা হয়েছে (লোকাল মোড)।");
+
+      const updatedReviews = [newReview, ...reviews];
+      localStorage.setItem(`lodonex_reviews_${course.id}`, JSON.stringify(updatedReviews));
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleReviewDelete = async (reviewId: string) => {
+    if (!currentUser) return;
+    if (!window.confirm(lang === "en" ? "Are you sure you want to delete this review?" : "আপনি কি নিশ্চিত যে আপনি এই রিভিউটি ডিলিট করতে চান?")) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, "reviews", reviewId));
+      const updated = reviews.filter((r) => r.id !== reviewId);
+      setReviews(updated);
+      localStorage.setItem(`lodonex_reviews_${course.id}`, JSON.stringify(updated));
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      // Fallback
+      const updated = reviews.filter((r) => r.id !== reviewId);
+      setReviews(updated);
+      localStorage.setItem(`lodonex_reviews_${course.id}`, JSON.stringify(updated));
+    }
+  };
 
   const isLessonCompleted = (lessonId: string) => progress.completedLessons.includes(lessonId);
 
@@ -293,6 +421,229 @@ export default function CourseDetails({
               </button>
             </div>
           )}
+
+          {/* Reviews Section */}
+          <div id="course-reviews-section" className="bg-white border border-editorial-border p-5 sm:p-6 space-y-6 text-left mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-editorial-border">
+              <div>
+                <h3 className="font-serif font-bold text-editorial-dark text-lg sm:text-xl">
+                  {lang === "en" ? `Reviews for ${course.tutor}` : `${course.tutor}-এর জন্য রিভিউ`}
+                </h3>
+                <p className="text-xs text-slate-500 font-sans mt-1">
+                  {lang === "en" 
+                    ? "Direct feedback from verified students enrolled in this course" 
+                    : "এই কোর্সে এনরোল করা শিক্ষার্থীদের সরাসরি মতামত ও ফিডব্যাক"}
+                </p>
+              </div>
+
+              {/* Summary Rating */}
+              <div className="flex items-center gap-2.5 bg-[#F7F5F0] border border-editorial-border px-3.5 py-2">
+                <div className="flex text-amber-500">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const avg = reviews.length > 0 
+                      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
+                      : course.rating || 5;
+                    return (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= Math.round(avg) ? "fill-current text-amber-500" : "text-slate-300"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="text-xs font-mono font-bold text-editorial-dark">
+                  {reviews.length > 0 
+                    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+                    : (course.rating || 4.8).toFixed(1)}{" "}
+                  / 5.0 ({reviews.length} {lang === "en" ? "reviews" : "টি রিভিউ"})
+                </div>
+              </div>
+            </div>
+
+            {/* Leave a review block */}
+            <div className="bg-[#F7F5F0] border border-editorial-border p-4 sm:p-5 space-y-4">
+              <h4 className="font-serif font-bold text-sm text-editorial-dark flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-editorial-accent" />
+                {lang === "en" ? "Share Your Experience" : "আপনার অভিজ্ঞতা শেয়ার করুন"}
+              </h4>
+
+              {!isLoggedIn ? (
+                <div className="text-xs text-slate-600 font-sans space-y-3">
+                  <p>
+                    {lang === "en" 
+                      ? `Sign up or log in to rate and leave feedback for ${course.tutor}.` 
+                      : `প্রশিক্ষক ${course.tutor}-কে রেটিং ও ফিডব্যাক দিতে দয়া করে লগইন বা সাইন আপ করুন।`}
+                  </p>
+                  {onOpenAuth && (
+                    <button
+                      onClick={onOpenAuth}
+                      className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
+                    >
+                      {lang === "en" ? "Sign Up / Log In" : "সাইন আপ / লগইন"}
+                    </button>
+                  )}
+                </div>
+              ) : !progress.enrolledCourses.includes(course.id) ? (
+                <p className="text-xs text-slate-500 font-sans italic">
+                  {lang === "en"
+                    ? "Only students enrolled in this masterclass can submit reviews for the instructor."
+                    : "শুধুমাত্র এই মাস্টারক্লাসে ভর্তি হওয়া শিক্ষার্থীরাই প্রশিক্ষককে রিভিউ দিতে পারবেন।"}
+                </p>
+              ) : (
+                <form onSubmit={handleReviewSubmit} className="space-y-4">
+                  {/* Rating Selector */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      {lang === "en" ? "Your Rating:" : "আপনার রেটিং:"}
+                    </span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setUserRating(star)}
+                          className="text-amber-500 hover:scale-110 transition cursor-pointer"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${
+                              star <= userRating ? "fill-current text-amber-500" : "text-slate-300"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Feedback Textarea */}
+                  <div className="space-y-1">
+                    <textarea
+                      rows={3}
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      placeholder={
+                        lang === "en"
+                          ? `Write your feedback for ${course.tutor} here...`
+                          : `প্রশিক্ষক ${course.tutor}-এর জন্য আপনার মতামত এখানে লিখুন...`
+                      }
+                      className="w-full p-3 text-xs sm:text-sm bg-white border border-editorial-border focus:outline-hidden focus:border-editorial-dark font-sans"
+                    ></textarea>
+                  </div>
+
+                  {reviewError && (
+                    <p className="text-xs text-red-600 font-sans font-bold flex items-center gap-1">
+                      <HelpCircle className="h-3.5 w-3.5" />
+                      {reviewError}
+                    </p>
+                  )}
+
+                  {reviewSuccess && (
+                    <p className="text-xs text-emerald-700 font-sans font-bold flex items-center gap-1">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      {reviewSuccess}
+                    </p>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-slate-800 text-white font-bold uppercase tracking-widest text-[10px] transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {submittingReview ? (
+                        <span>{lang === "en" ? "Submitting..." : "সাবমিট হচ্ছে..."}</span>
+                      ) : (
+                        <>
+                          <Send className="h-3 w-3" />
+                          <span>{lang === "en" ? "Submit Review" : "রিভিউ সাবমিট করুন"}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* List of reviews */}
+            <div className="space-y-4">
+              <h4 className="font-serif font-bold text-sm text-editorial-dark border-b border-editorial-border pb-2">
+                {lang === "en" ? "Student Feedback Feed" : "শিক্ষার্থীদের রিভিউ ও ফিডব্যাক সমূহ"}
+              </h4>
+
+              {loadingReviews ? (
+                <div className="text-center py-6 text-xs text-slate-400 font-mono">
+                  {lang === "en" ? "Loading reviews..." : "রিভিউ লোড হচ্ছে..."}
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400 font-sans italic">
+                  {lang === "en" 
+                    ? `No reviews submitted yet for ${course.tutor}. Be the first to leave a feedback!` 
+                    : `প্রশিক্ষক ${course.tutor}-এর জন্য এখনো কোনো রিভিউ দেওয়া হয়নি। প্রথম রিভিউটি আপনি দিন!`}
+                </div>
+              ) : (
+                <div className="divide-y divide-editorial-border">
+                  {reviews.map((review) => {
+                    const isMyReview = currentUser && review.studentId === currentUser.id;
+                    const initials = review.studentName
+                      ? review.studentName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
+                      : "S";
+
+                    return (
+                      <div key={review.id} className="py-4 flex gap-4 items-start">
+                        {/* Student Avatar Icon */}
+                        <div className="h-8 w-8 bg-editorial-accent text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider flex-shrink-0">
+                          {initials}
+                        </div>
+
+                        {/* Review Content */}
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                            <span className="font-sans font-bold text-xs text-editorial-dark">
+                              {review.studentName}
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono">
+                              {new Date(review.createdAt).toLocaleDateString(
+                                lang === "en" ? "en-US" : "bn-BD",
+                                { year: "numeric", month: "short", day: "numeric" }
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Star rating for this review */}
+                          <div className="flex text-amber-500">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-3 w-3 ${
+                                  star <= review.rating ? "fill-current text-amber-500" : "text-slate-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed whitespace-pre-wrap break-words">
+                            {review.feedback}
+                          </p>
+                        </div>
+
+                        {/* Actions (Delete if owner) */}
+                        {isMyReview && (
+                          <button
+                            onClick={() => handleReviewDelete(review.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 transition cursor-pointer flex-shrink-0"
+                            title={lang === "en" ? "Delete review" : "রিভিউ ডিলিট করুন"}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right 1 Column: Lessons List Sidebar */}

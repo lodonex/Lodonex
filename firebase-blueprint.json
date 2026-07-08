@@ -28,12 +28,56 @@
         }
       },
       "required": ["id", "name", "email", "status", "progress"]
+    },
+    "CourseReview": {
+      "title": "CourseReview",
+      "description": "Feedback and rating submitted by an enrolled student for a course instructor",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the review"
+        },
+        "courseId": {
+          "type": "string",
+          "description": "The ID of the course being reviewed"
+        },
+        "studentId": {
+          "type": "string",
+          "description": "The user ID of the student who wrote the review"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "The name of the student who wrote the review"
+        },
+        "studentEmail": {
+          "type": "string",
+          "description": "The email of the student who wrote the review"
+        },
+        "rating": {
+          "type": "integer",
+          "description": "Rating score between 1 and 5"
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Detailed text feedback for the course instructor"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of when the review was created"
+        }
+      },
+      "required": ["id", "courseId", "studentId", "studentName", "studentEmail", "rating", "feedback", "createdAt"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserAccount",
       "description": "Collection of all user accounts and their associated training progress data"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "CourseReview",
+      "description": "Collection of all student reviews for course instructors"
     }
   }
 }
