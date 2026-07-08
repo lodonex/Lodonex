@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { X, Mail, Lock, User, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
 import { Language, UserAccount } from "../types";
+import { auth, db } from "../utils/firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,7 +29,7 @@ export default function AuthModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -37,24 +40,17 @@ export default function AuthModal({
 
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
       const emailLower = email.toLowerCase().trim();
 
       if (isSignUp) {
-        // Check if user already exists
-        if (existingUsers.some((u) => u.email.toLowerCase() === emailLower)) {
-          setError(
-            lang === "en"
-              ? "An account with this email already exists."
-              : "এই ইমেল অ্যাড্রেস দিয়ে ইতিমধ্যেই একটি অ্যাকাউন্ট তৈরি করা হয়েছে।"
-          );
-          return;
-        }
+        // Sign up with Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, emailLower, password);
+        const userId = userCredential.user.uid;
 
-        // Create new pending user
+        // Create new pending user profile in Firestore
         const newUser: UserAccount = {
-          id: `user-${Date.now()}`,
+          id: userId,
           name: name.trim(),
           email: emailLower,
           status: "pending", // Default to pending as requested: "when admin give him access"
@@ -67,26 +63,64 @@ export default function AuthModal({
           },
         };
 
+        await setDoc(doc(db, "users", userId), newUser);
         onAuthSuccess(newUser);
         onClose();
       } else {
-        // Log in
-        const foundUser = existingUsers.find((u) => u.email.toLowerCase() === emailLower);
-        if (!foundUser) {
-          setError(
-            lang === "en"
-              ? "No account found with this email. Please sign up."
-              : "এই ইমেলের সাথে কোনো অ্যাকাউন্ট পাওয়া যায়নি। দয়া করে সাইন আপ করুন।"
-          );
-          return;
-        }
+        // Log in with Firebase Auth
+        const userCredential = await signInWithEmailAndPassword(auth, emailLower, password);
+        const userId = userCredential.user.uid;
 
-        // Simulating login success
-        onAuthSuccess(foundUser);
+        // Fetch user from Firestore
+        const docSnap = await getDoc(doc(db, "users", userId));
+        if (docSnap.exists()) {
+          onAuthSuccess(docSnap.data() as UserAccount);
+        } else {
+          // Check if user exists in pre-existing LocalStorage list and migrate them
+          const emailUser = existingUsers.find((u) => u.email.toLowerCase() === emailLower);
+          if (emailUser) {
+            const migratedUser = { ...emailUser, id: userId };
+            await setDoc(doc(db, "users", userId), migratedUser);
+            onAuthSuccess(migratedUser);
+          } else {
+            // Create a default approved student profile
+            const newUser: UserAccount = {
+              id: userId,
+              name: emailLower.split("@")[0],
+              email: emailLower,
+              status: "approved",
+              progress: {
+                enrolledCourses: [],
+                completedLessons: [],
+                quizScores: {},
+                customRecipes: [],
+                badges: [],
+              },
+            };
+            await setDoc(doc(db, "users", userId), newUser);
+            onAuthSuccess(newUser);
+          }
+        }
         onClose();
       }
-    }, 600);
+    } catch (err: any) {
+      console.error("Firebase auth error:", err);
+      let errMsg = lang === "en" ? "Authentication failed. Please check your credentials." : "অনুমোদন ব্যর্থ হয়েছে। দয়া করে সঠিক তথ্য দিন।";
+      if (err.code === "auth/weak-password") {
+        errMsg = lang === "en" ? "Password must be at least 6 characters." : "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।";
+      } else if (err.code === "auth/email-already-in-use") {
+        errMsg = lang === "en" ? "An account with this email already exists." : "এই ইমেল অ্যাড্রেস দিয়ে ইতিমধ্যেই একটি অ্যাকাউন্ট তৈরি করা হয়েছে।";
+      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+        errMsg = lang === "en" ? "Invalid email or password." : "ভুল ইমেল অথবা পাসওয়ার্ড।";
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans">

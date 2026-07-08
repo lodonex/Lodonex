@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Information about a registered student and their learning progress",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user identifier from Firebase Authentication"
+        },
+        "name": {
+          "type": "string",
+          "description": "Student's full name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Student's email address"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved"],
+          "description": "Admin approval status of the student account"
+        },
+        "progress": {
+          "type": "object",
+          "description": "Learning progress container for courses, lessons, quizzes, recipes, and badges"
+        }
+      },
+      "required": ["id", "name", "email", "status", "progress"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserAccount",
+      "description": "Collection of all user accounts and their associated training progress data"
+    }
+  }
+}

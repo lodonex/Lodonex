@@ -31,6 +31,9 @@ import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Loc
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
 import { INITIAL_COURSES, INITIAL_RECIPES, INITIAL_LIVE_CLASSES, BADGES, MOCK_BLOGS } from "./data/mockData";
 import { TRANSLATIONS } from "./data/translations";
+import { db, auth } from "./utils/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
 
 const lodonexLogo = "/src/assets/images/lodonex_logo_1783226863502.jpg";
 
@@ -61,51 +64,113 @@ export default function App() {
   // Auth modal open state
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
 
-  // Database of Registered Users in LocalStorage
+  // Database of Registered Users with Firestore + Local fallback
   const [users, setUsers] = useState<UserAccount[]>(() => {
     const saved = localStorage.getItem("lodonex_users");
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
-        // ignore fallback
-      }
+      } catch (e) {}
     }
-    // Default initial user: Tasnim Rahman as an approved user
-    return [
-      {
-        id: "default-student-1",
-        name: "Tasnim Rahman",
-        email: "tasnim@example.com",
-        status: "approved",
-        progress: {
-          enrolledCourses: ["course-1"],
-          completedLessons: ["c1-l1"],
-          quizScores: { "c1-l1": 100 },
-          customRecipes: [],
-          badges: [BADGES[0]], // Gastronomy Pioneer initially unlocked
-        },
-      },
-    ];
+    return [];
   });
 
-  // Current logged in user (starts NULL to give default random visitor experience!)
+  // Current logged in user
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
     const saved = localStorage.getItem("lodonex_current_user");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === "object") return parsed;
-      } catch (e) {
-        // ignore fallback
-      }
+      } catch (e) {}
     }
-    return null; // Always load as null for a fresh visitor on initial checkout/page load
+    return null;
   });
 
-  // Persist users & active account state to LocalStorage
+  // Load and sync users from Firestore on mount
   useEffect(() => {
-    localStorage.setItem("lodonex_users", JSON.stringify(users));
+    const fetchUsers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        if (querySnapshot.empty) {
+          // Seed initial default user
+          const defaultUser: UserAccount = {
+            id: "default-student-1",
+            name: "Tasnim Rahman",
+            email: "tasnim@example.com",
+            status: "approved",
+            progress: {
+              enrolledCourses: ["course-1"],
+              completedLessons: ["c1-l1"],
+              quizScores: { "c1-l1": 100 },
+              customRecipes: [],
+              badges: [BADGES[0]],
+            },
+          };
+          await setDoc(doc(db, "users", defaultUser.id), defaultUser);
+          setUsers([defaultUser]);
+        } else {
+          const loadedUsers: UserAccount[] = [];
+          querySnapshot.forEach((docSnap) => {
+            loadedUsers.push(docSnap.data() as UserAccount);
+          });
+          setUsers(loadedUsers);
+        }
+      } catch (err) {
+        console.error("Error loading users from Firestore, falling back to local storage:", err);
+        const saved = localStorage.getItem("lodonex_users");
+        if (saved) {
+          try {
+            setUsers(JSON.parse(saved));
+          } catch (e) {
+            // fallback to default
+          }
+        } else {
+          // Seed initial default user
+          const defaultUser: UserAccount = {
+            id: "default-student-1",
+            name: "Tasnim Rahman",
+            email: "tasnim@example.com",
+            status: "approved",
+            progress: {
+              enrolledCourses: ["course-1"],
+              completedLessons: ["c1-l1"],
+              quizScores: { "c1-l1": 100 },
+              customRecipes: [],
+              badges: [BADGES[0]],
+            },
+          };
+          setUsers([defaultUser]);
+        }
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Listen to Firebase auth state changes to restore session
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          if (userDoc.exists()) {
+            setCurrentUser(userDoc.data() as UserAccount);
+          }
+        } catch (err) {
+          console.error("Error restoring user session:", err);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Persist state to local cache for offline/instant availability
+  useEffect(() => {
+    if (users.length > 0) {
+      localStorage.setItem("lodonex_users", JSON.stringify(users));
+    }
   }, [users]);
 
   useEffect(() => {
@@ -116,21 +181,31 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Sync user state changes back to the users list
-  const updateCurrentUserProgress = (newProgress: StudentProgress) => {
+  // Sync user state changes back to the users list and Firestore
+  const updateCurrentUserProgress = async (newProgress: StudentProgress) => {
     if (!currentUser) return;
     const updatedUser: UserAccount = { ...currentUser, progress: newProgress };
     setCurrentUser(updatedUser);
     setUsers((prev) => prev.map((u) => (u.id === currentUser.id ? updatedUser : u)));
+
+    try {
+      await setDoc(doc(db, "users", currentUser.id), updatedUser);
+    } catch (err) {
+      console.error("Error updating user progress in Firestore:", err);
+    }
   };
 
   const t = TRANSLATIONS[lang];
 
-  // Auth success handler (either logged in or signed up)
-  const handleAuthSuccess = (user: UserAccount) => {
-    // Check if user is newly created or existing
+  // Auth success handler
+  const handleAuthSuccess = async (user: UserAccount) => {
     if (!users.some((u) => u.id === user.id)) {
       setUsers((prev) => [...prev, user]);
+      try {
+        await setDoc(doc(db, "users", user.id), user);
+      } catch (err) {
+        console.error("Error saving user to Firestore in auth success:", err);
+      }
     }
     setCurrentUser(user);
     
@@ -138,15 +213,20 @@ export default function App() {
     if (user.status === "approved") {
       setCurrentTab("dashboard");
     } else {
-      setCurrentTab("dashboard"); // Pending approval notice is displayed inside Dashboard
+      setCurrentTab("dashboard");
     }
   };
 
   // Log Out Handler
-  const handleLogOut = () => {
+  const handleLogOut = async () => {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      console.error("Error signing out of Firebase:", err);
+    }
     setCurrentUser(null);
     setCart([]);
-    setCurrentTab("dashboard"); // Return back to random visitor welcome layout
+    setCurrentTab("dashboard");
   };
 
   // Cart operations
@@ -278,7 +358,7 @@ export default function App() {
       };
 
   // Sandbox simulation operations
-  const handleUpdateUserStatus = (userId: string, status: "pending" | "approved") => {
+  const handleUpdateUserStatus = async (userId: string, status: "pending" | "approved") => {
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, status } : u))
     );
@@ -286,9 +366,19 @@ export default function App() {
     if (currentUser && currentUser.id === userId) {
       setCurrentUser((prev) => (prev ? { ...prev, status } : null));
     }
+
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        await setDoc(userDocRef, { ...docSnap.data(), status }, { merge: true });
+      }
+    } catch (err) {
+      console.error("Error updating user status in Firestore:", err);
+    }
   };
 
-  const handleAddSimulatedUser = () => {
+  const handleAddSimulatedUser = async () => {
     const randomNum = Math.floor(100 + Math.random() * 900);
     const simulated: UserAccount = {
       id: `user-sim-${Date.now()}`,
@@ -304,6 +394,12 @@ export default function App() {
       },
     };
     setUsers((prev) => [...prev, simulated]);
+
+    try {
+      await setDoc(doc(db, "users", simulated.id), simulated);
+    } catch (err) {
+      console.error("Error creating simulated user in Firestore:", err);
+    }
   };
 
   const handleResetSimulation = () => {
