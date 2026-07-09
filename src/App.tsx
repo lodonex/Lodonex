@@ -26,6 +26,7 @@ import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
 import AdminSimulationPanel from "./components/AdminSimulationPanel";
 import { OurChefs } from "./components/OurChefs";
+import Policies from "./components/Policies";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
@@ -592,6 +593,18 @@ export default function App() {
                 }}
               />
             )}
+
+            {["terms", "refund", "privacy"].includes(currentTab) && (
+              <Policies
+                lang={lang}
+                policyType={currentTab as "terms" | "refund" | "privacy"}
+                onBackToCourses={() => {
+                  setSelectedCourse(null);
+                  setCurrentTab("courses");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            )}
           </>
         )}
       </main>
@@ -639,12 +652,12 @@ export default function App() {
               </div>
               <div className="space-y-1.5">
                 <h4 className="text-white font-serif font-bold text-xs italic">
-                  {lang === "en" ? "About Us" : "আমাদের সম্পর্কে"}
+                  {lang === "en" ? "Lodonex Cooking Academy" : "লোডোনেক্স কুকিং একাডেমি"}
                 </h4>
                 <p className="text-[#E5E2D9]/70 leading-relaxed text-[11px]">
                   {lang === "en"
-                    ? "Founded by award-winning gastronomy experts, Lodonex is Bangladesh's premier culinary institute. We deliver world-class training in traditional Bengali heritage, commercial baking, continental cuisine, and professional kitchen management, empowering students with verified certifications."
-                    : "পুরস্কারপ্রাপ্ত রন্ধন বিশেষজ্ঞদের দ্বারা প্রতিষ্ঠিত, লোডোনেক্স হলো বাংলাদেশের শীর্ষস্থানীয় রন্ধন শিক্ষা কেন্দ্র। আমরা ঐতিহ্যবাহী বাঙালি রান্না, বাণিজ্যিক বেকিং, কন্টিনেন্টাল খাবার এবং রন্ধনপ্রণালীতে বিশ্বমানের শিক্ষা প্রদান করি।"}
+                    ? "Widely recognized as Bangladesh's best cooking academy, Lodonex is the premier institute for professional culinary education. We deliver Michelin-standard practical mastery in traditional Bengali heritage gastronomy, classical pastry arts, commercial baking, and advanced kitchen management. Our students graduate with globally verified digital certificates and elite career placements."
+                    : "বাংলাদেশের সেরা কুকিং একাডেমি হিসেবে দেশজুড়ে স্বীকৃত, লোডোনেক্স হলো প্রফেশনাল রন্ধন শিক্ষার শ্রেষ্ঠ প্রতিষ্ঠান। আমরা ঐতিহ্যবাহী বাঙালি রান্না, ক্লাসিকাল পেস্ট্রি আর্ট, কমার্শিয়াল বেকিং এবং উন্নত কিচেন ম্যানেজমেন্টের ওপর সরাসরি বিশ্বমানের প্রশিক্ষণ প্রদান করি। আমাদের শিক্ষার্থীরা আন্তর্জাতিক মানসম্পন্ন ডিজিটাল সার্টিফিকেট ও নিশ্চিত ক্যারিয়ার গাইডেন্স পেয়ে থাকেন।"}
                 </p>
               </div>
               <p className="text-[10px] text-[#E5E2D9]/50 font-mono">
@@ -652,34 +665,63 @@ export default function App() {
               </p>
             </div>
 
-            {/* Column 2: Quick Links */}
-            <div className="space-y-3">
-              <h4 className="font-serif font-bold text-sm tracking-wider text-white italic">
-                {lang === "en" ? "Academy Navigation" : "একাডেমি নেভিগেশন"}
-              </h4>
-              <ul className="space-y-2 text-[11px] text-[#E5E2D9]/80 font-medium">
-                {[
-                  { id: "dashboard", label: t.studentDashboard },
-                  { id: "courses", label: t.ourCourses },
-                  { id: "recipes", label: t.myRecipes },
-                  { id: "chefs", label: t.ourChefs },
-                  { id: "live", label: t.liveMasterclass },
-                  { id: "blogs", label: t.blogs },
-                ].map((link) => (
-                  <li key={link.id}>
-                    <button
-                      onClick={() => {
-                        setSelectedCourse(null);
-                        setCurrentTab(link.id);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="hover:text-editorial-accent transition-colors text-left cursor-pointer"
-                    >
-                      • {link.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            {/* Column 2: Quick Links & Policies */}
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <h4 className="font-serif font-bold text-sm tracking-wider text-white italic">
+                  {lang === "en" ? "Academy Navigation" : "একাডেমি নেভিগেশন"}
+                </h4>
+                <ul className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-[#E5E2D9]/80 font-medium">
+                  {[
+                    { id: "dashboard", label: t.studentDashboard },
+                    { id: "courses", label: t.ourCourses },
+                    { id: "recipes", label: t.myRecipes },
+                    { id: "chefs", label: t.ourChefs },
+                    { id: "live", label: t.liveMasterclass },
+                    { id: "blogs", label: t.blogs },
+                  ].map((link) => (
+                    <li key={link.id}>
+                      <button
+                        onClick={() => {
+                          setSelectedCourse(null);
+                          setCurrentTab(link.id);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="hover:text-editorial-accent transition-colors text-left cursor-pointer"
+                      >
+                        • {link.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-3 border-t border-editorial-border/30 space-y-2">
+                <h4 className="font-serif font-bold text-xs tracking-wider text-white italic">
+                  {lang === "en" ? "Policies & Information" : "পলিসি ও নীতিমালা"}
+                </h4>
+                <ul className="space-y-1.5 text-[11px] text-[#E5E2D9]/70 font-medium">
+                  {[
+                    { id: "terms", label: lang === "en" ? "Terms & Conditions" : "শর্তাবলী ও নিয়মাবলি" },
+                    { id: "refund", label: lang === "en" ? "Refund & Return Policy" : "রিফান্ড ও রিটার্ন পলিসি" },
+                    { id: "privacy", label: lang === "en" ? "Privacy Policy" : "গোপনীয়তা নীতিমালা" },
+                  ].map((link) => (
+                    <li key={link.id}>
+                      <button
+                        onClick={() => {
+                          setSelectedCourse(null);
+                          setCurrentTab(link.id);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="hover:text-editorial-accent text-left transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <span className="text-editorial-accent font-mono text-[10px]">§</span>
+                        <span>{link.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
             {/* Column 3: Contact Us Details */}

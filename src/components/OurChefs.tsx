@@ -33,71 +33,71 @@ interface Chef {
 const CHEFS: Chef[] = [
   {
     id: "chef-1",
-    nameEn: "Chef Afroza Rahman",
-    nameBn: "শেফ আফরোজা রহমান",
-    roleEn: "Executive Head of Heritage Bengali Gastronomy",
-    roleBn: "প্রধান নির্বাহী, ঐতিহ্যবাহী বাঙালি রন্ধনশিল্প",
+    nameEn: "Chef Tawhid Shekh",
+    nameBn: "শেফ তৌহিদ শেখ",
+    roleEn: "Executive Chef & Academic Director",
+    roleBn: "এক্সিকিউটিভ শেফ এবং একাডেমিক ডিরেক্টর",
     image: "/src/assets/images/regenerated_image_1783236070688.jpg",
     experienceEn: "18+ Years",
     experienceBn: "১৮+ বছর",
     speciality: "traditional",
     specialityEn: "Traditional Bengali & Mughal",
     specialityBn: "ঐতিহ্যবাহী বাঙালি এবং মোগলাই রান্না",
-    bgEn: "Former culinary consultant for top-tier heritage resorts in Dhaka & Kolkata. Winner of Bangladesh Culinary Heritage Preservation Award (2021).",
-    bgBn: "ঢাকা ও কলকাতার শীর্ষস্থানীয় হেরিটেজ রিসোর্টসমূহের প্রাক্তন কালিনারি কনসালট্যান্ট। বাংলাদেশ কালিনারি হেরিটেজ প্রিজারভেশন অ্যাওয়ার্ড (২০২১) বিজয়ী।",
-    bioEn: "Chef Afroza has spent nearly two decades traveling into rural Bengal to document and preserve ancient heirloom recipes. She is renowned for translating forgotten grandmothers' spice-blending techniques into standard professional academy training.",
-    bioBn: "শেফ আফরোজা প্রায় দুই দশক ধরে বাংলার প্রত্যন্ত অঞ্চলে ভ্রমণ করে প্রাচীন রেসিপিগুলো নথিভুক্ত ও সংরক্ষণ করেছেন। ঠাকুমা-দিদিমাদের হারিয়ে যাওয়া মশলার অনুপাত ও মিশ্রণকে আধুনিক একাডেমিক নিয়মে রূপান্তর করার জন্য তিনি দেশজুড়ে সমাদৃত।",
-    philosophyEn: "Traditional food is a living tapestry of history, earth, and patience. True gastronomy doesn't rush the slow koshano process.",
-    philosophyBn: "ঐতিহ্যবাহী খাবার হলো ইতিহাস, মাটির টান আর ধৈর্যের এক জীবন্ত রূপ। নিখুঁত রন্ধনশৈলী কখনো ধীর আঁচে কষানোর প্রক্রিয়াকে তাড়াহুড়ো করে না।",
+    bgEn: "Former culinary director and consultant for top-tier gastronomy academies and luxury resorts in Bangladesh & globally. Winner of the Culinary Excellence & Academic Leadership Award.",
+    bgBn: "দেশী ও আন্তর্জাতিক শীর্ষস্থানীয় গ্যাস্ট্রোনমি একাডেমি এবং লাক্সারি রিসোর্টসমূহের প্রাক্তন কালিনারি ডিরেক্টর ও কনসালট্যান্ট। কালিনারি এক্সেলেন্স ও একাডেমিক লিডারশিপ অ্যাওয়ার্ড বিজয়ী।",
+    bioEn: "Chef Tawhid Shekh is a master of heritage Bengali cuisine and Royal Mughal gastronomy. He has trained thousands of professional chefs across South Asia and is dedicated to preserving authentic heirloom recipes while integrating modern culinary standards.",
+    bioBn: "শেফ তৌহিদ শেখ ঐতিহ্যবাহী বাঙালি রন্ধনশৈলী এবং রাজকীয় মোগলাই খাবারের একজন পরম মাস্টার। তিনি দক্ষিণ এশিয়া জুড়ে হাজার হাজার পেশাদার শেফকে প্রশিক্ষণ দিয়েছেন এবং আধুনিক রন্ধনশিল্পের মান নিশ্চিত করার সাথে সাথে হারিয়ে যাওয়া খাঁটি ঐতিহ্যবাহী রেসিপিগুলো পুনরুদ্ধারে নিরলস কাজ করে যাচ্ছেন।",
+    philosophyEn: "Culinary arts and academic excellence are forged through discipline, precision, and a passion for continuous discovery.",
+    philosophyBn: "রন্ধনশিল্প এবং একাডেমিক উৎকর্ষতা শৃঙ্খলা, নিখুঁত পরিমাপ এবং ক্রমাগত নতুন কিছু আবিষ্কারের আবেগের মধ্য দিয়ে তৈরি হয়।",
     achievementsEn: [
-      "Author of 'The Heirloom Spice Maps of Bengal'",
-      "First Bangladeshi speaker at the Asian Gastronomy Summit (2022)",
-      "Curator of the Presidential Banquet for Bengali Heritage Cuisines"
+      "Author of 'The Modern Gastronomy & Academy Manual'",
+      "First Bangladeshi speaker at the Asian Gastronomy Summit",
+      "Curator of the Presidential Banquet & Academic Excellence Awardee"
     ],
     achievementsBn: [
-      "কালজয়ী বই 'দ্য হেরিটেজ স্পাইস ম্যাপস অব বেঙ্গল' এর লেখিকা",
-      "এশিয়ান গ্যাস্ট্রোনমি সামিট (২০২২)-এ প্রথম বাংলাদেশী বক্তা",
-      "রাষ্ট্রপতির বিশেষ রাষ্ট্রীয় ভোজের বাঙালি খাবারের প্রধান কিউরেটর"
+      "আধুনিক গ্যাস্ট্রোনমি ও একাডেমি ম্যানুয়ালের লেখক",
+      "এশিয়ান গ্যাস্ট্রোনমি সামিটে প্রথম বাংলাদেশী বিশেষ বক্তা",
+      "রাষ্ট্রপতির বিশেষ রাষ্ট্রীয় ভোজের প্রধান কিউরেটর ও একাডেমিক এক্সেলেন্স অ্যাওয়ার্ড বিজয়ী"
     ],
     signatureDishesEn: ["Classic Shorshe Ilish with Mustard emulsion", "Slow-Braised Royal Beef Bhuna", "Traditional Clay-Pot Bogura Mishti Doi"],
     signatureDishesBn: ["সরিষার ঝাঁঝালো মিশ্রণে সর্ষে ইলিশ", "ধীর আঁচে সেদ্ধ রাজকীয় গরুর মাংস ভুনা", "মাটির পাত্রে জমানো বগুড়ার ঐতিহ্যবাহী মিষ্টি দই"],
     courseId: "course-1",
-    courseTitleEn: "Bengali Cuisine Heritage Masterclass",
-    courseTitleBn: "বাঙালি ঐতিহ্যবাহী রান্না মাস্টারক্লাস"
+    courseTitleEn: "Traditional Bengali Heritage Masterclass",
+    courseTitleBn: "ঐতিহ্যবাহী বাঙালি রন্ধন মাস্টারক্লাস"
   },
   {
     id: "chef-2",
-    nameEn: "Chef Robert Gomes",
-    nameBn: "শেফ রবার্ট গোমেজ",
-    roleEn: "Master Artisan Baker & Confectionery Director",
-    roleBn: "মাস্টার আর্টিসান বেকার এবং পেস্ট্রি পরিচালক",
-    image: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=600&q=80",
-    experienceEn: "15+ Years",
-    experienceBn: "১৫+ বছর",
+    nameEn: "SK Jubair Haider",
+    nameBn: "এস কে জুবায়ের হায়দার",
+    roleEn: "Director of Marketing & Information Technology (IT)",
+    roleBn: "ডিরেক্টর অব মার্কেটিং অ্যান্ড ইনফরমেশন টেকনোলজি (আইটি)",
+    image: "/src/assets/images/regenerated_image_1783570906752.jpg",
+    experienceEn: "12+ Years",
+    experienceBn: "১২+ বছর",
     speciality: "baking",
-    specialityEn: "Artisan Sourdough & European Baking",
-    specialityBn: "আর্টিসান টকমিষ্টি পাউরুটি এবং ইউরোপীয় বেকিং",
-    bgEn: "Certified Master Baker by the European Guild. Former Head of Viennoiserie for premium luxury cruise lines in Singapore & Hong Kong.",
-    bgBn: "ইউরোপীয় গিল্ডের একজন প্রত্যয়িত মাস্টার বেকার। সিঙ্গাপুর এবং হংকংয়ের একাধিক লাক্সারি ক্রুজ লাইনের ভিয়েনোইসেরি (Viennoiserie) বিভাগের প্রাক্তন প্রধান।",
-    bioEn: "Robert has introduced advanced dough-chemistry and hydration science to the Bangladeshi culinary scene. He is passionate about making technical French techniques like macaron foldings and wild-yeast sourdough starters accessible to every home kitchen.",
-    bioBn: "রবার্ট বাংলাদেশী রন্ধন জগতে ডফ-কেমিস্ট্রি (ময়দার আঠালো গঠন) এবং হাইড্রেশন সায়েন্সের আধুনিক ধারা নিয়ে এসেছেন। ফ্রেঞ্চ ম্যাক্যারন ফোল্ডিং বা বুনো ঈস্টের তৈরি টকমিষ্টি পাউরুটির জটিল কৌশলগুলো প্রতিটি সাধারণের রান্নাঘরে সহজভাবে পৌঁছে দেওয়া তাঁর অন্যতম লক্ষ্য।",
-    philosophyEn: "Baking is not a guess; it is an exact dialogue between water, flour, temperature, and time.",
-    philosophyBn: "বেকিং কোনো আন্দাজের বিষয় নয়; এটি পানি, ময়দা, তাপমাত্রা এবং সময়ের মধ্যকার একটি নিখুঁত বৈজ্ঞানিক কথোপকথন।",
+    specialityEn: "IT & Digital Growth",
+    specialityBn: "আইটি এবং ডিজিটাল গ্রোথ",
+    bgEn: "Renowned expert in digital marketing strategies and tech infrastructure. Architect of Lodonex's digital student management system and global outreach campaigns.",
+    bgBn: "ডিজিটাল মার্কেটিং স্ট্র্যাটেজি এবং আইটি অবকাঠামো খাতের প্রখ্যাত বিশেষজ্ঞ। লোডোনেক্সের ডিজিটাল স্টুডেন্ট ম্যানেজমেন্ট সিস্টেম এবং আন্তর্জাতিক আউটরিচ ক্যাম্পেইনের প্রধান স্থপতি।",
+    bioEn: "SK Jubair Haider directs the digital presence and technological framework of Lodonex Culinary Academy. He specializes in educational platforms, student portals, secure data architectures, and hyper-targeted culinary marketing systems that keep Lodonex as Bangladesh's No. 1 academy.",
+    bioBn: "জুবায়ের লোডোনেক্স কালিনারি একাডেমির ডিজিটাল উপস্থিতি এবং প্রযুক্তিগত কাঠামো পরিচালনা করেন। তিনি এডুকেশনাল প্ল্যাটফর্ম, স্টুডেন্ট পোর্টাল, নিরাপদ ডাটা আর্কিটেকচার এবং লোডোনেক্সকে বাংলাদেশের ১ নম্বর একাডেমি হিসেবে ধরে রাখতে হাইপার-টার্গেটেড কালিনারি মার্কেটিং সিস্টেম নিয়ে কাজ করেন।",
+    philosophyEn: "Marketing tells our story, but technology builds the stage for culinary excellence to perform.",
+    philosophyBn: "মার্কেটিং আমাদের গল্প বলে, কিন্তু রন্ধনশিল্পের শ্রেষ্ঠত্ব প্রদর্শনের আসল স্টেজ তৈরি করে আধুনিক প্রযুক্তি।",
     achievementsEn: [
-      "Designed the 15-foot State Wedding Cake for national dignitaries",
-      "Founder of Dhaka Artisan Bread Association",
-      "Awarded 'Best Pastry Artist' at the South Asian Pastry Cup"
+      "Spearheaded Lodonex Digital Learning Portal & app interface deployment",
+      "Successfully scaled Lodonex marketing campaigns to over 2 million organic reach",
+      "Pioneered secure Firestore cloud integration for Bangladeshi educational hubs"
     ],
     achievementsBn: [
-      "জাতীয় বিশিষ্ট ব্যক্তিবর্গের জন্য ১৫ ফুট লম্বা রাষ্ট্রীয় বিয়ের কেক ডিজাইন করেছেন",
-      "ঢাকা আর্টিসান ব্রেড অ্যাসোসিয়েশনের প্রতিষ্ঠাতা",
-      "সাউথ এশিয়ান পেস্ট্রি কাপে 'সেরা পেস্ট্রি শিল্পী' হিসেবে পুরস্কৃত"
+      "লোডোনেক্স ডিজিটাল লার্নিং পোর্টাল এবং অ্যাপ ইন্টারফেসের সফল উদ্বোধন",
+      "লোডোনেক্স মার্কেটিং ক্যাম্পেইনকে ২ মিলিয়নেরও বেশি মানুষের কাছে সফলভাবে পৌঁছে দেওয়া",
+      "বাংলাদেশি শিক্ষামূলক হাবগুলোর জন্য নিরাপদ ফায়ারস্টোর ক্লাউড ইন্টিগ্রেশন ব্যবস্থার উন্নয়ন"
     ],
-    signatureDishesEn: ["High-Hydration Wild-Yeast Sourdough Bread", "French Raspberry Macarons", "Airy Bakery-Style Vanilla Sponge Cake"],
-    signatureDishesBn: ["উচ্চ-আর্দ্রতাসম্পন্ন ওয়াইল্ড-ঈস্ট টকমিষ্টি পাউরুটি", "ফ্রেঞ্চ রাস্পবেরি ম্যাক্যারন", "অত্যন্ত নরম ও হালকা ভ্যানিলা স্পঞ্জ কেক"],
+    signatureDishesEn: ["High-Conversion Funnel Strategies", "Secure Cloud Server Architecture", "Automated Student Feedback Loops"],
+    signatureDishesBn: ["হাই-কনভার্সন ফানেল স্ট্র্যাটেজি", "সিকিউর ক্লাউড সার্ভার আর্কিটেকচার", "অটোমেটেড স্টুডেন্ট ফিডব্যাক লুপস"],
     courseId: "course-2",
-    courseTitleEn: "Professional Baking Secrets",
-    courseTitleBn: "পেশাদার বেকিংয়ের গোপন রহস্য"
+    courseTitleEn: "Culinary Business & Tech Blueprint",
+    courseTitleBn: "কালিনারি বিজনেস এবং টেক ব্লুপ্রিন্ট"
   },
   {
     id: "chef-3",
@@ -157,7 +157,7 @@ const CHEFS: Chef[] = [
       "Master of the 24-Fold Crystal Dumpling Technique"
     ],
     achievementsBn: [
-      "এশিয়া-প্যাসিফিক গোল্ডেন ওক ট্রফি ২০১৯ বিজয়ী",
+      "এশিয়া-প্যাসিফিক ওক ট্রফি ২০১৯ বিজয়ী",
       "দক্ষিণ এশিয়ার শীর্ষস্থানীয় প্যান-এশিয়ান রেস্তোরাঁ ব্র্যান্ডগুলোর প্রধান পরামর্শক",
       "২৪-ভাঁজের ঐতিহ্যবাহী ক্রিস্টাল ডাম্পলিং টেকনিকের মাস্টার ট্রেইনার"
     ],
@@ -168,7 +168,6 @@ const CHEFS: Chef[] = [
     courseTitleBn: "চাইনিজ / ওক মাস্টারক্লাস"
   }
 ];
-
 interface OurChefsProps {
   lang: Language;
   onSelectCourse: (courseId: string) => void;

@@ -13,7 +13,7 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
 
   const slides = [
     {
-      id: "chef-afroza",
+      id: "chef-tawhid",
       titleEn: "Master Culinary Arts with Bangladesh's Premier Gastronomy Mentors",
       titleBn: "বাংলাদেশের শীর্ষস্থানীয় রন্ধন বিশেষজ্ঞদের সাথে রান্নার শিল্পে পারদর্শী হয়ে উঠুন",
       subtitleEn: "Featuring our senior chef instructor, specialized in classical heritage, commercial baking, and advanced plating. Complete certified masterclasses with hands-on assessments.",
@@ -110,7 +110,7 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
                     >
                       {isEn ? slide.ctaEn : slide.ctaBn}
                     </button>
-                    {slide.id === "chef-afroza" && (
+                    {slide.id === "chef-tawhid" && (
                       <span className="text-[10px] sm:text-xs font-mono text-slate-400 uppercase tracking-widest">
                         ⭐ 4.9 {isEn ? "Instructor Rating" : "প্রশিক্ষক রেটিং"}
                       </span>
