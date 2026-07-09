@@ -735,8 +735,8 @@ export default function App() {
                     <MapPin className="h-4 w-4 text-editorial-accent flex-shrink-0" />
                     <span>
                       {lang === "en"
-                        ? "Plot 12, Road 11, Banani, Dhaka 1213, Bangladesh"
-                        : "প্লট ১২, রোড ১১, বনানী, ঢাকা ১২১৩, বাংলাদেশ"}
+                        ? "1288/1 Senpara Parbata, Mirpur-10, Dhaka-1215"
+                        : "১২৮৮/১ সেনপাড়া পর্বতা, মিরপুর-১০, ঢাকা-১২১৫"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
