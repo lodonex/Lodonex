@@ -5,6 +5,7 @@ import { Language } from "../types";
 import chef1Image from "../assets/images/regenerated_image_1783236070688.jpg";
 import chef2Image from "../assets/images/regenerated_image_1783570906752.jpg";
 import chef3Image from "../assets/images/regenerated_image_1783572520006.jpg";
+import chef4Image from "../assets/images/regenerated_image_1783649665068.png";
 
 interface Chef {
   id: string;
@@ -138,37 +139,37 @@ const CHEFS: Chef[] = [
   },
   {
     id: "chef-4",
-    nameEn: "Chef Lee Wei",
-    nameBn: "শেফ লি ওয়েই",
-    roleEn: "Master of Asian Fusion & Wok Artistry",
-    roleBn: "মাস্টার, এশিয়ান ফিউশন এবং ওক আর্ট",
-    image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80",
+    nameEn: "Chef Bishal",
+    nameBn: "শেফ বিশাল",
+    roleEn: "Director of Production & Course Coordination",
+    roleBn: "ডিরেক্টর অব প্রোডাকশন অ্যান্ড কোর্স কোঅর্ডিনেশন",
+    image: chef4Image,
     experienceEn: "14+ Years",
     experienceBn: "১৪+ বছর",
     speciality: "chinese",
-    specialityEn: "High-Heat Cantonese Wok Hei & Dim Sum",
-    specialityBn: "উচ্চ-তাপের ক্যান্টনিজ ওক হাই এবং ডিম সাম তৈরি",
-    bgEn: "Former Head Chef of premium Pan-Asian bistros in Kuala Lumpur and Bangkok. Gold medalist in the Asia-Pacific Wok Master Championships (2019).",
-    bgBn: "কুয়ালালামপুর এবং ব্যাংককের বিখ্যাত প্যান-এশিয়ান বিস্ট্রোর প্রাক্তন প্রধান শেফ। এশিয়া-প্যাসিফিক ওক মাস্টার চ্যাম্পিয়নশিপে (২০১৯) স্বর্ণপদক বিজয়ী।",
-    bioEn: "Chef Lee Wei brings the magic of Cantonese fire control directly to students. He focuses on the physics of the wok, teaches the art of delicate dough rolling for transparent crystal dumplings, and specializes in rich broth frameworks.",
-    bioBn: "শেফ লি ওয়েই ওকের আগুনের নিখুঁত নিয়ন্ত্রণের জাদু শিক্ষার্থীদের কাছে নিয়ে আসেন। তিনি ডিম সামের স্বচ্ছ পাতলা ডো তৈরির শিল্প এবং চাইনিজ সুগন্ধযুক্ত স্টক বা ঝোলের মূল ভিত্তি নিখুঁতভাবে তৈরি করা শেখান।",
-    philosophyEn: "Wok Hei is the soul of Asian cooking—capturing the breath of the wok in a microsecond of perfect high-heat dispersion.",
-    philosophyBn: "ওক হাই হলো এশিয়ান রান্নার আত্মা—তীব্র উচ্চ-তাপমাত্রার সঠিক সঞ্চালনের মাধ্যমে একটি ক্ষুদ্রাতিক্ষুদ্র সেকেন্ডে আগুনের ধোঁয়াটে স্বাদকে বন্দি করা।",
+    specialityEn: "Culinary Production & Operations Management",
+    specialityBn: "কালিনারি প্রোডাকশন এবং অপারেশনস ম্যানেজমেন্ট",
+    bgEn: "Senior culinary operations specialist and director of high-volume kitchen productions. Expert in training coordination, food supply management, and academy curriculum design.",
+    bgBn: "উচ্চ-মানের কালিনারি অপারেশনস বিশেষজ্ঞ এবং বড় পরিসরে কিচেন প্রোডাকশন ডিরেক্টর। একাডেমি কারিকুলাম ডিজাইন, প্রশিক্ষণ সমন্বয় এবং ফুড সাপ্লাই চেইন ব্যবস্থাপনায় অভিজ্ঞ।",
+    bioEn: "Chef Bishal oversees the production and coordinated execution of all academy masterclasses, ensuring world-class standards are maintained across every course. He is dedicated to mentoring students on advanced kitchen layout flows, bulk food logistics, and academic scheduling.",
+    bioBn: "শেফ বিশাল একাডেমির সকল মাস্টারক্লাস ও প্রোডাকশন কার্যক্রম সমন্বয় ও পরিচালনা করেন, যাতে প্রতিটি কোর্সে আন্তর্জাতিক মান বজায় থাকে। তিনি শিক্ষার্থীদের অ্যাডভান্সড কিচেন লেআউট ফ্লো, বাল্ক ফুড লজিস্টিকস এবং একাডেমিক সময়সূচি ব্যবস্থাপনায় প্রশিক্ষণ দিতে নিবেদিত।",
+    philosophyEn: "Operational efficiency and seamless production coordination are what turn culinary passion into a successful commercial venture.",
+    philosophyBn: "সুশৃঙ্খল কিচেন অপারেশনস এবং নিখুঁত প্রোডাকশন সমন্বয়ই রন্ধনশিল্পের প্রতি ভালোবাসাকে একটি সফল ব্যবসায়িক উদ্যোগে রূপান্তর করে।",
     achievementsEn: [
-      "Winner of the Asia-Pacific Golden Wok Trophy 2019",
-      "Consultant Chef for award-winning Pan-Asian franchises in South Asia",
-      "Master of the 24-Fold Crystal Dumpling Technique"
+      "Successfully coordinated over 500+ masterclass cohorts with 98% satisfaction",
+      "Expert in large-scale banqueting and food service logistics",
+      "Developed the Lodonex Standard Operating Procedures for professional courses"
     ],
     achievementsBn: [
-      "এশিয়া-প্যাসিফিক ওক ট্রফি ২০১৯ বিজয়ী",
-      "দক্ষিণ এশিয়ার শীর্ষস্থানীয় প্যান-এশিয়ান রেস্তোরাঁ ব্র্যান্ডগুলোর প্রধান পরামর্শক",
-      "২৪-ভাঁজের ঐতিহ্যবাহী ক্রিস্টাল ডাম্পলিং টেকনিকের মাস্টার ট্রেইনার"
+      "৯৮% সন্তুষ্টি সহ ৫০০টিরও বেশি মাস্টারক্লাস ব্যাচ সফলভাবে পরিচালনা ও সমন্বয় করা",
+      "বৃহৎ পরিসরে ক্যাটারিং ও ফুড সার্ভিস লজিস্টিকস ব্যবস্থাপনায় বিশেষজ্ঞ",
+      "পেশাদার কোর্সসমূহের জন্য লোডোনেক্সের স্ট্যান্ডার্ড অপারেটিং প্রসিডিউর (SOP) প্রস্তুতকরণ"
     ],
-    signatureDishesEn: ["High-Heat Wok-Seared Szechuan Noodles", "24-Fold Crystal Shrimp Har Gow", "Double-Boiled Imperial Ginseng Duck Broth"],
-    signatureDishesBn: ["উচ্চ তাপে ভাজা সিচুয়ান নুডলস (ওক-সিয়ারড)", "২৪-ভাঁজের ঐতিহ্যবাহী ক্রিস্টাল চিংড়ি হার গাও", "ডাবল-বয়েলড রাজকীয় জিনসেং হাঁসের ঝোল"],
+    signatureDishesEn: ["High-Volume Catering Formulations", "Kitchen Workflow Optimization Maps", "Recipe Scaling & Yield Calculators"],
+    signatureDishesBn: ["হ্যান্ডস-অন ক্যাটারিং ফর্মুলেশন", "কিচেন ওয়ার্কফ্লো অপ্টিমাইজেশন ডিজাইন", "রেসিপি স্কেলিং এবং ইল্ড ক্যালকুলেটর"],
     courseId: "course-4",
-    courseTitleEn: "Chinese / Wok Masterclass",
-    courseTitleBn: "চাইনিজ / ওক মাস্টারক্লাস"
+    courseTitleEn: "Culinary Production & Operations Management",
+    courseTitleBn: "কালিনারি প্রোডাকশন এবং অপারেশনস ম্যানেজমেন্ট"
   }
 ];
 interface OurChefsProps {
