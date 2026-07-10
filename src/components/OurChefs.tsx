@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Award, ChefHat, BookOpen, Sparkles, Clock, ArrowRight, Heart, X, Check } from "lucide-react";
 import { Language } from "../types";
+import chef1Image from "../assets/images/regenerated_image_1783236070688.jpg";
+import chef2Image from "../assets/images/regenerated_image_1783570906752.jpg";
+import chef3Image from "../assets/images/regenerated_image_1783572520006.jpg";
 
 interface Chef {
   id: string;
@@ -37,7 +40,7 @@ const CHEFS: Chef[] = [
     nameBn: "শেফ তৌহিদ শেখ",
     roleEn: "Executive Chef & Academic Director",
     roleBn: "এক্সিকিউটিভ শেফ এবং একাডেমিক ডিরেক্টর",
-    image: "/src/assets/images/regenerated_image_1783236070688.jpg",
+    image: chef1Image,
     experienceEn: "18+ Years",
     experienceBn: "১৮+ বছর",
     speciality: "traditional",
@@ -71,7 +74,7 @@ const CHEFS: Chef[] = [
     nameBn: "এস কে জুবায়ের হায়দার",
     roleEn: "Director of Marketing & Information Technology (IT)",
     roleBn: "ডিরেক্টর অব মার্কেটিং অ্যান্ড ইনফরমেশন টেকনোলজি (আইটি)",
-    image: "/src/assets/images/regenerated_image_1783570906752.jpg",
+    image: chef2Image,
     experienceEn: "12+ Years",
     experienceBn: "১২+ বছর",
     speciality: "baking",
@@ -105,7 +108,7 @@ const CHEFS: Chef[] = [
     nameBn: "শাকিল ভূঁইয়া",
     roleEn: "Finance Director",
     roleBn: "ফাইন্যান্স ডিরেক্টর",
-    image: "/src/assets/images/regenerated_image_1783572520006.jpg",
+    image: chef3Image,
     experienceEn: "15+ Years",
     experienceBn: "১৫+ বছর",
     speciality: "continental",

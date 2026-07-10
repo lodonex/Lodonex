@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Sparkles, BookOpen, Clock, Star } from "lucide-react";
 import { Language } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import chefInstructorImage from "../assets/images/chef_instructor_1783228989569.jpg";
 
 interface HomeSliderProps {
   lang: Language;
@@ -21,7 +22,7 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
       badgeEn: "Lead Academic Mentor",
       badgeBn: "প্রধান একাডেমি মেন্টর",
       // Reference our generated high quality chef image
-      image: "/src/assets/images/chef_instructor_1783228989569.jpg",
+      image: chefInstructorImage,
       ctaEn: "Browse Masterclasses",
       ctaBn: "মাস্টারক্লাস দেখুন"
     },

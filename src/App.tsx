@@ -35,8 +35,7 @@ import { TRANSLATIONS } from "./data/translations";
 import { db, auth, handleFirestoreError, OperationType } from "./utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, setDoc, getDocs, getDoc } from "firebase/firestore";
-
-const lodonexLogo = "/src/assets/images/lodonex_logo_1783226863502.jpg";
+import lodonexLogo from "./assets/images/lodonex_logo_1783226863502.jpg";
 
 export default function App() {
   // Localization state
