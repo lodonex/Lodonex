@@ -1,4 +1,107 @@
-import { Course, Recipe, LiveClass, Badge, BlogPost } from "../types";
+import { Course, Recipe, LiveClass, Badge, BlogPost, LQFLevelDetails } from "../types";
+
+export const LQF_LEVELS: LQFLevelDetails[] = [
+  {
+    level: 1,
+    titleEn: "Lodonex Certified Culinary Foundation",
+    titleBn: "লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন",
+    careerPathEn: "Commis III",
+    careerPathBn: "কমিস ৩",
+    suitableForEn: "Beginners, No Experience Required",
+    suitableForBn: "শিক্ষানবিস, কোনো পূর্ব অভিজ্ঞতার প্রয়োজন নেই"
+  },
+  {
+    level: 2,
+    titleEn: "Lodonex Certified Culinary Professional",
+    titleBn: "লোডোনেক্স সার্টিফাইড কালিনারি প্রফেশনাল",
+    careerPathEn: "Commis II",
+    careerPathBn: "কমিস ২",
+    eligibilityEn: "LQF Level 1",
+    eligibilityBn: "এলকিউএফ লেভেল ১",
+    experienceRequiredEn: "Not Required",
+    experienceRequiredBn: "প্রয়োজন নেই"
+  },
+  {
+    level: 3,
+    titleEn: "Lodonex Advanced Culinary Professional",
+    titleBn: "লোডোনেক্স অ্যাডভান্সড কালিনারি প্রফেশনাল",
+    careerPathEn: "Commis I",
+    careerPathBn: "কমিস ১",
+    eligibilityEn: "LQF Level 2",
+    eligibilityBn: "এলকিউএফ লেভেল ২",
+    experienceRequiredEn: "Minimum 1 Year Job or Internship",
+    experienceRequiredBn: "ন্যূনতম ১ বছরের চাকরি বা ইন্টার্নশিপ"
+  },
+  {
+    level: 4,
+    titleEn: "Lodonex Professional Diploma in Culinary Arts",
+    titleBn: "লোডোনেক্স প্রফেশনাল ডিপ্লোমা ইন কালিনারি আর্টস",
+    careerPathEn: "Senior Commis / Kitchen In-Charge",
+    careerPathBn: "সিনিয়র কমিস / কিচেন ইন-চার্জ",
+    eligibilityEn: "LQF Level 3",
+    eligibilityBn: "এলকিউএফ লেভেল ৩",
+    experienceRequiredEn: "Minimum Total 2 Years Job or Internship Experience",
+    experienceRequiredBn: "সর্বমোট ন্যূনতম ২ বছরের চাকরি বা ইন্টার্নশিপের অভিজ্ঞতা",
+    workshopEn: "7-Day Professional Workshop",
+    workshopBn: "৭-দিনের প্রফেশনাল ওয়ার্কশপ"
+  },
+  {
+    level: 5,
+    titleEn: "Lodonex Professional Diploma in Specialty Cuisine",
+    titleBn: "লোডোনেক্স প্রফেশনাল ডিপ্লোমা ইন স্পেশাল্টি কুইজিন",
+    careerPathEn: "Demi Chef de Partie",
+    careerPathBn: "ডেমি শেফ ডি পার্টি",
+    eligibilityEn: "LQF Level 4",
+    eligibilityBn: "এলকিউএফ লেভেল ৪",
+    experienceRequiredEn: "Minimum 1 Year Experience in Selected Cuisine",
+    experienceRequiredBn: "নির্বাচিত কুইজিনে ন্যূনতম ১ বছরের অভিজ্ঞতা",
+    workshopEn: "7-Day Professional Workshop",
+    workshopBn: "৭-দিনের প্রফেশনাল ওয়ার্কশপ",
+    specializationsEn: ["Japanese Cuisine", "Continental Cuisine", "Indian Cuisine", "Thai Cuisine", "Chinese Cuisine", "Bakery & Pastry"],
+    specializationsBn: ["জাপানি কুইজিন", "কন্টিনেন্টাল কুইজিন", "ইন্ডিয়ান কুইজিন", "থাই কুইজিন", "চাইনিজ কুইজিন", "বেকারি ও পেস্ট্রি"]
+  },
+  {
+    level: 6,
+    titleEn: "Lodonex Advanced Professional Diploma in Specialty Cuisine",
+    titleBn: "লোডোনেক্স অ্যাডভান্সড প্রফেশনাল ডিপ্লোমা ইন স্পেশাল্টি কুইজিন",
+    careerPathEn: "Chef de Partie",
+    careerPathBn: "শেফ ডি পার্টি",
+    eligibilityEn: "LQF Level 5",
+    eligibilityBn: "এলকিউএফ লেভেল ৫",
+    experienceRequiredEn: "Minimum 1 Year Experience",
+    experienceRequiredBn: "ন্যূনতম ১ বছরের অভিজ্ঞতা",
+    workshopEn: "7-Day Professional Workshop",
+    workshopBn: "৭-দিনের প্রফেশনাল ওয়ার্কশপ"
+  },
+  {
+    level: 7,
+    titleEn: "Lodonex Executive Diploma in Culinary Leadership",
+    titleBn: "লোডোনেক্স এক্সিকিউটিভ ডিপ্লোমা ইন কালিনারি লিডারশিপ",
+    careerPathEn: "Junior Sous Chef",
+    careerPathBn: "জুনিয়ার সু শেফ",
+    eligibilityEn: "LQF Level 6",
+    eligibilityBn: "এলকিউএফ লেভেল ৬",
+    experienceRequiredEn: "Minimum 1 Year Supervisory Experience",
+    experienceRequiredBn: "ন্যূনতম ১ বছরের সুপারভাইজরি অভিজ্ঞতা",
+    workshopEn: "Executive Leadership Workshop",
+    workshopBn: "এক্সিকিউティブ লিডারশিপ ওয়ার্কশপ"
+  },
+  {
+    level: 8,
+    titleEn: "Lodonex Executive Fellowship in Culinary Leadership",
+    titleBn: "লোডোনেক্স এক্সিকিউটিভ ফেলোশিপ ইন কালিনারি লিডারশিপ",
+    careerPathEn: "Executive Sous Chef / Executive Chef",
+    careerPathBn: "এক্সিকিউティブ সু শেফ / এক্সিকিউティブ শেফ",
+    eligibilityEn: "LQF Level 7",
+    eligibilityBn: "এলকিউএফ লেভেল ৭",
+    experienceRequiredEn: "Minimum 1 Year Senior Leadership Experience",
+    experienceRequiredBn: "ন্যূনতম ১ বছরের সিনিয়র লিডারশিপ অভিজ্ঞতা",
+    workshopEn: "Executive Leadership Workshop",
+    workshopBn: "এক্সিকিউティブ লিডারশিপ ওয়ার্কশপ",
+    recognitionEn: "LQF Certified Master Assessor",
+    recognitionBn: "এলকিউএফ সার্টিফাইড মাস্টার অ্যাসেসর"
+  }
+];
 
 export const INITIAL_COURSES: Course[] = [
   {
@@ -12,8 +115,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.9,
     tutor: "Chef Tawhid Shekh",
     duration: "6 Hours",
-    levelEn: "Intermediate",
-    levelBn: "মধ্যম",
+    levelEn: "LQF Level 1",
+    levelBn: "এলকিউএফ লেভেল ১",
+    lqfLevel: 1,
     category: "traditional",
     lessons: [
       {
@@ -77,8 +181,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.8,
     tutor: "Chef Robert Gomes",
     duration: "8 Hours",
-    levelEn: "Beginner to Advanced",
-    levelBn: "শিক্ষানবিস থেকে উন্নত",
+    levelEn: "LQF Level 2",
+    levelBn: "এলকিউএফ লেভেল ২",
+    lqfLevel: 2,
     category: "baking",
     lessons: [
       {
@@ -126,8 +231,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.9,
     tutor: "Chef Tanvir Ahmed",
     duration: "10 Hours",
-    levelEn: "Advanced",
-    levelBn: "উন্নত",
+    levelEn: "LQF Level 3",
+    levelBn: "এলকিউএফ লেভেল ৩",
+    lqfLevel: 3,
     category: "continental",
     lessons: [
       {
@@ -175,8 +281,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.7,
     tutor: "Chef Bishal",
     duration: "5 Hours",
-    levelEn: "Intermediate",
-    levelBn: "মধ্যম",
+    levelEn: "LQF Level 4",
+    levelBn: "এলকিউএফ লেভেল ৪",
+    lqfLevel: 4,
     category: "chinese",
     lessons: [
       {
@@ -208,8 +315,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.8,
     tutor: "Chef Tanvir Ahmed",
     duration: "7 Hours",
-    levelEn: "Intermediate",
-    levelBn: "মধ্যম",
+    levelEn: "LQF Level 5",
+    levelBn: "এলকিউএফ লেভেল ৫",
+    lqfLevel: 5,
     category: "continental",
     lessons: [
       {
@@ -241,8 +349,9 @@ export const INITIAL_COURSES: Course[] = [
     rating: 4.9,
     tutor: "Chef Robert Gomes",
     duration: "9 Hours",
-    levelEn: "Advanced",
-    levelBn: "উন্নত",
+    levelEn: "LQF Level 6",
+    levelBn: "এলকিউএফ লেভেল ৬",
+    lqfLevel: 6,
     category: "baking",
     lessons: [
       {

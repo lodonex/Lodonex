@@ -138,8 +138,13 @@ export default function CourseCatalog({
                     alt={course.titleEn}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-102"
                   />
-                  <div className="absolute top-3 left-3 bg-[#FDFCF9]/95 backdrop-blur-xs border border-editorial-border px-3 py-1 rounded-none text-[9px] font-sans font-bold text-editorial-dark uppercase tracking-widest">
-                    {lang === "en" ? course.category : t[course.category]}
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+                    <div className="bg-[#FDFCF9]/95 backdrop-blur-xs border border-editorial-border px-3 py-1 rounded-none text-[9px] font-sans font-bold text-editorial-dark uppercase tracking-widest">
+                      {lang === "en" ? course.category : t[course.category]}
+                    </div>
+                    <div className="bg-editorial-accent text-white px-2 py-0.5 rounded-none text-[8px] font-sans font-extrabold uppercase tracking-widest">
+                      {lang === "en" ? `LQF Level ${course.lqfLevel}` : `এলকিউএফ লেভেল ${course.lqfLevel}`}
+                    </div>
                   </div>
                   <div className="absolute bottom-3 right-3 bg-white/95 border border-editorial-border px-2 py-0.5 rounded-none text-xs font-bold text-editorial-dark flex items-center gap-1">
                     <Star className="h-3.5 w-3.5 fill-editorial-accent text-editorial-accent" />

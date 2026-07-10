@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy, Star, MessageSquare, Trash2, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy, Star, MessageSquare, Trash2, Send, Compass } from "lucide-react";
 import { Language, Course, Lesson, StudentProgress, CourseReview, UserAccount } from "../types";
+import { LQF_LEVELS } from "../data/mockData";
 import { TRANSLATIONS } from "../data/translations";
 import { motion } from "motion/react";
 import { db } from "../utils/firebase";
@@ -35,6 +36,7 @@ export default function CourseDetails({
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
   const [quizCorrect, setQuizCorrect] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<"about" | "materials">("about");
+  const [showLqfLadder, setShowLqfLadder] = useState<boolean>(false);
 
   // Reviews integration states
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -186,6 +188,8 @@ export default function CourseDetails({
     setQuizSubmitted(false);
     setQuizCorrect(null);
   };
+
+  const courseLqf = LQF_LEVELS.find((l) => l.level === course.lqfLevel);
 
   return (
     <div id="course-details-section" className="space-y-6 py-6">
@@ -420,6 +424,216 @@ export default function CourseDetails({
                 {isLessonCompleted(activeLesson.id) ? t.completed : t.markComplete}
               </button>
             </div>
+          )}
+
+          {/* LQF Level Details Card */}
+          {courseLqf && (
+            <div id="lqf-level-details-card" className="bg-[#F7F5F0] border border-editorial-border p-5 sm:p-6 space-y-4 text-left mt-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-editorial-border pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-[#1A1A1A] text-white rounded-none flex items-center justify-center font-bold text-lg font-mono flex-shrink-0">
+                    {courseLqf.level}
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase tracking-widest text-editorial-accent font-bold block">
+                      {lang === "en" ? "LQF National Qualification Framework" : "এলকিউএফ জাতীয় রন্ধনশিল্প যোগ্যতা কাঠামো"}
+                    </span>
+                    <h3 className="font-serif font-bold text-[#1A1A1A] text-base sm:text-lg leading-tight">
+                      {lang === "en" ? courseLqf.titleEn : courseLqf.titleBn}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  id="toggle-lqf-ladder-btn"
+                  onClick={() => setShowLqfLadder(!showLqfLadder)}
+                  className="px-4 py-2 bg-[#1A1A1A] text-white hover:bg-slate-800 text-[10px] font-bold uppercase tracking-widest rounded-none transition flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                >
+                  <Compass className="h-4 w-4" />
+                  {showLqfLadder
+                    ? (lang === "en" ? "Hide Ladder" : "ল্যাডার লুকান")
+                    : (lang === "en" ? "View Full LQF Framework" : "সম্পূর্ণ এলকিউএফ কাঠামো")}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-xs sm:text-sm">
+                {/* Career Path */}
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                    {lang === "en" ? "Career Path" : "ক্যারিয়ার পাথ"}
+                  </span>
+                  <p className="font-serif font-bold text-editorial-dark text-sm sm:text-base italic">
+                    {lang === "en" ? courseLqf.careerPathEn : courseLqf.careerPathBn}
+                  </p>
+                </div>
+
+                {/* Suitable For / Eligibility */}
+                {courseLqf.suitableForEn && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Suitable For" : "যার জন্য উপযোগী"}
+                    </span>
+                    <p className="font-sans font-semibold text-slate-700">
+                      {lang === "en" ? courseLqf.suitableForEn : courseLqf.suitableForBn}
+                    </p>
+                  </div>
+                )}
+
+                {courseLqf.eligibilityEn && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Eligibility" : "যোগ্যতা"}
+                    </span>
+                    <p className="font-sans font-semibold text-slate-700">
+                      {lang === "en" ? courseLqf.eligibilityEn : courseLqf.eligibilityBn}
+                    </p>
+                  </div>
+                )}
+
+                {/* Experience Required */}
+                {courseLqf.experienceRequiredEn && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Experience Required" : "প্রয়োজনীয় অভিজ্ঞতা"}
+                    </span>
+                    <p className="font-sans font-semibold text-slate-700">
+                      {lang === "en" ? courseLqf.experienceRequiredEn : courseLqf.experienceRequiredBn}
+                    </p>
+                  </div>
+                )}
+
+                {/* Workshop */}
+                {courseLqf.workshopEn && (
+                  <div className="space-y-1 col-span-1 md:col-span-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Required Workshop" : "প্রয়োজনীয় ওয়ার্কশপ"}
+                    </span>
+                    <p className="font-sans font-semibold text-slate-700">
+                      {lang === "en" ? courseLqf.workshopEn : courseLqf.workshopBn}
+                    </p>
+                  </div>
+                )}
+
+                {/* Specializations */}
+                {courseLqf.specializationsEn && (
+                  <div className="space-y-1 col-span-1 md:col-span-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Available Specializations" : "উপলব্ধ স্পেশালাইজেশনসমূহ"}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {(lang === "en" ? courseLqf.specializationsEn : courseLqf.specializationsBn).map((spec, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-white border border-editorial-border text-[10px] font-bold text-[#1A1A1A] font-sans uppercase">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Expanded Career Ladder */}
+          {showLqfLadder && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              id="lqf-ladder-visualizer"
+              className="bg-white border border-editorial-border p-5 sm:p-6 space-y-6 text-left mt-4"
+            >
+              <div className="flex items-center justify-between border-b border-editorial-border pb-3">
+                <h4 className="font-serif font-bold text-editorial-dark text-base italic">
+                  {lang === "en" ? "Lodonex Qualification Framework (LQF) Career Ladder" : "লোডোনেক্স কোয়ালিফিকেশন ফ্রেমওয়ার্ক (LQF) ক্যারিয়ার ল্যাডার"}
+                </h4>
+                <button
+                  onClick={() => setShowLqfLadder(false)}
+                  className="text-xs font-bold uppercase tracking-wider text-editorial-accent hover:underline cursor-pointer"
+                >
+                  {lang === "en" ? "Close" : "বন্ধ করুন"}
+                </button>
+              </div>
+
+              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                {LQF_LEVELS.map((lvl) => {
+                  const isCurrent = lvl.level === course.lqfLevel;
+                  return (
+                    <div
+                      key={lvl.level}
+                      id={`lqf-ladder-level-${lvl.level}`}
+                      className={`p-4 border ${
+                        isCurrent ? "border-editorial-accent bg-[#FDFCF9] shadow-xs" : "border-editorial-border bg-[#F7F5F0]/40"
+                      } flex gap-4 items-start relative`}
+                    >
+                      {isCurrent && (
+                        <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-editorial-accent text-white font-sans text-[8px] font-bold uppercase tracking-widest">
+                          {lang === "en" ? "This Course" : "এই কোর্স"}
+                        </span>
+                      )}
+                      <div className={`h-8 w-8 rounded-none flex items-center justify-center font-bold text-sm font-mono flex-shrink-0 ${
+                        isCurrent ? "bg-editorial-accent text-white" : "bg-[#1A1A1A] text-white"
+                      }`}>
+                        L{lvl.level}
+                      </div>
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div>
+                          <h5 className="font-serif font-bold text-[#1A1A1A] text-sm sm:text-base leading-tight">
+                            {lang === "en" ? lvl.titleEn : lvl.titleBn}
+                          </h5>
+                          <p className="text-xs text-editorial-accent font-sans font-bold uppercase tracking-wider mt-0.5">
+                            {lang === "en" ? `Career Path: ${lvl.careerPathEn}` : `ক্যারিয়ার পাথ: ${lvl.careerPathBn}`}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-slate-600 font-sans border-t border-editorial-border/40 pt-2">
+                          {lvl.suitableForEn && (
+                            <div>
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Suitable For" : "যার জন্য উপযোগী"}</span>
+                              <span>{lang === "en" ? lvl.suitableForEn : lvl.suitableForBn}</span>
+                            </div>
+                          )}
+                          {lvl.eligibilityEn && (
+                            <div>
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Eligibility" : "যোগ্যতা"}</span>
+                              <span>{lang === "en" ? lvl.eligibilityEn : lvl.eligibilityBn}</span>
+                            </div>
+                          )}
+                          {lvl.experienceRequiredEn && (
+                            <div>
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Experience" : "অভিজ্ঞতা"}</span>
+                              <span>{lang === "en" ? lvl.experienceRequiredEn : lvl.experienceRequiredBn}</span>
+                            </div>
+                          )}
+                          {lvl.workshopEn && (
+                            <div>
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Workshop" : "ওয়ার্কশপ"}</span>
+                              <span>{lang === "en" ? lvl.workshopEn : lvl.workshopBn}</span>
+                            </div>
+                          )}
+                          {lvl.recognitionEn && (
+                            <div className="sm:col-span-2">
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Recognition" : "স্বীকৃতি"}</span>
+                              <span className="text-editorial-accent font-bold">{lang === "en" ? lvl.recognitionEn : lvl.recognitionBn}</span>
+                            </div>
+                          )}
+                          {lvl.specializationsEn && (
+                            <div className="sm:col-span-2">
+                              <span className="font-bold text-slate-400 block uppercase text-[9px]">{lang === "en" ? "Available Specializations" : "উপলব্ধ স্পেশালাইজেশন"}</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {(lang === "en" ? lvl.specializationsEn : lvl.specializationsBn).map((spec, sidx) => (
+                                  <span key={sidx} className="px-2 py-0.5 bg-white border border-editorial-border text-[9px] font-semibold text-[#1A1A1A] font-sans">
+                                    {spec}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
           )}
 
           {/* Reviews Section */}

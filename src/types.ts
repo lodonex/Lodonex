@@ -32,6 +32,7 @@ export interface Course {
   duration: string;
   levelEn: string;
   levelBn: string;
+  lqfLevel: number;
   category: "baking" | "traditional" | "continental" | "chinese";
   lessons: Lesson[];
 }
@@ -118,6 +119,26 @@ export interface CourseReview {
   rating: number; // 1 to 5
   feedback: string;
   createdAt: string; // ISO string
+}
+
+export interface LQFLevelDetails {
+  level: number;
+  titleEn: string;
+  titleBn: string;
+  careerPathEn: string;
+  careerPathBn: string;
+  eligibilityEn?: string;
+  eligibilityBn?: string;
+  experienceRequiredEn?: string;
+  experienceRequiredBn?: string;
+  suitableForEn?: string;
+  suitableForBn?: string;
+  specializationsEn?: string[];
+  specializationsBn?: string[];
+  workshopEn?: string;
+  workshopBn?: string;
+  recognitionEn?: string;
+  recognitionBn?: string;
 }
 
 

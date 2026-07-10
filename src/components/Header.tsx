@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ShoppingBag, Globe, User, LogOut, ShieldAlert, CheckCircle, Menu, X } from "lucide-react";
 import { Language, Course, UserAccount } from "../types";
 import { TRANSLATIONS } from "../data/translations";
-import lodonexLogo from "../assets/images/lodonex_logo_1783226863502.jpg";
+import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
 interface HeaderProps {
   currentTab: string;

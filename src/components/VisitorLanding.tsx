@@ -127,9 +127,14 @@ export default function VisitorLanding({
                   className="h-full w-full object-cover"
                   referrerPolicy="no-referrer"
                 />
-                <span className="absolute top-2 left-2 px-2 py-0.5 bg-editorial-accent text-white font-bold text-[8px] uppercase tracking-wider">
-                  {course.category}
-                </span>
+                <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                  <span className="px-2 py-0.5 bg-editorial-dark text-white font-bold text-[8px] uppercase tracking-wider">
+                    {course.category}
+                  </span>
+                  <span className="px-2 py-0.5 bg-editorial-accent text-white font-bold text-[8px] uppercase tracking-wider">
+                    {isEn ? `LQF Level ${course.lqfLevel}` : `এলকিউএফ লেভেল ${course.lqfLevel}`}
+                  </span>
+                </div>
               </div>
               <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-1.5">
