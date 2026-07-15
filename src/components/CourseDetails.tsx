@@ -19,6 +19,92 @@ interface CourseDetailsProps {
   currentUser?: UserAccount | null;
 }
 
+const LEVEL_METADATA: Record<number, {
+  qualificationEn: string;
+  qualificationBn: string;
+  durationEn: string;
+  durationBn: string;
+  hoursEn: string;
+  hoursBn: string;
+  feeEn: string;
+  feeBn: string;
+  stageEn: string;
+  stageBn: string;
+}> = {
+  1: {
+    qualificationEn: "Lodonex Certified Culinary Foundation",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন",
+    durationEn: "3 Months",
+    durationBn: "৩ মাস",
+    hoursEn: "360 Training Hours",
+    hoursBn: "৩৬০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 1,250",
+    feeBn: "১,২৫০ মার্কিন ডলার (৳১,৫০,০০০)",
+    stageEn: "Commis III",
+    stageBn: "কমিস ৩",
+  },
+  2: {
+    qualificationEn: "Lodonex Certified Culinary Professional",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড কালিনারি প্রফেশনাল",
+    durationEn: "4 Months",
+    durationBn: "৪ মাস",
+    hoursEn: "480 Training Hours",
+    hoursBn: "৪৮০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 1,350",
+    feeBn: "১,৩৫০ মার্কিন ডলার (৳১,৬২,০০০)",
+    stageEn: "Commis II",
+    stageBn: "কমিস ২",
+  },
+  3: {
+    qualificationEn: "Lodonex Certified Advanced Culinary Professional",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড অ্যাডভান্সড কালিনারি প্রফেশনাল",
+    durationEn: "15 Days",
+    durationBn: "১৫ দিন",
+    hoursEn: "120 Training Hours",
+    hoursBn: "১২০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 1,000",
+    feeBn: "১,০০০ মার্কিন ডলার (৳১,২০,০০০)",
+    stageEn: "Advanced Culinary Professional / Commis I",
+    stageBn: "অ্যাডভান্সড কালিনারি প্রফেশনাল / কমিস ১",
+  },
+  4: {
+    qualificationEn: "Lodonex Certified Culinary Operations Manager",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড কালিনারি অপারেশনস ম্যানেজার",
+    durationEn: "1 Month",
+    durationBn: "১ মাস",
+    hoursEn: "80 Training Hours",
+    hoursBn: "৮০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 1,800",
+    feeBn: "১,৮০০ মার্কিন ডলার (৳২,১৬,০০০)",
+    stageEn: "Demi Chef de Partie",
+    stageBn: "ডেমি শেফ ডি পার্টি",
+  },
+  5: {
+    qualificationEn: "Lodonex Certified Pasta & Mediterranean Specialist",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড পাস্তা ও মেডিটেরেনিয়ান স্পেশালিস্ট",
+    durationEn: "1.5 Months",
+    durationBn: "১.৫ মাস",
+    hoursEn: "120 Training Hours",
+    hoursBn: "১২০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 2,200",
+    feeBn: "২,২০০ মার্কিন ডলার (৳২,৬৪,০০০)",
+    stageEn: "Chef de Partie",
+    stageBn: "শেফ ডি পার্টি",
+  },
+  6: {
+    qualificationEn: "Lodonex Certified French Pastry Chef",
+    qualificationBn: "লোডোনেক্স সার্টিফাইড ফ্রেঞ্চ পেস্ট্রি শেফ",
+    durationEn: "2 Months",
+    durationBn: "২ মাস",
+    hoursEn: "160 Training Hours",
+    hoursBn: "১৬০ প্রশিক্ষণ ঘন্টা",
+    feeEn: "USD 3,500",
+    feeBn: "৩,৫০০ মার্কিন ডলার (৳৪,২০,০০০)",
+    stageEn: "Pastry Chef / Sous Chef",
+    stageBn: "পেস্ট্রি শেফ / সু শেফ",
+  }
+};
+
 export default function CourseDetails({
   lang,
   course,
@@ -293,15 +379,274 @@ export default function CourseDetails({
 
             <div className="pt-4 text-xs sm:text-sm text-slate-600 leading-relaxed min-h-[60px] font-sans">
               {activeTab === "about" ? (
-                <div className="space-y-2">
-                  <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px]">
-                    {lang === "en" ? "Academy Directives:" : "একাডেমির নির্দেশনাবলী:"}
-                  </p>
-                  <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-                    <li>{lang === "en" ? "Watch the complete step-by-step video lecture." : "সম্পূর্ণ ভিডিও লেকচারটি মনোযোগ সহকারে দেখুন।"}</li>
-                    <li>{lang === "en" ? "Take note of key temperatures, mixing speed and secret spices." : "तापমাত্রা, মিশ্রণ এবং মশলার অনুপাত খাতায় নোট করে রাখুন।"}</li>
-                    <li>{lang === "en" ? "Pass the multiple choice theory quiz down below." : "নিচের বহুনির্বাচনী তত্ত্ব কুইজে উত্তীর্ণ হোন।"}</li>
-                  </ul>
+                <div className="space-y-6">
+                  {/* Academy Directives */}
+                  <div className="space-y-2">
+                    <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px]">
+                      {lang === "en" ? "Academy Directives:" : "একাডেমির নির্দেশনাবলী:"}
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1 text-slate-600">
+                      <li>{lang === "en" ? "Watch the complete step-by-step video lecture." : "সম্পূর্ণ ভিডিও লেকচারটি মনোযোগ সহকারে দেখুন।"}</li>
+                      <li>{lang === "en" ? "Take note of key temperatures, mixing speed and secret spices." : "तापমাত্রা, মিশ্রণ এবং মশলার অনুপাত খাতায় নোট করে রাখুন।"}</li>
+                      <li>{lang === "en" ? "Pass the multiple choice theory quiz down below." : "নিচের বহুনির্বাচনী তত্ত্ব কুইজে উত্তীর্ণ হোন।"}</li>
+                    </ul>
+                  </div>
+
+                  {/* Course Duration & Fees */}
+                  <div className="border border-editorial-border bg-[#F7F5F0] p-4 space-y-3">
+                    <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5">
+                      {lang === "en" ? "Course Duration & Fees" : "কোর্সের সময়কাল ও ফি"}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                      <div className="flex justify-between sm:justify-start sm:gap-4 border-b border-dashed border-slate-200 py-1 sm:border-0">
+                        <span className="text-slate-400 w-24 flex-shrink-0">{lang === "en" ? "Qualification:" : "যোগ্যতা:"}</span>
+                        <span className="font-semibold text-editorial-dark text-left">
+                          {lang === "en" 
+                            ? (LEVEL_METADATA[course.lqfLevel]?.qualificationEn || course.titleEn) 
+                            : (LEVEL_METADATA[course.lqfLevel]?.qualificationBn || course.titleBn)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between sm:justify-start sm:gap-4 border-b border-dashed border-slate-200 py-1 sm:border-0">
+                        <span className="text-slate-400 w-24 flex-shrink-0">{lang === "en" ? "Duration:" : "সময়কাল:"}</span>
+                        <span className="font-semibold text-editorial-dark text-left">
+                          {lang === "en" 
+                            ? (LEVEL_METADATA[course.lqfLevel]?.durationEn || course.duration) 
+                            : (LEVEL_METADATA[course.lqfLevel]?.durationBn || "নির্ধারিত সময়")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between sm:justify-start sm:gap-4 border-b border-dashed border-slate-200 py-1 sm:border-0">
+                        <span className="text-slate-400 w-24 flex-shrink-0">{lang === "en" ? "Training Hours:" : "প্রশিক্ষণ ঘন্টা:"}</span>
+                        <span className="font-semibold text-editorial-dark text-left">
+                          {lang === "en" 
+                            ? (LEVEL_METADATA[course.lqfLevel]?.hoursEn || "120 Training Hours") 
+                            : (LEVEL_METADATA[course.lqfLevel]?.hoursBn || "১২০ প্রশিক্ষণ ঘন্টা")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between sm:justify-start sm:gap-4 border-b border-dashed border-slate-200 py-1 sm:border-0">
+                        <span className="text-slate-400 w-24 flex-shrink-0">{lang === "en" ? "Course Fee:" : "কোর্স ফি:"}</span>
+                        <span className="font-bold text-editorial-accent text-left">
+                          {lang === "en" 
+                            ? (LEVEL_METADATA[course.lqfLevel]?.feeEn || "USD 1,000") 
+                            : (LEVEL_METADATA[course.lqfLevel]?.feeBn || "১,০০০ মার্কিন ডলার")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between sm:justify-start sm:gap-4 py-1 sm:border-0 col-span-1 sm:col-span-2">
+                        <span className="text-slate-400 w-24 flex-shrink-0">{lang === "en" ? "Career Stage:" : "ক্যারিয়ার ধাপ:"}</span>
+                        <span className="font-semibold text-editorial-dark text-left">
+                          {lang === "en" 
+                            ? (LEVEL_METADATA[course.lqfLevel]?.stageEn || "Professional") 
+                            : (LEVEL_METADATA[course.lqfLevel]?.stageBn || "পেশাদার")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Level-specific Curriculum */}
+                  {course.lqfLevel >= 3 ? (
+                    <div className="space-y-6">
+                      {/* Professional Development Focus Header */}
+                      <div className="border border-amber-200 bg-[#FCFAF5] p-4 text-center space-y-1">
+                        <p className="font-bold text-amber-800 text-[11px] uppercase tracking-wider">
+                          {lang === "en" ? "Higher LQF Level Curriculum" : "উচ্চতর এলকিউএফ লেভেল কারিকুলাম"}
+                        </p>
+                        <p className="text-xs text-amber-950 leading-relaxed font-serif font-bold italic">
+                          {lang === "en" 
+                            ? "Every higher level focuses on professional development and career excellence." 
+                            : "প্রতিটি উচ্চতর লেভেল পেশাদার উন্নয়ন এবং কর্মক্ষেত্রে শ্রেষ্ঠত্ব অর্জনের ওপর আলোকপাত করে।"}
+                        </p>
+                      </div>
+
+                      {/* Professional Development Modules */}
+                      <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                        <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5 text-left">
+                          {lang === "en" 
+                            ? `Level ${course.lqfLevel} Curriculum - Advanced Development Modules` 
+                            : `লেভেল ${course.lqfLevel} কারিকুলাম - অ্যাডভান্সড ডেভেলপমেন্ট মডিউল`}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-left">
+                          {[
+                            { en: "Advanced Theory", bn: "অ্যাডভান্সড থিওরি (উন্নত তত্ত্ব)" },
+                            { en: "Practical Examination", bn: "ব্যবহারিক পরীক্ষা (প্র্যাক্টিক্যাল)" },
+                            { en: "Live Kitchen Assessment", bn: "লাইভ কিচেন অ্যাসেসমেন্ট" },
+                            { en: "Leadership", bn: "নেতৃত্ব ও লিডারশিপ" },
+                            { en: "Kitchen Management", bn: "রান্নাঘর ব্যবস্থাপনা" },
+                            { en: "Cost Control", bn: "ব্যয় নিয়ন্ত্রণ ও কস্ট কন্ট্রোল" },
+                            { en: "Menu Development", bn: "মেনু উন্নয়ন ও মেনু ডেভেলপমেন্ট" },
+                            { en: "Food Cost", bn: "খাদ্য খরচ ও ফুড কস্ট হিসাব" },
+                            { en: "Yield Test", bn: "ইয়াল্ড টেস্ট ও উৎপাদনশীলতা" },
+                            { en: "Quality Assurance", bn: "মান নিশ্চিতকরণ ও কোয়ালিটি অ্যাসুরেন্স" },
+                            { en: "Business Case Study", bn: "ব্যবসায়িক কেস স্টাডি" },
+                            { en: "Presentation", bn: "উপস্থাপনা ও প্রেজেন্টেশন" },
+                            { en: "Portfolio", bn: "পোর্টফোলিও তৈরি" },
+                            { en: "Panel Interview", bn: "প্যানেল ইন্টারভিউ" }
+                          ].map((mod, idx) => (
+                            <div key={idx} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0 sm:even:border-b sm:border-slate-100">
+                              <span className="h-1.5 w-1.5 bg-amber-600 rounded-full flex-shrink-0" />
+                              <span className="text-slate-700 font-medium">{lang === "en" ? mod.en : mod.bn}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Assessment Weight & Graduation Requirements Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        {/* Assessment Weight */}
+                        <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                          <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5">
+                            {lang === "en" ? "Assessment Weight" : "মূল্যায়ন পদ্ধতি ও নম্বর বিভাজন"}
+                          </p>
+                          <div className="space-y-2 text-xs">
+                            {[
+                              { en: "Written Theory – 20%", bn: "লিখিত থিওরি পরীক্ষা – ২০%" },
+                              { en: "Practical Examination – 40%", bn: "ব্যবহারিক পরীক্ষা – ৪০%" },
+                              { en: "Workplace Evidence – 20%", bn: "कर्मক্ষেত্রের প্রমাণাদি (Workplace Evidence) – ২০%" },
+                              { en: "Portfolio – 10%", bn: "পোর্টফোলিও – ১০%" },
+                              { en: "Professional Behaviour – 10%", bn: "পেশাদার আচরণ ও শৃঙ্খলা – ১০%" }
+                            ].map((weight, idx) => (
+                              <div key={idx} className="flex items-center justify-between border-b border-dashed border-slate-100 pb-1.5 last:border-0">
+                                <span className="text-slate-600">{lang === "en" ? weight.en.split(" – ")[0] : weight.bn.split(" – ")[0]}</span>
+                                <span className="font-bold text-editorial-accent">{lang === "en" ? weight.en.split(" – ")[1] : weight.bn.split(" – ")[1]}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Graduation Requirements */}
+                        <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                          <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5">
+                            {lang === "en" ? "Graduation Requirements" : "স্নাতক/উত্তীর্ণ হওয়ার শর্তাবলী"}
+                          </p>
+                          <div className="space-y-1.5 text-xs">
+                            {[
+                              { en: "Theory Examination", bn: "তত্ত্বীয় পরীক্ষা (Theory Examination)" },
+                              { en: "Practical Examination", bn: "ব্যবহারিক পরীক্ষা (Practical Examination)" },
+                              { en: "Workplace Log Book", bn: "কর্মক্ষেত্রের লগ বুক (Workplace Log Book)" },
+                              { en: "Experience Letter", bn: "অভিজ্ঞতার সনদ (Experience Letter)" },
+                              { en: "Portfolio", bn: "পোর্টফোলিও" },
+                              { en: "Supervisor Evaluation", bn: "সুপারভাইজার মূল্যায়ন" },
+                              { en: "Viva Board Panel Interview", bn: "ভাইভা বোর্ড (মৌখিক পরীক্ষা)" }
+                            ].map((req, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Check className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                                <span className="text-slate-700">{lang === "en" ? req.en : req.bn}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : course.lqfLevel === 2 ? (
+                    <div className="space-y-4">
+                      {/* Intermediate Culinary Skills */}
+                      <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                        <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5 text-left">
+                          {lang === "en" ? "Level 2 Curriculum - Intermediate Culinary Skills" : "লেভেল ২ কারিকুলাম - ইন্টারমিডিয়েট কালিনারি স্কিলস"}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-left">
+                          {[
+                            { en: "Advanced Knife Skills", bn: "উন্নত নাইফ স্কিলস" },
+                            { en: "Meat Preparation", bn: "মাংসের প্রস্তুতি ও প্রিপারেশন" },
+                            { en: "Poultry Preparation", bn: "পোল্ট্রি প্রিপারেশন" },
+                            { en: "Seafood Preparation", bn: "সি-ফুড প্রিপারেশন" },
+                            { en: "Sauce Production", bn: "সস তৈরি ও উৎপাদন" },
+                            { en: "Soup Production", bn: "স্যুপ তৈরি ও উৎপাদন" },
+                            { en: "Breakfast Production", bn: "নাস্তা ও ব্রেকফাস্ট প্রিপারেশন" },
+                            { en: "Cost Awareness", bn: "ব্যয় সচেতনতা ও বাজেট" },
+                            { en: "Waste Control", bn: "অপচয় নিয়ন্ত্রণ ও ওয়েস্ট ম্যানেজমেন্ট" },
+                            { en: "Kitchen Communication", bn: "রান্নাঘরে পেশাদার যোগাযোগ" },
+                            { en: "Kitchen Workflow", bn: "কিচেন ওয়ার্কফ্লো ও সমন্বয়" },
+                            { en: "Speed Training", bn: "গতি ও স্পিড ট্রেনিং" },
+                          ].map((mod, idx) => (
+                            <div key={idx} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0 sm:even:border-b sm:border-slate-100">
+                              <span className="h-1.5 w-1.5 bg-editorial-accent rounded-full flex-shrink-0" />
+                              <span className="text-slate-700">{lang === "en" ? mod.en : mod.bn}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* International Cuisine */}
+                      <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                        <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5 text-left">
+                          {lang === "en" ? "International Cuisine" : "আন্তর্জাতিক রন্ধনপ্রণালী ও কুইজিন"}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-left">
+                          {[
+                            { en: "Japanese Teriyaki", bn: "জাপানিজ তেরিয়াকি" },
+                            { en: "French Cuisine", bn: "ফ্রেঞ্চ কুইজিন" },
+                            { en: "Korean BBQ", bn: "কোরিয়ান বার্বিকিউ" },
+                            { en: "Turkish Kebab", bn: "তুর্কি কাবাব" },
+                            { en: "Greek Cuisine", bn: "গ্রীক কুইজিন" },
+                            { en: "Spanish Paella", bn: "স্প্যানিশ পায়েল্লা" },
+                            { en: "Malaysian Cuisine", bn: "মালয়েশিয়ান কুইজিন" },
+                            { en: "Indonesian Cuisine", bn: "ইন্দোনেশিয়ান কুইজিন" },
+                            { en: "British Cuisine", bn: "ব্রিটিশ কুইজিন" },
+                            { en: "Italian Risotto", bn: "ইতালিয়ান রিসোতো" },
+                          ].map((mod, idx) => (
+                            <div key={idx} className="flex items-center gap-2 p-2 bg-[#F7F5F0] border border-editorial-border/40">
+                              <span className="h-1 w-1 bg-editorial-dark rounded-full flex-shrink-0" />
+                              <span className="text-slate-800 font-medium">{lang === "en" ? mod.en : mod.bn}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Value Added Classes */}
+                      <div className="border border-editorial-border p-4 space-y-3 bg-[#FCFAF5]">
+                        <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5 text-left">
+                          {lang === "en" ? "Value Added Classes" : "ভ্যালু অ্যাডেড স্পেশাল ক্লাস"}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-left">
+                          {[
+                            { en: "Advanced Bakery", bn: "অ্যাডভান্সড বেকারি ও পেস্ট্রি" },
+                            { en: "Artisan Bread", bn: "আর্টিসান ব্রেড মেকিং" },
+                            { en: "Coffee Brewing", bn: "পেশাদার কফি ব্রিউইং" },
+                            { en: "Milk Steaming", bn: "মিল্ক স্টিমিং ও ফোমিং" },
+                            { en: "Latte Basics", bn: "ল্যাটে আর্ট ও বেসিকস" },
+                            { en: "Coffee Service", bn: "কফি সার্ভিস ও শিষ্টাচার" },
+                            { en: "Intermediate Carving", bn: "ইন্টারমিডিয়েট কার্ভিং (ফল ও সবজি)" },
+                          ].map((mod, idx) => (
+                            <div key={idx} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0">
+                              <span className="h-1.5 w-1.5 bg-amber-600 rounded-full flex-shrink-0" />
+                              <span className="text-slate-700">{lang === "en" ? mod.en : mod.bn}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Level 1 Curriculum */
+                    <div className="border border-editorial-border p-4 space-y-3 bg-white">
+                      <p className="font-bold text-editorial-dark uppercase tracking-wider text-[10px] border-b border-editorial-border/40 pb-1.5 text-left">
+                        {lang === "en" ? "Level 1 Curriculum - Foundation Modules" : "লেভেল ১ কারিকুলাম - ফাউন্ডেশন মডিউল"}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-left">
+                        {[
+                          { en: "Food Safety", bn: "খাদ্য নিরাপত্তা" },
+                          { en: "HACCP", bn: "এইচএসিপিপি (HACCP)" },
+                          { en: "Kitchen Hygiene", bn: "কিচেন হাইজিন" },
+                          { en: "Personal Hygiene", bn: "ব্যক্তিগত পরিচ্ছন্নতা" },
+                          { en: "Kitchen Equipment", bn: "কিচেন সামগ্রী ও যন্ত্রপাতি" },
+                          { en: "Knife Theory", bn: "নাইফ থিওরি" },
+                          { en: "Knife Skills", bn: "নাইফ স্কিলস" },
+                          { en: "Vegetable Cuts", bn: "সবজি কাটার ধরন ও সাইজ" },
+                          { en: "Stocks", bn: "স্টক তৈরি" },
+                          { en: "Egg Cookery", bn: "ডিমের রকমারি রান্না" },
+                          { en: "Rice Cookery", bn: "ভাত ও রাইস প্রিপারেশন" },
+                          { en: "Basic Sauces", bn: "বেসিক সস ও গ্রেভি" },
+                          { en: "Culinary Terminology", bn: "কালিনারি টার্মিনোলজি" },
+                          { en: "Kitchen Mathematics", bn: "কিচেন গণিত ও হিসাব" },
+                          { en: "Professional Behaviour", bn: "পেশাদার আচরণ ও শিষ্টাচার" },
+                          { en: "Time Management", bn: "সময় ব্যবস্থাপনা" },
+                        ].map((mod, idx) => (
+                          <div key={idx} className="flex items-center gap-2 py-1 border-b border-slate-100 last:border-0 sm:even:border-b sm:border-slate-100">
+                            <span className="h-1.5 w-1.5 bg-editorial-accent rounded-full flex-shrink-0" />
+                            <span className="text-slate-700">{lang === "en" ? mod.en : mod.bn}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -527,6 +872,30 @@ export default function CourseDetails({
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Assessment */}
+                {courseLqf.assessmentEn && (
+                  <div className="space-y-1 col-span-1 md:col-span-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Assessment Details" : "মূল্যায়ন বিবরণী"}
+                    </span>
+                    <div className="text-slate-700 bg-white border border-editorial-border p-3 text-xs leading-relaxed whitespace-pre-line rounded-none font-sans">
+                      {lang === "en" ? courseLqf.assessmentEn : courseLqf.assessmentBn}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pass Mark */}
+                {courseLqf.passMarkEn && (
+                  <div className="space-y-1 col-span-1 md:col-span-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      {lang === "en" ? "Passing Mark" : "পাস মার্ক"}
+                    </span>
+                    <p className="font-serif font-bold text-editorial-accent text-sm italic">
+                      {lang === "en" ? courseLqf.passMarkEn : courseLqf.passMarkBn}
+                    </p>
                   </div>
                 )}
               </div>

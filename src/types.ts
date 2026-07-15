@@ -139,6 +139,10 @@ export interface LQFLevelDetails {
   workshopBn?: string;
   recognitionEn?: string;
   recognitionBn?: string;
+  assessmentEn?: string;
+  assessmentBn?: string;
+  passMarkEn?: string;
+  passMarkBn?: string;
 }
 
 
