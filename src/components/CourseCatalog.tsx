@@ -259,7 +259,7 @@ export default function CourseCatalog({
                         <button
                           id={`action-buy-${course.id}`}
                           onClick={() => onAddToCart(course)}
-                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#1A1A1A] text-white rounded-none hover:bg-slate-800 shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#1A1A1A] text-white rounded-none hover:bg-red-600 border border-transparent hover:border-red-600 shadow-sm transition flex items-center gap-1.5 cursor-pointer"
                         >
                           <ShoppingCart className="h-4 w-4" />
                           {t.buyCourse}

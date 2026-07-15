@@ -169,7 +169,7 @@ export default function VisitorLanding({
                     </button>
                     <button
                       onClick={onOpenAuth}
-                      className="px-2.5 py-1.5 bg-[#F7F5F0] hover:bg-editorial-dark border border-editorial-border text-editorial-dark hover:text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
+                      className="px-2.5 py-1.5 bg-[#F7F5F0] hover:bg-red-600 border border-editorial-border text-editorial-dark hover:text-white hover:border-red-600 text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
                     >
                       {isEn ? "Enroll" : "ভর্তি"}
                     </button>

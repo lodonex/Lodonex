@@ -157,7 +157,7 @@ export default function Dashboard({
               <button
                 id="dashboard-enroll-first-btn"
                 onClick={() => setCurrentTab("courses")}
-                className="inline-flex items-center gap-2 px-6 py-3 text-xs font-bold bg-[#1A1A1A] hover:bg-slate-800 text-white uppercase tracking-widest rounded-none shadow transition"
+                className="inline-flex items-center gap-2 px-6 py-3 text-xs font-bold bg-[#1A1A1A] hover:bg-red-600 border border-transparent hover:border-red-600 text-white uppercase tracking-widest rounded-none shadow transition"
               >
                 {t.enrollNow}
               </button>

@@ -459,7 +459,7 @@ export default function PaymentModal({
                 <button
                   id="checkout-pay-now-btn"
                   type="submit"
-                  className="w-full py-3 bg-[#1A1A1A] hover:bg-slate-800 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-3 bg-[#1A1A1A] hover:bg-red-600 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Lock className="h-4 w-4 text-editorial-accent" />
                   {t.payNow} ({formatPrice(subtotal, lang)})
@@ -542,7 +542,7 @@ export default function PaymentModal({
             <button
               id="proceed-checkout-btn"
               onClick={handleStartCheckout}
-              className="w-full py-3 bg-[#1A1A1A] hover:bg-slate-850 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition text-center cursor-pointer"
+              className="w-full py-3 bg-[#1A1A1A] hover:bg-red-600 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition text-center cursor-pointer"
             >
               {t.checkout}
             </button>
