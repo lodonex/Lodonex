@@ -37,10 +37,22 @@ export default function CourseCatalog({
   // Filter courses based on category & search
   const filteredCourses = courses.filter((course) => {
     const matchesCategory = selectedCategory === "all" || course.category === selectedCategory;
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    if (!lowerQuery) return matchesCategory;
+
     const matchesSearch =
-      course.titleEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.titleBn.includes(searchQuery) ||
-      course.tutor.toLowerCase().includes(searchQuery.toLowerCase());
+      course.titleEn.toLowerCase().includes(lowerQuery) ||
+      course.titleBn.toLowerCase().includes(lowerQuery) ||
+      course.descriptionEn.toLowerCase().includes(lowerQuery) ||
+      course.descriptionBn.toLowerCase().includes(lowerQuery) ||
+      course.tutor.toLowerCase().includes(lowerQuery) ||
+      course.lessons.some((lesson) =>
+        lesson.titleEn.toLowerCase().includes(lowerQuery) ||
+        lesson.titleBn.toLowerCase().includes(lowerQuery) ||
+        lesson.descriptionEn.toLowerCase().includes(lowerQuery) ||
+        lesson.descriptionBn.toLowerCase().includes(lowerQuery)
+      );
+
     return matchesCategory && matchesSearch;
   });
 
@@ -77,12 +89,16 @@ export default function CourseCatalog({
         className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-none border border-editorial-border"
       >
         {/* Search */}
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             id="course-search-input"
             type="text"
-            placeholder={lang === "en" ? "Search Chef or Masterclass..." : "শেফ অথবা মাস্টারক্লাস খুঁজুন..."}
+            placeholder={
+              lang === "en"
+                ? "Search title, chef, curriculum topics, lessons..."
+                : "কোর্সের নাম, শেফ, পাঠ্যক্রম বা পাঠসূচি খুঁজুন..."
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F7F5F0] border border-editorial-border rounded-none focus:outline-none focus:border-editorial-dark text-slate-950 font-sans"
@@ -171,6 +187,38 @@ export default function CourseCatalog({
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-sans">
                       {lang === "en" ? course.descriptionEn : course.descriptionBn}
                     </p>
+
+                    {/* Matched in Curriculum Indicator */}
+                    {searchQuery.trim() && course.lessons.some(l => 
+                      l.titleEn.toLowerCase().includes(searchQuery.toLowerCase().trim()) || 
+                      l.titleBn.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                      l.descriptionEn.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                      l.descriptionBn.toLowerCase().includes(searchQuery.toLowerCase().trim())
+                    ) && (
+                      <div className="mt-2 bg-[#F7F5F0] border-l-2 border-editorial-accent p-2 text-[11px] text-slate-600 font-sans text-left">
+                        <span className="font-bold uppercase tracking-wider text-[9px] text-editorial-accent block mb-1">
+                          {lang === "en" ? "Matched in Curriculum / Lesson:" : "পাঠ্যসূচি / পাঠে মিলেছে:"}
+                        </span>
+                        <ul className="list-disc pl-3.5 space-y-1">
+                          {course.lessons
+                            .filter(l => 
+                              l.titleEn.toLowerCase().includes(searchQuery.toLowerCase().trim()) || 
+                              l.titleBn.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                              l.descriptionEn.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                              l.descriptionBn.toLowerCase().includes(searchQuery.toLowerCase().trim())
+                            )
+                            .slice(0, 2)
+                            .map(l => (
+                              <li key={l.id} className="text-slate-700 leading-tight">
+                                <span className="font-medium text-editorial-dark">{lang === "en" ? l.titleEn : l.titleBn}</span>
+                                <span className="block text-[10px] text-slate-400 line-clamp-1 italic">
+                                  {lang === "en" ? l.descriptionEn : l.descriptionBn}
+                                </span>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-editorial-border flex items-center justify-between gap-4">

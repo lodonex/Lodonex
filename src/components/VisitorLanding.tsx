@@ -111,20 +111,20 @@ export default function VisitorLanding({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {courses.map((course) => (
             <div
               key={course.id}
-              className="border border-editorial-border bg-[#FDFCF9] overflow-hidden flex flex-col sm:flex-row hover:shadow-xs transition duration-300"
+              className="border border-editorial-border bg-[#FDFCF9] overflow-hidden flex flex-col justify-between hover:shadow-xs transition duration-300 h-full min-h-[420px]"
             >
               <div
                 onClick={() => onSelectCourse(course)}
-                className="h-44 sm:h-auto w-full sm:w-2/5 relative overflow-hidden bg-neutral-100 flex-shrink-0 cursor-pointer"
+                className="aspect-video w-full relative overflow-hidden bg-neutral-100 flex-shrink-0 cursor-pointer"
               >
                 <img
                   src={course.image}
                   alt={course.titleEn}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover hover:scale-102 transition duration-300"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
@@ -146,11 +146,11 @@ export default function VisitorLanding({
                   </div>
                   <h3
                     onClick={() => onSelectCourse(course)}
-                    className="font-serif font-bold text-sm sm:text-base text-editorial-dark leading-snug cursor-pointer hover:text-editorial-accent transition"
+                    className="font-serif font-bold text-sm sm:text-base text-editorial-dark leading-snug cursor-pointer hover:text-editorial-accent transition line-clamp-2 min-h-[2.5rem]"
                   >
                     {isEn ? course.titleEn : course.titleBn}
                   </h3>
-                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">
+                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3">
                     {isEn ? course.descriptionEn : course.descriptionBn}
                   </p>
                 </div>
@@ -171,7 +171,7 @@ export default function VisitorLanding({
                       onClick={onOpenAuth}
                       className="px-2.5 py-1.5 bg-[#F7F5F0] hover:bg-editorial-dark border border-editorial-border text-editorial-dark hover:text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
                     >
-                      {isEn ? "Enroll Now" : "ভর্তি হোন"}
+                      {isEn ? "Enroll" : "ভর্তি"}
                     </button>
                   </div>
                 </div>
