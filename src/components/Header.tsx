@@ -37,6 +37,7 @@ export default function Header({
     { id: "chefs", label: t.ourChefs },
     { id: "live", label: t.liveMasterclass },
     { id: "blogs", label: t.blogs },
+    { id: "about", label: lang === "en" ? "About Us" : "আমাদের সম্পর্কে" },
   ];
 
   return (

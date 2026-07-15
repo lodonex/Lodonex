@@ -27,6 +27,7 @@ import PendingApprovalView from "./components/PendingApprovalView";
 import AdminSimulationPanel from "./components/AdminSimulationPanel";
 import { OurChefs } from "./components/OurChefs";
 import Policies from "./components/Policies";
+import AboutUs from "./components/AboutUs";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
@@ -604,6 +605,12 @@ export default function App() {
                 }}
               />
             )}
+
+            {currentTab === "about" && (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <AboutUs lang={lang} />
+              </div>
+            )}
           </>
         )}
       </main>
@@ -678,6 +685,7 @@ export default function App() {
                     { id: "chefs", label: t.ourChefs },
                     { id: "live", label: t.liveMasterclass },
                     { id: "blogs", label: t.blogs },
+                    { id: "about", label: lang === "en" ? "About Us" : "আমাদের সম্পর্কে" },
                   ].map((link) => (
                     <li key={link.id}>
                       <button
@@ -740,11 +748,11 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-editorial-accent flex-shrink-0" />
-                    <span>+880 2-8812345, +880 1712-345678</span>
+                    <span>+88 01711-924269</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-editorial-accent flex-shrink-0" />
-                    <span className="underline">info@lodonex.edu.bd</span>
+                    <span className="underline">lodonexcookingacademy@gmail.com</span>
                   </div>
                 </div>
               </div>
@@ -766,7 +774,7 @@ export default function App() {
                   </a>
                   <a
                     id="social-facebook"
-                    href="https://facebook.com"
+                    href="https://www.facebook.com/lodonex2026/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 bg-neutral-800 border border-neutral-700 text-[#E5E2D9]/70 hover:bg-[#1877F2]/10 hover:border-[#1877F2] hover:text-[#1877F2] transition-all duration-300 rounded-none cursor-pointer"

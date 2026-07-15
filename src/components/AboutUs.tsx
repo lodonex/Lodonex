@@ -37,6 +37,28 @@ export default function AboutUs({ lang }: AboutUsProps) {
               : "ঐতিহ্যবাহী বাঙালি সর্ষে ইলিশের মশলার রসায়ন অন্বেষণ করা, পেশাদার টকমিষ্টি পাউরুটি ও বেকিংয়ের গোপন সূত্র রপ্ত করা, কিংবা কন্টিনেন্টাল মাদার সস এবং ওক ফ্রাইং টেকনিকের খুঁটিনাটি শেখা—সবক্ষেত্রেই লোডোনেক্স আপনাকে দিচ্ছে আজীবন বিশেষজ্ঞ নির্দেশিকা।"}
           </p>
 
+          {/* Vision & Government Credentials Section */}
+          <div id="vision-credentials-block" className="p-4 bg-[#F7F5F0] border-l-4 border-editorial-accent space-y-3 my-4">
+            <h3 className="font-serif font-bold text-editorial-dark text-xs sm:text-sm uppercase tracking-wider">
+              {isEn ? "Global Vision & Government Credentials" : "আমাদের বৈশ্বিক ভিশন এবং সরকারি স্বীকৃতি"}
+            </h3>
+            <p className="text-slate-700 leading-relaxed text-xs">
+              {isEn
+                ? "Lodonex is a government-registered company in Bangladesh. Our vision is to empower culinary talents with professional cooking courses and facilitate elite chef job accommodation in Dubai and European countries."
+                : "লোডোনেক্স বাংলাদেশ সরকার কর্তৃক অনুমোদিত ও নিবন্ধিত একটি কালিনারি একাডেমি। আমাদের মূল লক্ষ্য ও ভিশন হলো পেশাদার কুকিং কোর্সের মাধ্যমে দক্ষ জনশক্তি তৈরি করা এবং দুবাই ও ইউরোপের বিভিন্ন দেশে শেফদের উপযুক্ত চাকরির আবাসন ও কর্মসংস্থানের ব্যবস্থা করা।"}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-editorial-border/40 font-mono text-[10px] sm:text-[11px] text-editorial-dark">
+              <div>
+                <span className="block text-slate-400 uppercase text-[9px] font-bold tracking-wider">{isEn ? "Trade Licence" : "ট্রেড লাইসেন্স"}</span>
+                <span className="font-bold text-[21px] text-left block leading-snug">Trade Licence No: TRAD/DNCC/001508/2026</span>
+              </div>
+              <div className="font-bold text-[20px] leading-snug">
+                <span className="block text-slate-400 uppercase text-[9px] font-bold tracking-wider">{isEn ? "TIN Certificate" : "টিন সার্টিফিকেট"}</span>
+                <span className="font-bold">Taxpayer's Identification Number (TIN) Certificate: TIN : 238820466940</span>
+              </div>
+            </div>
+          </div>
+
           {/* Pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-editorial-dark">
             <div className="flex items-start gap-3 p-3 bg-[#FBF9F5] border border-editorial-border/40">
