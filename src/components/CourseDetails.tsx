@@ -345,7 +345,7 @@ export default function CourseDetails({
           <div id="lesson-info-box" className="bg-white p-5 sm:p-6 rounded-none border border-editorial-border space-y-3 text-left">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg sm:text-2xl font-serif font-bold text-editorial-dark leading-snug">
-                {lang === "en" ? activeLesson.titleEn : activeLesson.titleBn}
+                {lang === "en" ? course.titleEn : course.titleBn}
               </h2>
               {isLessonCompleted(activeLesson.id) && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none text-[9px] font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -354,9 +354,14 @@ export default function CourseDetails({
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
-              {lang === "en" ? activeLesson.descriptionEn : activeLesson.descriptionBn}
-            </p>
+            <div className="border-l-2 border-editorial-accent pl-3 py-0.5 my-2">
+              <p className="text-xs font-bold text-editorial-dark font-sans uppercase tracking-wider mb-1">
+                {lang === "en" ? `Current Topic: ${activeLesson.titleEn}` : `চলতি বিষয়: ${activeLesson.titleBn}`}
+              </p>
+              <p className="text-xs text-slate-500 font-sans leading-relaxed">
+                {lang === "en" ? activeLesson.descriptionEn : activeLesson.descriptionBn}
+              </p>
+            </div>
 
             <div className="flex border-b border-editorial-border mt-6">
               <button

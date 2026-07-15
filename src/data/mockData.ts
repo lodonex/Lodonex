@@ -112,8 +112,8 @@ export const LQF_LEVELS: LQFLevelDetails[] = [
 export const INITIAL_COURSES: Course[] = [
   {
     id: "course-1",
-    titleEn: "Lodonex Certified Culinary Foundation",
-    titleBn: "লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন",
+    titleEn: "Level 1 – Lodonex Certified Culinary Foundation",
+    titleBn: "লেভেল ১ – লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন",
     descriptionEn: "Master kitchen fundamentals, knife skills, food safety, and essential culinary methods to kickstart your professional career.",
     descriptionBn: "আপনার পেশাদার কালিনারি ক্যারিয়ার শুরু করতে কিচেনের মৌলিক বিষয়াদি, নাইফ স্কিলস, ফুড সেফটি এবং রান্নার মৌলিক কলাকৌশল রপ্ত করুন।",
     price: 150000,
@@ -178,8 +178,8 @@ export const INITIAL_COURSES: Course[] = [
   },
   {
     id: "course-2",
-    titleEn: "Lodonex Certified Culinary Professional",
-    titleBn: "লোডোনেক্স সার্টিফাইড কালিনারি প্রফেশনাল",
+    titleEn: "Level -2 Lodonex Certified Culinary Professional",
+    titleBn: "লেভেল ২ – লোডোনেক্স সার্টিফাইড কালিনারি প্রফেশনাল",
     descriptionEn: "Master intermediate culinary skills, meat & poultry preparation, international cuisines, and high-value coffee & bakery competencies.",
     descriptionBn: "আপনার পেশাদার প্রোফাইল আরও উন্নত করতে ইন্টারমিডিয়েট কালিনারি স্কিলস, মিট ও পোল্ট্রি প্রিপারেশন, আন্তর্জাতিক রন্ধনশৈলী এবং কফি ও বেকিংয়ের দক্ষতা অর্জন করুন।",
     price: 162000,
@@ -248,7 +248,7 @@ export const INITIAL_COURSES: Course[] = [
     titleBn: "লেভেল ৩ – অ্যাডভান্সড কালিনারি প্রফেশনাল",
     descriptionEn: "Every higher level focuses on professional development. Master leadership, menu development, cost control, and quality assurance.",
     descriptionBn: "উচ্চতর লেভেলে পেশাদারী উন্নয়ন অর্জন করুন। রান্নাঘর ব্যবস্থাপনা, মেনু পরিকল্পনা, কস্ট কন্ট্রোল ও গুণমান নিয়ন্ত্রণ শিখুন।",
-    price: 1000,
+    price: 120000,
     image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
     rating: 4.9,
     tutor: "Chef Tanvir Ahmed",
