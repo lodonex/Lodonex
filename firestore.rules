@@ -1,75 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Global helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function isValidUser(user) {
-      return user.keys().hasAll(['id', 'name', 'email', 'status', 'progress']) &&
-             user.id is string && user.id.size() <= 128 &&
-             user.name is string && user.name.size() <= 100 &&
-             user.email is string && user.email.size() <= 150 &&
-             user.status in ['pending', 'approved'] &&
-             user.progress is map;
-    }
-
-    function isValidReview(review) {
-      return review.keys().hasAll(['id', 'courseId', 'studentId', 'studentName', 'studentEmail', 'rating', 'feedback', 'createdAt']) &&
-             review.id is string && review.id.size() <= 128 &&
-             review.courseId is string && review.courseId.size() <= 128 &&
-             review.studentId is string && review.studentId == request.auth.uid &&
-             review.studentName is string && review.studentName.size() <= 100 &&
-             review.studentEmail is string && review.studentEmail.size() <= 150 &&
-             review.rating is int && review.rating >= 1 && review.rating <= 5 &&
-             review.feedback is string && review.feedback.size() <= 1000 &&
-             review.createdAt is string;
-    }
-
-    // Default deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Users Collection rules
+    // Users collection
     match /users/{userId} {
-      // Sandbox and simulation dashboard requires listing/reading registered users
       allow read: if true;
-      
-      allow create: if isValidId(userId) && isValidUser(request.resource.data);
-      
-      allow update: if isValidId(userId) && isValidUser(request.resource.data) && (
-        isOwner(userId) || 
-        // Sandbox administrative status update: allows modifying 'status' field for simulation
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-      );
-
-      allow delete: if false; // Block document deletions via client
+      allow create, update: if true;
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Reviews Collection rules
+    // Reviews collection
     match /reviews/{reviewId} {
-      // Anyone can read course reviews
       allow read: if true;
-      
-      // Enrolled students can write their own reviews
-      allow create: if isSignedIn() && isValidId(reviewId) && isValidReview(request.resource.data);
-      
-      // Allow user to edit their own review or admin update
-      allow update: if isSignedIn() && request.auth.uid == resource.data.studentId && isValidReview(request.resource.data);
-      
-      // Allow user to delete their own review
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.studentId;
+      allow create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // Recipes collection
+    match /recipes/{recipeId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Applications collection
+    match /applications/{applicationId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Default fallback
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

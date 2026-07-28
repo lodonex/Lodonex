@@ -1,83 +1,80 @@
 {
   "entities": {
-    "UserAccount": {
-      "title": "UserAccount",
-      "description": "Information about a registered student and their learning progress",
+    "users": {
+      "title": "users",
+      "description": "User profiles, activation statuses, and culinary training progress.",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique user identifier from Firebase Authentication"
-        },
-        "name": {
-          "type": "string",
-          "description": "Student's full name"
-        },
-        "email": {
-          "type": "string",
-          "description": "Student's email address"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "approved"],
-          "description": "Admin approval status of the student account"
-        },
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved"] },
         "progress": {
           "type": "object",
-          "description": "Learning progress container for courses, lessons, quizzes, recipes, and badges"
+          "properties": {
+            "enrolledCourses": { "type": "array", "items": { "type": "string" } },
+            "completedLessons": { "type": "array", "items": { "type": "string" } },
+            "quizScores": { "type": "object" },
+            "customRecipes": { "type": "array" },
+            "badges": { "type": "array" }
+          }
         }
       },
       "required": ["id", "name", "email", "status", "progress"]
     },
-    "CourseReview": {
-      "title": "CourseReview",
-      "description": "Feedback and rating submitted by an enrolled student for a course instructor",
+    "reviews": {
+      "title": "reviews",
+      "description": "Student reviews and feedback for courses.",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier of the review"
-        },
-        "courseId": {
-          "type": "string",
-          "description": "The ID of the course being reviewed"
-        },
-        "studentId": {
-          "type": "string",
-          "description": "The user ID of the student who wrote the review"
-        },
-        "studentName": {
-          "type": "string",
-          "description": "The name of the student who wrote the review"
-        },
-        "studentEmail": {
-          "type": "string",
-          "description": "The email of the student who wrote the review"
-        },
-        "rating": {
-          "type": "integer",
-          "description": "Rating score between 1 and 5"
-        },
-        "feedback": {
-          "type": "string",
-          "description": "Detailed text feedback for the course instructor"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "ISO timestamp of when the review was created"
-        }
+        "id": { "type": "string" },
+        "courseId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "studentEmail": { "type": "string" },
+        "rating": { "type": "number" },
+        "feedback": { "type": "string" },
+        "createdAt": { "type": "string" }
       },
-      "required": ["id", "courseId", "studentId", "studentName", "studentEmail", "rating", "feedback", "createdAt"]
-    }
-  },
-  "firestore": {
-    "/users/{userId}": {
-      "schema": "UserAccount",
-      "description": "Collection of all user accounts and their associated training progress data"
+      "required": ["id", "courseId", "studentId", "rating", "feedback"]
     },
-    "/reviews/{reviewId}": {
-      "schema": "CourseReview",
-      "description": "Collection of all student reviews for course instructors"
+    "recipes": {
+      "title": "recipes",
+      "description": "Custom recipes created and persisted by students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "titleEn": { "type": "string" },
+        "titleBn": { "type": "string" },
+        "categoryEn": { "type": "string" },
+        "categoryBn": { "type": "string" },
+        "prepTime": { "type": "string" },
+        "cookTime": { "type": "string" },
+        "servings": { "type": "number" },
+        "ingredientsEn": { "type": "array", "items": { "type": "string" } },
+        "ingredientsBn": { "type": "array", "items": { "type": "string" } },
+        "stepsEn": { "type": "array", "items": { "type": "string" } },
+        "stepsBn": { "type": "array", "items": { "type": "string" } },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "titleEn", "ingredientsEn", "stepsEn"]
+    },
+    "applications": {
+      "title": "applications",
+      "description": "Student enrollment and admission inquiries.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "courseId", "name", "email"]
     }
   }
 }

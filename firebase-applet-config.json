@@ -6,5 +6,7 @@
   "firestoreDatabaseId": "ai-studio-professionalcook-b3d74d44-6ee1-4eda-acd8-42a9ef2fa8dd",
   "storageBucket": "gen-lang-client-0036445018.firebasestorage.app",
   "messagingSenderId": "441735947007",
-  "measurementId": ""
+  "measurementId": "",
+  "oAuthClientId": "441735947007-5vv9nfn6bu8i2c4qbl0k2s09mdf5ptqu.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

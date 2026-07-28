@@ -100,6 +100,7 @@ export interface BlogPost {
   image: string;
   categoryEn: string;
   categoryBn: string;
+  courseId?: string;
 }
 
 export interface UserAccount {

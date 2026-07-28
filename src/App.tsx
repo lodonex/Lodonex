@@ -577,6 +577,14 @@ export default function App() {
               <BlogSection
                 lang={lang}
                 blogs={MOCK_BLOGS}
+                onSelectCourse={(courseId) => {
+                  const course = INITIAL_COURSES.find((c) => c.id === courseId);
+                  if (course) {
+                    setSelectedCourse(course);
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
               />
             )}
 

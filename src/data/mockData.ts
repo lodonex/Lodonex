@@ -617,6 +617,106 @@ export const BADGES: Badge[] = [
 
 export const MOCK_BLOGS: BlogPost[] = [
   {
+    id: "blog-level1",
+    titleEn: "Level 1 – Lodonex Certified Culinary Foundation",
+    titleBn: "লেভেল ১ – লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন",
+    excerptEn: "Master kitchen safety, professional behavior, personal hygiene, and the core culinary concepts of LQF Level 1. Your gateway to a professional Commis III career.",
+    excerptBn: "এলকিউএফ লেভেল ১-এর রান্নাঘরের নিরাপত্তা, পেশাদার আচরণ, ব্যক্তিগত পরিচ্ছন্নতা এবং মূল রন্ধনশিল্পের ধারণা আয়ত্ত করুন। কমিস ৩ ক্যারিয়ারের শুরু।",
+    contentEn: `### Current Topic: Lodonex Certified Culinary Foundation
+
+Master kitchen safety, professional behavior, personal hygiene, and the core culinary concepts of LQF Level 1 with the prestigious Lodonex Cooking Academy accreditation.
+
+#### About This Module
+This comprehensive LQF Level 1 program provides the ultimate stepping stone into professional gastronomy. Designed according to global hospitality standards, this module bridges the gap between fundamental cooking techniques and high-pressure commercial kitchen leadership. Students will master knife ergonomics, precise vegetable cuts, food chemistry, stock extraction, and time management.
+
+#### Resource Materials
+All enrolled students receive lifetime access to high-definition video walkthroughs, downloadable temperature control cheat-sheets, classic stock ratio matrixes, and interactive practice quizzes.
+
+#### Academy Directives:
+• Watch the complete step-by-step video lecture.
+• Take note of key temperatures, mixing speed and secret spices.
+• Pass the multiple choice theory quiz down below.
+
+#### Course Duration & Fees
+• **Qualification:** Lodonex Certified Culinary Foundation
+• **Duration:** 3 Months
+• **Training Hours:** 360 Training Hours
+• **Course Fee:** USD 1,250
+• **Career Stage:** Commis III
+
+#### Level 1 Curriculum - Foundation Modules
+• Food Safety & Cross-Contamination Prevention
+• HACCP Principles & Temperature Logging
+• Kitchen Hygiene & Sanitization Standards
+• Personal Hygiene & Uniform Care
+• Commercial Kitchen Equipment Mastery
+• Knife Theory & Sharpening Mechanics
+• Precision Knife Skills & Ergonomics
+• Classical French & Asian Vegetable Cuts
+• Fundamental White & Brown Stocks (Fonds)
+• Egg Cookery & Emulsion Science
+• Rice Cookery & Grain Hydration
+• The Five Basic Mother Sauces
+• Essential Culinary Terminology
+• Kitchen Mathematics & Yield Percentages
+• Professional Behavior & Work Ethic
+• High-Performance Time Management
+
+---
+[BACKLINK:course-1] Elevate your career with our industry-accredited program: **[Enroll in Level 1 – Lodonex Certified Culinary Foundation Course Details & Registration](#course-1)**`,
+    contentBn: `### বর্তমান বিষয়: লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন
+
+লোডোনেক্স কুকিং একাডেমি স্বীকৃতির সাথে এলকিউএফ লেভেল ১-এর কিচেন সেফটি, পেশাদার আচরণ, ব্যক্তিগত পরিচ্ছন্নতা এবং মূল রন্ধন কৌশল আয়ত্ত করুন।
+
+#### মডিউল সম্পর্কে
+এই পূর্ণাঙ্গ এলকিউএফ লেভেল ১ প্রোগ্রামটি পেশাদার রন্ধনশিল্পের জগতে প্রবেশ নিশ্চিত করে। আন্তর্জাতিক হসপিটালিটি স্ট্যান্ডার্ড অনুযায়ী তৈরি এই কোর্সটিতে ছাত্র-ছাত্রীরা নাইফ স্কিলস, সবজি কাটার বৈচিত্র্য, স্টক তৈরি, সস বিজ্ঞান এবং সময় ব্যবস্থাপনা শিখবেন।
+
+#### রিসোর্স মেটেরিয়ালস
+সকল শিক্ষার্থী এইচডি ভিডিও টিউটোরিয়াল, ডাউনলোডযোগ্য টেম্পারেচার চার্ট, সস রেসিপি ম্যাট্রিক্স এবং ইন্টারঅ্যাক্টিভ থিওরি কুইজের সম্পূর্ণ অ্যাক্সেস পাবেন।
+
+#### একাডেমি নির্দেশিকা:
+• সম্পূর্ণ ধাপে ধাপে ভিডিও লেকচারটি মনোযোগ দিয়ে দেখুন।
+• মূল তাপমাত্রা, মিক্সিং স্পিড এবং গোপন মশলার নোট নিন।
+• নিচের বহুনির্বাচনী থিওরি কুইজে উত্তীর্ণ হন।
+
+#### কোর্সের মেয়াদ ও ফি
+• **যোগ্যতা অর্জন:** লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন
+• **মেয়াদ:** ৩ মাস
+• **প্রশিক্ষণ সময়:** ৩৬০ প্রশিক্ষণ ঘণ্টা
+• **কোর্স ফি:** ১,২৫০ মার্কিন ডলার (৳১,৫০,০০০)
+• **ক্যারিয়ার স্তর:** কমিস ৩ (Commis III)
+
+#### লেভেল ১ কারিকুলাম - মূল মডিউলসমূহ
+• ফুড সেফটি ও ক্রস-কন্ট্যামিনেশন প্রতিরোধ
+• এইচএসিসিপি (HACCP) মূলনীতি ও নিয়মাবলি
+• কিচেন হাইজিন ও স্যানিটেশন
+• ব্যক্তিগত পরিচ্ছন্নতা ও পোশাক পরিধান নিয়ম
+• কমার্শিয়াল কিচেন ইকুইপমেন্ট পরিচালনা
+• নাইফ থিওরি ও ধার দেওয়ার কৌশল
+• প্রিসিশন নাইফ স্কিলস
+• ক্লাসিক্যাল ভেজিটেবল কাটস
+• ফান্ডামেন্টাল স্টকস (White & Brown Stocks)
+• এগ কুকিং ও ইমালশন সায়েন্স
+• রাইস কুকিং ও গ্রেইন হাইড্রেশন
+• বেসিক মাদার সস (Five Mother Sauces)
+• কালিনারি টার্মিনোলজি ও শব্দকোষ
+• কিচেন ম্যাথমেটিক্স ও ইল্ড পার্সেন্টেজ
+• প্রফেশনাল বিহেভিয়ার ও ওয়ার্ক এথিক
+• টাইম ম্যানেজমেন্ট ও দ্রুত কার্যসম্পাদন
+
+---
+[BACKLINK:course-1] আপনার আন্তর্জাতিক শেফ ক্যারিয়ার শুরু করতে সরাসরি ভর্তি হন: **[লেভেল ১ – লোডোনেক্স সার্টিফাইড কালিনারি ফাউন্ডেশন কোর্স বিস্তারিত ও এনরোলমেন্ট](#course-1)**`,
+    authorEn: "Executive Chef Council",
+    authorBn: "এক্সিকিউটিভ শেফ কাউন্সিল",
+    date: "2026-07-27",
+    readTimeEn: "8 min read",
+    readTimeBn: "৮ মিনিট পাঠ",
+    image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80",
+    categoryEn: "Academy Courses",
+    categoryBn: "একাডেমি কোর্স",
+    courseId: "course-1"
+  },
+  {
     id: "blog-1",
     titleEn: "The Art of Sourdough: Science, Hydration & Wild Yeasts",
     titleBn: "টকমিষ্টি পাউরুটির শিল্প: বিজ্ঞান, হাইড্রেশন এবং ওয়াইল্ড ঈস্ট",

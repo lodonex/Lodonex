@@ -6,15 +6,17 @@ import { motion } from "motion/react";
 interface BlogSectionProps {
   lang: Language;
   blogs: BlogPost[];
+  onSelectCourse?: (courseId: string) => void;
 }
 
-export default function BlogSection({ lang, blogs }: BlogSectionProps) {
+export default function BlogSection({ lang, blogs, onSelectCourse }: BlogSectionProps) {
   const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const categories = [
     { id: "all", labelEn: "All Articles", labelBn: "সকল আর্টিকেল" },
+    { id: "Academy Courses", labelEn: "Academy Courses", labelBn: "একাডেমি কোর্স" },
     { id: "Baking", labelEn: "Baking Secrets", labelBn: "বেকিংয়ের গোপন তথ্য" },
     { id: "Continental", labelEn: "Continental Cuisines", labelBn: "মহাদেশীয় রান্না" },
     { id: "Traditional Bengali", labelEn: "Traditional Bengali", labelBn: "ঐতিহ্যবাহী বাঙালি" },
@@ -81,14 +83,116 @@ export default function BlogSection({ lang, blogs }: BlogSectionProps) {
           </div>
         </div>
 
+        {/* Course Direct Back-Link Header Banner if applicable */}
+        {selectedBlog.courseId && onSelectCourse && (
+          <div className="p-4 bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-sans">
+            <div>
+              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-widest block">
+                {lang === "en" ? "Associated Course Certification" : "সংশ্লিষ্ট কোর্স সার্টিফিকেট"}
+              </span>
+              <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                {lang === "en" ? selectedBlog.titleEn : selectedBlog.titleBn}
+              </p>
+            </div>
+            <button
+              onClick={() => onSelectCourse(selectedBlog.courseId!)}
+              className="px-4 py-2 bg-[#1A1A1A] hover:bg-red-900 text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer whitespace-nowrap"
+            >
+              {lang === "en" ? "Go to Course Page →" : "কোর্স পেজে যান →"}
+            </button>
+          </div>
+        )}
+
         {/* Article content */}
-        <article className="prose prose-slate max-w-none text-[#1A1A1A] leading-relaxed text-sm sm:text-base space-y-6 pt-2 font-serif font-light">
+        <article className="prose prose-slate max-w-none text-[#1A1A1A] leading-relaxed text-sm sm:text-base space-y-4 pt-2 font-serif font-light">
           <p className="text-lg italic text-slate-600 font-sans border-l-4 border-editorial-accent pl-4 py-1 leading-relaxed">
             {lang === "en" ? selectedBlog.excerptEn : selectedBlog.excerptBn}
           </p>
-          <p className="whitespace-pre-line">
-            {lang === "en" ? selectedBlog.contentEn : selectedBlog.contentBn}
-          </p>
+          <div className="space-y-2">
+            {(lang === "en" ? selectedBlog.contentEn : selectedBlog.contentBn).split("\n").map((line, idx) => {
+              const trimmed = line.trim();
+              if (!trimmed) return <div key={idx} className="h-1" />;
+
+              if (trimmed.startsWith("### ")) {
+                return (
+                  <h3 key={idx} className="text-xl sm:text-2xl font-bold font-serif text-editorial-dark mt-6 mb-2">
+                    {trimmed.replace("### ", "")}
+                  </h3>
+                );
+              }
+
+              if (trimmed.startsWith("#### ")) {
+                return (
+                  <h4 key={idx} className="text-sm sm:text-base font-bold font-sans text-editorial-dark mt-5 mb-2 border-b border-editorial-border/60 pb-1 uppercase tracking-wider">
+                    {trimmed.replace("#### ", "")}
+                  </h4>
+                );
+              }
+
+              if (trimmed.startsWith("[BACKLINK:")) {
+                const match = trimmed.match(/\[BACKLINK:(.*?)\]\s*(.*)/);
+                const targetCourseId = match ? match[1] : "course-1";
+                const backlinkText = match ? match[2] : trimmed;
+                
+                return (
+                  <div key={idx} className="my-6 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-none flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                    <div className="space-y-1 font-sans">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-200 px-2 py-0.5 inline-block">
+                        {lang === "en" ? "Course Back-Link" : "কোর্স ব্যাক-লিংক"}
+                      </span>
+                      <p className="text-xs sm:text-sm text-slate-900 font-medium leading-relaxed">
+                        {backlinkText.replace(/\*\*/g, "").replace(/\[(.*?)\]\(.*?\)/g, "$1")}
+                      </p>
+                    </div>
+                    {onSelectCourse && (
+                      <button
+                        onClick={() => onSelectCourse(targetCourseId)}
+                        className="px-5 py-2.5 bg-red-900 hover:bg-red-950 text-white text-xs font-bold uppercase tracking-wider transition whitespace-nowrap cursor-pointer shadow-xs flex-shrink-0"
+                      >
+                        {lang === "en" ? "Enroll / View Course →" : "কোর্স এনরোল / বিস্তারিত দেখুন →"}
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              if (trimmed.startsWith("• ") || trimmed.startsWith("- ")) {
+                const bulletText = trimmed.substring(2);
+                const parts = bulletText.split(/(\*\*.*?\*\*)/g);
+                return (
+                  <div key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-800 font-sans pl-2 my-1">
+                    <span className="text-editorial-accent font-bold">•</span>
+                    <span>
+                      {parts.map((p, i) =>
+                        p.startsWith("**") && p.endsWith("**") ? (
+                          <strong key={i} className="font-bold text-slate-950">{p.slice(2, -2)}</strong>
+                        ) : (
+                          p
+                        )
+                      )}
+                    </span>
+                  </div>
+                );
+              }
+
+              if (trimmed === "---") {
+                return <hr key={idx} className="border-editorial-border my-6" />;
+              }
+
+              const parts = trimmed.split(/(\*\*.*?\*\*)/g);
+              return (
+                <p key={idx} className="text-xs sm:text-sm text-slate-800 font-sans leading-relaxed my-1.5">
+                  {parts.map((p, i) =>
+                    p.startsWith("**") && p.endsWith("**") ? (
+                      <strong key={i} className="font-bold text-slate-950">{p.slice(2, -2)}</strong>
+                    ) : (
+                      p
+                    )
+                  )}
+                </p>
+              );
+            })}
+          </div>
         </article>
 
         {/* Reading completion footer card */}

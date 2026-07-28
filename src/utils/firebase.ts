@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const env = (import.meta as any).env || {};
 
@@ -19,6 +19,7 @@ const app = initializeApp(firebaseConfig);
 const databaseId = env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || "ai-studio-professionalcook-b3d74d44-6ee1-4eda-acd8-42a9ef2fa8dd";
 export const db = getFirestore(app, databaseId);
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
   CREATE = "create",
