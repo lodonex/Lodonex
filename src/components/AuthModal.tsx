@@ -65,9 +65,9 @@ export default function AuthModal({
           status: "approved",
           role: isAdmin ? "admin" : "student",
           progress: {
-            enrolledCourses: ["course-1"],
-            completedLessons: ["c1-l1"],
-            quizScores: { "c1-l1": 100 },
+            enrolledCourses: isAdmin ? ["course-1", "course-2", "course-3", "course-4", "course-5", "course-6"] : [],
+            completedLessons: [],
+            quizScores: {},
             customRecipes: [],
             badges: [],
           },
@@ -122,7 +122,7 @@ export default function AuthModal({
           status: isAdmin ? "approved" : "approved", // Visitor signs up and gets access, but NO admin access
           role: isAdmin ? "admin" : "student",
           progress: {
-            enrolledCourses: ["course-1"],
+            enrolledCourses: isAdmin ? ["course-1", "course-2", "course-3", "course-4", "course-5", "course-6"] : [],
             completedLessons: [],
             quizScores: {},
             customRecipes: [],
@@ -183,7 +183,7 @@ export default function AuthModal({
               status: "approved",
               role: isAdmin ? "admin" : "student",
               progress: {
-                enrolledCourses: ["course-1"],
+                enrolledCourses: isAdmin ? ["course-1", "course-2", "course-3", "course-4", "course-5", "course-6"] : [],
                 completedLessons: [],
                 quizScores: {},
                 customRecipes: [],

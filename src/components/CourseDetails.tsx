@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy, Star, MessageSquare, Trash2, Send, Compass } from "lucide-react";
+import { ArrowLeft, CheckCircle, Play, Award, Check, FileText, ChevronRight, HelpCircle, Trophy, Star, MessageSquare, Trash2, Send, Compass, Lock, CreditCard } from "lucide-react";
 import { Language, Course, Lesson, StudentProgress, CourseReview, UserAccount } from "../types";
 import { LQF_LEVELS } from "../data/mockData";
 import { TRANSLATIONS } from "../data/translations";
 import { motion } from "motion/react";
 import { db } from "../utils/firebase";
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
+import { formatPrice } from "../utils/price";
 
 interface CourseDetailsProps {
   lang: Language;
@@ -17,6 +18,7 @@ interface CourseDetailsProps {
   isLoggedIn?: boolean;
   onOpenAuth?: () => void;
   currentUser?: UserAccount | null;
+  onEnrollNow?: (course: Course) => void;
 }
 
 const LEVEL_METADATA: Record<number, {
@@ -115,8 +117,10 @@ export default function CourseDetails({
   isLoggedIn = false,
   onOpenAuth,
   currentUser = null,
+  onEnrollNow,
 }: CourseDetailsProps) {
   const t = TRANSLATIONS[lang];
+  const isEnrolled = (currentUser && currentUser.email.toLowerCase() === "lodonexcookingacademy@gmail.com") || progress.enrolledCourses.includes(course.id);
   const [activeLesson, setActiveLesson] = useState<Lesson>(course.lessons[0]);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
@@ -326,20 +330,75 @@ export default function CourseDetails({
       <div id="course-details-grid" className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Columns: Video Player & Quizzes */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Embedded YouTube Player */}
-          <div
-            id="video-player-container"
-            className="relative w-full rounded-none bg-black border border-editorial-dark aspect-video shadow-xs"
-          >
-            <iframe
-              id="chef-video-frame"
-              src={activeLesson.videoUrl}
-              title={lang === "en" ? activeLesson.titleEn : activeLesson.titleBn}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
+          {/* Embedded YouTube Player or Paywall Barrier */}
+          {!isEnrolled ? (
+            <div
+              id="video-paywall-container"
+              className="relative w-full rounded-none bg-[#1A1A1A] text-white border border-editorial-dark aspect-video flex flex-col items-center justify-center p-6 text-center shadow-lg overflow-hidden"
+            >
+              <img
+                src={course.image}
+                alt={course.titleEn}
+                className="absolute inset-0 w-full h-full object-cover opacity-25 blur-xs"
+              />
+              <div className="relative z-10 max-w-md mx-auto space-y-4">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-none bg-editorial-accent/20 border border-editorial-accent text-editorial-accent mx-auto">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-sans font-extrabold tracking-widest text-editorial-accent block mb-1">
+                    {lang === "en" ? "Course Access Locked" : "কোর্স অ্যাক্সেস লকড"}
+                  </span>
+                  <h3 className="font-serif font-bold text-lg sm:text-2xl text-white italic">
+                    {lang === "en" ? "Payment Required to Access Course" : "কোর্স ভিডিও ও মেটেরিয়াল দেখতে পেমেন্ট আবশ্যক"}
+                  </h3>
+                  <p className="text-xs text-slate-300 font-sans mt-2 leading-relaxed">
+                    {lang === "en"
+                      ? "Any student enrolling in this course must complete payment to unlock step-by-step video lectures, quizzes, and graduation certificates."
+                      : "যেকোনো শিক্ষার্থীকে এই কোর্সের ভিডিও লেকচার, কুইজ এবং সার্টিফিকেট পেতে প্রথমে পেমেন্ট সম্পন্ন করতে হবে।"}
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="text-left bg-white/10 px-4 py-2 border border-white/20 w-full sm:w-auto">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-300 block font-bold">
+                      {lang === "en" ? "Course Fee" : "কোর্স ফি"}
+                    </span>
+                    <span className="text-base font-serif font-extrabold text-editorial-accent">
+                      {formatPrice(course.price, lang)}
+                    </span>
+                  </div>
+                  <button
+                    id="paywall-enroll-btn"
+                    onClick={() => {
+                      if (!isLoggedIn && onOpenAuth) {
+                        onOpenAuth();
+                      } else if (onEnrollNow) {
+                        onEnrollNow(course);
+                      }
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 bg-editorial-accent hover:bg-red-700 text-white font-bold text-xs uppercase tracking-widest transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>{lang === "en" ? "Pay & Enroll Now" : "পেমেন্ট করে এখনই এনরোল করুন"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              id="video-player-container"
+              className="relative w-full rounded-none bg-black border border-editorial-dark aspect-video shadow-xs"
+            >
+              <iframe
+                id="chef-video-frame"
+                src={activeLesson.videoUrl}
+                title={lang === "en" ? activeLesson.titleEn : activeLesson.titleBn}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          )}
 
           {/* Active Lesson Text Header */}
           <div id="lesson-info-box" className="bg-white p-5 sm:p-6 rounded-none border border-editorial-border space-y-3 text-left">
@@ -679,7 +738,37 @@ export default function CourseDetails({
           </div>
 
           {/* Interactive Lesson Quiz */}
-          {activeLesson.quiz && (
+          {!isEnrolled ? (
+            <div
+              id="quiz-paywall-locked"
+              className="bg-[#F7F5F0] p-5 sm:p-6 rounded-none border border-editorial-border space-y-3 text-center"
+            >
+              <div className="inline-flex items-center gap-2 text-editorial-accent">
+                <Lock className="h-5 w-5 text-editorial-accent" />
+                <h3 className="font-serif font-bold text-editorial-dark text-sm sm:text-base italic">
+                  {lang === "en" ? "Interactive Quiz & Assessment Locked" : "ইন্টারেক্টিভ কুইজ ও মূল্যায়ন সুবিধা লকড"}
+                </h3>
+              </div>
+              <p className="text-xs text-slate-600 font-sans max-w-md mx-auto leading-relaxed">
+                {lang === "en"
+                  ? "To take lesson theory quizzes, track your scores, and earn verified diplomas, please complete course enrollment payment."
+                  : "কুইজে অংশ নিতে, স্কোর ট্র্যাক করতে এবং ভেরিফাইড ডিপ্লোমা অর্জন করতে কোর্স পেমেন্ট সম্পন্ন করুন।"}
+              </p>
+              <button
+                id="quiz-paywall-enroll-btn"
+                onClick={() => {
+                  if (!isLoggedIn && onOpenAuth) {
+                    onOpenAuth();
+                  } else if (onEnrollNow) {
+                    onEnrollNow(course);
+                  }
+                }}
+                className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-red-600 text-white font-bold uppercase tracking-widest text-[10px] transition cursor-pointer"
+              >
+                {lang === "en" ? "Pay to Unlock Quiz & Certificate" : "কুইজ আনলক করতে পেমেন্ট করুন"}
+              </button>
+            </div>
+          ) : activeLesson.quiz && (
             <div
               id={`quiz-container-${activeLesson.id}`}
               className="bg-[#F7F5F0] p-5 sm:p-6 rounded-none border border-editorial-border space-y-4 text-left"
@@ -758,7 +847,7 @@ export default function CourseDetails({
           )}
 
           {/* Quick manual mark as complete bypass if lesson has no quiz */}
-          {!activeLesson.quiz && (
+          {!activeLesson.quiz && isEnrolled && (
             <div className="flex justify-end pt-2">
               <button
                 id="manual-complete-btn"
@@ -1276,7 +1365,9 @@ export default function CourseDetails({
                     </div>
                   </div>
                   <div className="flex-shrink-0 ml-2">
-                    {isCompleted ? (
+                    {!isEnrolled ? (
+                      <Lock className="h-4 w-4 text-slate-400" />
+                    ) : isCompleted ? (
                       <CheckCircle className="h-5 w-5 text-emerald-600" />
                     ) : (
                       <Play className="h-4 w-4 text-slate-400" />

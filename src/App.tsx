@@ -112,11 +112,11 @@ export default function App() {
             email: "tasnim@example.com",
             status: "approved",
             progress: {
-              enrolledCourses: ["course-1"],
-              completedLessons: ["c1-l1"],
-              quizScores: { "c1-l1": 100 },
+              enrolledCourses: [],
+              completedLessons: [],
+              quizScores: {},
               customRecipes: [],
-              badges: [BADGES[0]],
+              badges: [],
             },
           };
           try {
@@ -149,11 +149,11 @@ export default function App() {
             email: "tasnim@example.com",
             status: "approved",
             progress: {
-              enrolledCourses: ["course-1"],
-              completedLessons: ["c1-l1"],
-              quizScores: { "c1-l1": 100 },
+              enrolledCourses: [],
+              completedLessons: [],
+              quizScores: {},
               customRecipes: [],
-              badges: [BADGES[0]],
+              badges: [],
             },
           };
           setUsers([defaultUser]);
@@ -478,6 +478,10 @@ export default function App() {
             isLoggedIn={!!currentUser}
             onOpenAuth={() => setIsAuthOpen(true)}
             currentUser={currentUser}
+            onEnrollNow={(course) => {
+              handleAddToCart(course);
+              setIsCartOpen(true);
+            }}
           />
         ) : (
           <>
