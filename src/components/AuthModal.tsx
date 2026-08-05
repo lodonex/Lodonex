@@ -9,9 +9,11 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: Language;
-  onAuthSuccess: (user: UserAccount) => void;
+  onAuthSuccess: (user: UserAccount, isNewSignup?: boolean) => void;
   existingUsers: UserAccount[];
 }
+
+const ADMIN_EMAIL = "lodonexcookingacademy@gmail.com";
 
 export default function AuthModal({
   isOpen,
@@ -38,6 +40,7 @@ export default function AuthModal({
       const userId = user.uid;
       const emailLower = (user.email || "").toLowerCase();
       const displayName = user.displayName || emailLower.split("@")[0] || "Student";
+      const isAdmin = emailLower === ADMIN_EMAIL;
 
       let docSnap;
       try {
@@ -47,13 +50,20 @@ export default function AuthModal({
       }
 
       if (docSnap && docSnap.exists()) {
-        onAuthSuccess(docSnap.data() as UserAccount);
+        const existingData = docSnap.data() as UserAccount;
+        const updatedUser: UserAccount = {
+          ...existingData,
+          role: isAdmin ? "admin" : "student",
+          status: isAdmin ? "approved" : existingData.status,
+        };
+        onAuthSuccess(updatedUser, false);
       } else {
         const newUser: UserAccount = {
           id: userId,
           name: displayName,
           email: emailLower,
           status: "approved",
+          role: isAdmin ? "admin" : "student",
           progress: {
             enrolledCourses: ["course-1"],
             completedLessons: ["c1-l1"],
@@ -67,7 +77,7 @@ export default function AuthModal({
         } catch (dbErr) {
           handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
         }
-        onAuthSuccess(newUser);
+        onAuthSuccess(newUser, true);
       }
       onClose();
     } catch (err: any) {
@@ -97,20 +107,22 @@ export default function AuthModal({
 
     try {
       const emailLower = email.toLowerCase().trim();
+      const isAdmin = emailLower === ADMIN_EMAIL;
 
       if (isSignUp) {
         // Sign up with Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, emailLower, password);
         const userId = userCredential.user.uid;
 
-        // Create new pending user profile in Firestore
+        // Create new user profile in Firestore
         const newUser: UserAccount = {
           id: userId,
           name: name.trim(),
           email: emailLower,
-          status: "pending", // Default to pending as requested: "when admin give him access"
+          status: isAdmin ? "approved" : "approved", // Visitor signs up and gets access, but NO admin access
+          role: isAdmin ? "admin" : "student",
           progress: {
-            enrolledCourses: [],
+            enrolledCourses: ["course-1"],
             completedLessons: [],
             quizScores: {},
             customRecipes: [],
@@ -123,7 +135,7 @@ export default function AuthModal({
         } catch (dbErr) {
           handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
         }
-        onAuthSuccess(newUser);
+        onAuthSuccess(newUser, true);
         onClose();
       } else {
         // Log in with Firebase Auth
@@ -139,27 +151,39 @@ export default function AuthModal({
         }
 
         if (docSnap && docSnap.exists()) {
-          onAuthSuccess(docSnap.data() as UserAccount);
+          const userData = docSnap.data() as UserAccount;
+          const updatedUser: UserAccount = {
+            ...userData,
+            role: isAdmin ? "admin" : "student",
+            status: isAdmin ? "approved" : userData.status,
+          };
+          onAuthSuccess(updatedUser, false);
         } else {
           // Check if user exists in pre-existing LocalStorage list and migrate them
           const emailUser = existingUsers.find((u) => u.email.toLowerCase() === emailLower);
           if (emailUser) {
-            const migratedUser = { ...emailUser, id: userId };
+            const migratedUser: UserAccount = {
+              ...emailUser,
+              id: userId,
+              role: isAdmin ? "admin" : "student",
+              status: isAdmin ? "approved" : emailUser.status,
+            };
             try {
               await setDoc(doc(db, "users", userId), migratedUser);
             } catch (dbErr) {
               handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
             }
-            onAuthSuccess(migratedUser);
+            onAuthSuccess(migratedUser, false);
           } else {
-            // Create a default approved student profile
+            // Create a default student profile
             const newUser: UserAccount = {
               id: userId,
               name: emailLower.split("@")[0],
               email: emailLower,
               status: "approved",
+              role: isAdmin ? "admin" : "student",
               progress: {
-                enrolledCourses: [],
+                enrolledCourses: ["course-1"],
                 completedLessons: [],
                 quizScores: {},
                 customRecipes: [],
@@ -171,7 +195,7 @@ export default function AuthModal({
             } catch (dbErr) {
               handleFirestoreError(dbErr, OperationType.WRITE, `users/${userId}`);
             }
-            onAuthSuccess(newUser);
+            onAuthSuccess(newUser, false);
           }
         }
         onClose();

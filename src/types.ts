@@ -108,6 +108,7 @@ export interface UserAccount {
   name: string;
   email: string;
   status: "pending" | "approved";
+  role?: "admin" | "student";
   progress: StudentProgress;
 }
 

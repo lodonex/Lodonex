@@ -22,6 +22,7 @@ import CertificateModal from "./components/CertificateModal";
 
 // New Components for Visitor Experience & Admin Approval Flows
 import AuthModal from "./components/AuthModal";
+import WelcomeEmailModal from "./components/WelcomeEmailModal";
 import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
 import AdminSimulationPanel from "./components/AdminSimulationPanel";
@@ -64,6 +65,9 @@ export default function App() {
 
   // Auth modal open state
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+
+  // Welcome Email Modal open state
+  const [isWelcomeEmailOpen, setIsWelcomeEmailOpen] = useState<boolean>(false);
 
   // Database of Registered Users with Firestore + Local fallback
   const [users, setUsers] = useState<UserAccount[]>(() => {
@@ -218,7 +222,7 @@ export default function App() {
   const t = TRANSLATIONS[lang];
 
   // Auth success handler
-  const handleAuthSuccess = async (user: UserAccount) => {
+  const handleAuthSuccess = async (user: UserAccount, isNewSignup?: boolean) => {
     if (!users.some((u) => u.id === user.id)) {
       setUsers((prev) => [...prev, user]);
       try {
@@ -229,12 +233,11 @@ export default function App() {
       }
     }
     setCurrentUser(user);
-    
-    // Redirect to active section
-    if (user.status === "approved") {
-      setCurrentTab("dashboard");
-    } else {
-      setCurrentTab("dashboard");
+    setCurrentTab("dashboard");
+
+    // Trigger Lodonex Welcome & Confirmation Email for visitors/students
+    if (isNewSignup || user.email.toLowerCase() !== "lodonexcookingacademy@gmail.com") {
+      setIsWelcomeEmailOpen(true);
     }
   };
 
@@ -457,6 +460,7 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogOut={handleLogOut}
+        onOpenWelcomeEmail={() => setIsWelcomeEmailOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -845,8 +849,16 @@ export default function App() {
         existingUsers={users}
       />
 
-      {/* Floating Sandbox Administration Panel */}
-      {currentUser && (
+      {/* Official Lodonex Welcome & Confirmation Email Modal */}
+      <WelcomeEmailModal
+        isOpen={isWelcomeEmailOpen}
+        onClose={() => setIsWelcomeEmailOpen(false)}
+        user={currentUser}
+        lang={lang}
+      />
+
+      {/* Floating Sandbox Administration Panel - ONLY accessible by lodonexcookingacademy@gmail.com */}
+      {currentUser && currentUser.email.toLowerCase() === "lodonexcookingacademy@gmail.com" && (
         <AdminSimulationPanel
           lang={lang}
           users={users}

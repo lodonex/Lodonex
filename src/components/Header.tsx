@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShoppingBag, Globe, User, LogOut, ShieldAlert, CheckCircle, Menu, X } from "lucide-react";
+import { ShoppingBag, Globe, User, LogOut, ShieldAlert, CheckCircle, Menu, X, Mail } from "lucide-react";
 import { Language, Course, UserAccount } from "../types";
 import { TRANSLATIONS } from "../data/translations";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
@@ -14,6 +14,7 @@ interface HeaderProps {
   currentUser: UserAccount | null;
   onOpenAuth: () => void;
   onLogOut: () => void;
+  onOpenWelcomeEmail?: () => void;
 }
 
 export default function Header({
@@ -26,6 +27,7 @@ export default function Header({
   currentUser,
   onOpenAuth,
   onLogOut,
+  onOpenWelcomeEmail,
 }: HeaderProps) {
   const t = TRANSLATIONS[lang];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -140,22 +142,34 @@ export default function Header({
                 </div>
 
                 {/* Name & Account Status info */}
-                <div className="hidden lg:block text-left text-[11px] max-w-[120px] font-sans leading-tight">
-                  <div className="font-extrabold text-editorial-dark truncate max-w-[100px]" title={currentUser.name}>
+                <div className="hidden lg:block text-left text-[11px] max-w-[130px] font-sans leading-tight">
+                  <div className="font-extrabold text-editorial-dark truncate max-w-[110px]" title={currentUser.name}>
                     {currentUser.name}
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
-                    {currentUser.status === "approved" ? (
-                      <span className="text-emerald-600 text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-0.5">
-                        <CheckCircle className="h-2 w-2" /> {lang === "en" ? "Approved" : "অনুমোদিত"}
+                    {currentUser.email.toLowerCase() === "lodonexcookingacademy@gmail.com" ? (
+                      <span className="text-editorial-accent bg-red-100 px-1 text-[8px] font-extrabold uppercase tracking-wider">
+                        ADMIN
                       </span>
                     ) : (
-                      <span className="text-amber-600 text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-0.5 animate-pulse">
-                        <ShieldAlert className="h-2 w-2" /> {lang === "en" ? "Pending" : "অপেক্ষমাণ"}
+                      <span className="text-emerald-700 bg-emerald-100 px-1 text-[8px] font-extrabold uppercase tracking-wider flex items-center gap-0.5">
+                        <CheckCircle className="h-2 w-2" /> {lang === "en" ? "Student" : "শিক্ষার্থী"}
                       </span>
                     )}
                   </div>
                 </div>
+
+                {/* View Confirmation Email Button */}
+                {onOpenWelcomeEmail && (
+                  <button
+                    onClick={onOpenWelcomeEmail}
+                    className="p-1 text-[#1A1A1A] hover:text-editorial-accent transition cursor-pointer relative"
+                    title={lang === "en" ? "View Welcome & Confirmation Email" : "স্বাগতম ইমেইল দেখুন"}
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-editorial-accent animate-ping" />
+                  </button>
+                )}
 
                 {/* Log Out Button */}
                 <button
