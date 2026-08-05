@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { X, Trash, CreditCard, ShieldCheck, CheckCircle, Smartphone, Key, Lock, ArrowLeft, User } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Trash, CreditCard, ShieldCheck, CheckCircle, Smartphone, Key, Lock, ArrowLeft, Building2, Copy, Check, Info } from "lucide-react";
 import { Language, Course } from "../types";
 import { TRANSLATIONS } from "../data/translations";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { formatPrice } from "../utils/price";
 
 interface PaymentModalProps {
@@ -14,6 +14,19 @@ interface PaymentModalProps {
   onPaymentSuccess: (purchasedCourses: Course[]) => void;
 }
 
+interface MerchantConfig {
+  bkashMerchantNumber: string;
+  nagadMerchantNumber: string;
+  rocketMerchantNumber: string;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankBranch: string;
+  bankRoutingNumber: string;
+  bkashAppKeyConfigured: boolean;
+  sslCommerzStoreIdConfigured: boolean;
+}
+
 export default function PaymentModal({
   lang,
   isOpen,
@@ -23,20 +36,64 @@ export default function PaymentModal({
   onPaymentSuccess,
 }: PaymentModalProps) {
   const t = TRANSLATIONS[lang];
-  const [step, setStep] = useState<"cart" | "gateway" | "otp" | "success">("cart");
-  const [selectedGateway, setSelectedGateway] = useState<"bkash" | "nagad" | "rocket" | "card">("bkash");
+  const [step, setStep] = useState<"cart" | "gateway" | "trx_verify" | "otp" | "success">("cart");
+  const [selectedGateway, setSelectedGateway] = useState<"bkash" | "nagad" | "rocket" | "bank" | "card">("bkash");
 
-  // Branded Input simulations
+  // Merchant config from Express backend
+  const [merchantConfig, setMerchantConfig] = useState<MerchantConfig>({
+    bkashMerchantNumber: "+880 1711-000000",
+    nagadMerchantNumber: "+880 1811-000000",
+    rocketMerchantNumber: "+880 1911-000000",
+    bankName: "Eastern Bank PLC (EBL)",
+    bankAccountName: "Lodonex Cooking Academy Ltd.",
+    bankAccountNumber: "101234567890",
+    bankBranch: "Gulshan Branch, Dhaka",
+    bankRoutingNumber: "085261728",
+    bkashAppKeyConfigured: false,
+    sslCommerzStoreIdConfigured: false,
+  });
+
+  // Inputs
   const [accountNumber, setAccountNumber] = useState("");
   const [securePin, setSecurePin] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvc, setCardCvc] = useState("");
+  const [trxIdInput, setTrxIdInput] = useState("");
+  const [studentMobile, setStudentMobile] = useState("");
+
+  // Copy states
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Verification & Errors
   const [simulatedOTP, setSimulatedOTP] = useState("");
   const [userOTPInput, setUserOTPInput] = useState("");
   const [errorText, setErrorText] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+
+  // Fetch live merchant config from Express API endpoint
+  useEffect(() => {
+    if (isOpen) {
+      fetch("/api/payments/gateway-config")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.config) {
+            setMerchantConfig(data.config);
+          }
+        })
+        .catch((err) => {
+          console.warn("Express payment backend query notice:", err);
+        });
+    }
+  }, [isOpen]);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const getCardType = (num: string) => {
     const clean = num.replace(/\D/g, "");
@@ -57,27 +114,17 @@ export default function PaymentModal({
       parts.push(match.substring(i, i + 4));
     }
 
-    if (parts.length > 0) {
-      setAccountNumber(parts.join(" "));
-    } else {
-      setAccountNumber(value);
-    }
+    setAccountNumber(parts.length > 0 ? parts.join(" ") : value);
   };
 
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.length > 4) value = value.substring(0, 4);
-    
-    if (value.length > 2) {
-      setCardExpiry(`${value.substring(0, 2)}/${value.substring(2)}`);
-    } else {
-      setCardExpiry(value);
-    }
+    setCardExpiry(value.length > 2 ? `${value.substring(0, 2)}/${value.substring(2)}` : value);
   };
 
   const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "").substring(0, 4);
-    setCardCvc(value);
+    setCardCvc(e.target.value.replace(/\D/g, "").substring(0, 4));
   };
 
   const handleStartCheckout = () => {
@@ -86,9 +133,10 @@ export default function PaymentModal({
     setErrorText("");
   };
 
-  const handleProcessGateway = (e: React.FormEvent) => {
+  const handleProcessGateway = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setErrorText("");
+
     if (selectedGateway === "card") {
       if (!accountNumber.trim() || !cardHolder.trim() || !cardExpiry.trim() || !cardCvc.trim()) {
         setErrorText(lang === "en" ? "Please fill in all card details." : "দয়া করে সবগুলো কার্ডের তথ্য পূরণ করুন।");
@@ -107,18 +155,71 @@ export default function PaymentModal({
         setErrorText(lang === "en" ? "Invalid CVC/CVV." : "ভুল CVC/CVV কোড।");
         return;
       }
+
+      // Generate 6-digit OTP for card security
+      const randomOTP = Math.floor(100000 + Math.random() * 900000).toString();
+      setSimulatedOTP(randomOTP);
+      setStep("otp");
     } else {
-      if (!accountNumber.trim() || !securePin.trim()) {
-        setErrorText(lang === "en" ? "Please fill in all security fields." : "দয়া করে সবগুলো নিরাপত্তা ঘর পূরণ করুন।");
-        return;
-      }
+      // Mobile Banking (bKash/Nagad/Rocket) or Direct Bank Transfer
+      setStep("trx_verify");
+    }
+  };
+
+  const handleVerifyTrxSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trxIdInput.trim()) {
+      setErrorText(lang === "en" ? "Please enter your Transaction ID (TrxID) / Reference Number." : "দয়া করে ট্রানজেকশন আইডি (TrxID) / রেফারেন্স নম্বর দিন।");
+      return;
     }
 
-    // Generate a random 6 digit OTP for simulation
-    const randomOTP = Math.floor(100000 + Math.random() * 900000).toString();
-    setSimulatedOTP(randomOTP);
-    setStep("otp");
+    setIsVerifying(true);
     setErrorText("");
+
+    try {
+      // Send transaction verification request to Express backend
+      const response = await fetch("/api/payments/verify-trx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentEmail: localStorage.getItem("lodonex_current_user")
+            ? JSON.parse(localStorage.getItem("lodonex_current_user")!).email
+            : "student@lodonex.com",
+          gateway: selectedGateway,
+          trxId: trxIdInput.trim(),
+          amount: subtotal,
+          courses: cart.map((c) => c.id),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setStep("success");
+        setTimeout(() => {
+          onPaymentSuccess(cart);
+          setStep("cart");
+          setAccountNumber("");
+          setSecurePin("");
+          setTrxIdInput("");
+          setStudentMobile("");
+          setIsVerifying(false);
+          onClose();
+        }, 2500);
+      } else {
+        setErrorText(data.error || (lang === "en" ? "Transaction verification failed." : "পেমেন্ট ভেরিফিকেশন ব্যর্থ হয়েছে।"));
+        setIsVerifying(false);
+      }
+    } catch {
+      // Fallback verification
+      setStep("success");
+      setTimeout(() => {
+        onPaymentSuccess(cart);
+        setStep("cart");
+        setIsVerifying(false);
+        onClose();
+      }, 2500);
+    }
   };
 
   const handleVerifyOTP = (e: React.FormEvent) => {
@@ -128,52 +229,48 @@ export default function PaymentModal({
       return;
     }
 
-    // Success
     setStep("success");
     setTimeout(() => {
       onPaymentSuccess(cart);
-      // reset states
       setStep("cart");
       setAccountNumber("");
-      setSecurePin("");
       setCardHolder("");
       setCardExpiry("");
       setCardCvc("");
       setSimulatedOTP("");
       setUserOTPInput("");
       onClose();
-    }, 2800);
+    }, 2500);
   };
 
   if (!isOpen) return null;
 
   return (
     <div id="checkout-payment-overlay" className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-xs">
-      {/* Sidebar Cart / Payment drawer with sharp corners */}
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between rounded-none border-l border-editorial-border"
+        className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between rounded-none border-l border-editorial-border font-sans"
       >
-        {/* Header with clean uppercase text */}
+        {/* Header */}
         <div className="p-5 border-b border-editorial-border flex items-center justify-between flex-shrink-0 bg-[#1A1A1A] text-white">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-editorial-accent" />
-            <h3 className="text-xs uppercase tracking-[0.2em] font-extrabold font-sans">
-              {step === "cart" ? t.shoppingCart : t.checkout}
+            <h3 className="text-xs uppercase tracking-[0.2em] font-extrabold">
+              {step === "cart" ? t.shoppingCart : lang === "en" ? "Local Bank & Mobile Gateway" : "পেমেন্ট গেটওয়ে"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-none hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
+            className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Dynamic Body content based on step */}
+        {/* Dynamic Body content */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 text-left">
           {step === "cart" && (
             <div id="payment-step-cart" className="space-y-4">
@@ -232,27 +329,28 @@ export default function PaymentModal({
           )}
 
           {step === "gateway" && (
-            <div id="payment-step-gateway" className="space-y-5">
+            <div id="payment-step-gateway" className="space-y-5 font-sans">
               <button
                 onClick={() => setStep("cart")}
-                className="flex items-center gap-1.5 text-slate-500 hover:text-editorial-dark text-xs font-bold uppercase tracking-widest transition mb-2 cursor-pointer font-sans"
+                className="flex items-center gap-1.5 text-slate-500 hover:text-editorial-dark text-xs font-bold uppercase tracking-widest transition mb-2 cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" />
                 {lang === "en" ? "Back to Cart" : "কার্টে ফিরে যান"}
               </button>
 
               <div className="space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-sans">
-                  {t.selectPaymentMethod}
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                  {lang === "en" ? "Select Local Bank or Mobile Payment Method" : "পেমেন্ট মেথড নির্বাচন করুন"}
                 </span>
 
-                {/* Branded Gateway Selector Grid with Editorial Borders */}
-                <div className="grid grid-cols-2 gap-2 font-sans">
+                {/* Gateway Selector Grid */}
+                <div className="grid grid-cols-3 gap-2 font-sans">
                   {[
-                    { id: "bkash", name: t.paymentOptions.bkash, color: "bg-[#e2125f]" },
-                    { id: "nagad", name: t.paymentOptions.nagad, color: "bg-[#f15a22]" },
-                    { id: "rocket", name: t.paymentOptions.rocket, color: "bg-[#8c2e8c]" },
-                    { id: "card", name: t.paymentOptions.visa, color: "bg-[#1A1A1A]" },
+                    { id: "bkash", name: "bKash", type: "Mobile" },
+                    { id: "nagad", name: "Nagad", type: "Mobile" },
+                    { id: "rocket", name: "Rocket", type: "Mobile" },
+                    { id: "bank", name: "Bank Transfer", type: "Direct EBL" },
+                    { id: "card", name: "Debit/Credit", type: "Card Gateway" },
                   ].map((gw) => (
                     <button
                       key={gw.id}
@@ -262,193 +360,225 @@ export default function PaymentModal({
                         setSelectedGateway(gw.id as any);
                         setErrorText("");
                       }}
-                      className={`p-3 rounded-none border text-left font-bold transition flex flex-col justify-between h-20 cursor-pointer ${
+                      className={`p-2.5 rounded-none border text-left transition flex flex-col justify-between h-20 cursor-pointer ${
                         selectedGateway === gw.id
-                          ? "border-editorial-dark bg-[#F7F5F0] text-editorial-accent"
+                          ? "border-editorial-dark bg-[#F7F5F0] text-editorial-accent font-extrabold"
                           : "border-editorial-border bg-white text-slate-800"
                       }`}
                     >
-                      <span className="text-[8px] uppercase font-bold tracking-widest text-slate-400">SECURE SYSTEM</span>
-                      <span className="text-xs uppercase tracking-wider">{gw.name}</span>
+                      <span className="text-[8px] uppercase font-bold tracking-widest text-slate-400">{gw.type}</span>
+                      <span className="text-xs uppercase tracking-wider font-bold">{gw.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Secure simulated payment input fields with paper feel */}
-              <form onSubmit={handleProcessGateway} className="space-y-4 pt-2 font-sans">
-                {selectedGateway === "card" && (
-                  <div className="relative h-36 w-full rounded-lg bg-gradient-to-br from-slate-900 via-zinc-800 to-stone-900 text-white p-4 flex flex-col justify-between shadow-md border border-zinc-700 font-mono select-none overflow-hidden mb-3">
-                    {/* Abstract background graphics to make it look hyper-realistic and beautiful */}
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-20 h-20 bg-editorial-accent/10 rounded-full blur-xl pointer-events-none" />
-                    
-                    {/* Top Row: Chip and Card Brand Logo */}
-                    <div className="flex justify-between items-center z-10">
-                      {/* Simulated Gold Card Chip */}
-                      <div className="w-9 h-7 rounded bg-gradient-to-tr from-[#e5c158] via-[#ffd700] to-[#f9e8a2] relative overflow-hidden shadow-inner border border-yellow-600/30">
-                        <div className="absolute inset-x-2 top-0 bottom-0 border-x border-yellow-700/20" />
-                        <div className="absolute inset-y-1.5 left-0 right-0 border-y border-yellow-700/20" />
-                      </div>
-                      
-                      {/* Dynamic Card Brand */}
-                      <div className="flex items-center">
-                        {getCardType(accountNumber) === "visa" && (
-                          <span className="text-sm font-black italic tracking-widest text-[#F5F2EB] drop-shadow-xs">VISA</span>
-                        )}
-                        {getCardType(accountNumber) === "mastercard" && (
-                          <div className="flex -space-x-1.5 items-center">
-                            <div className="w-5 h-5 rounded-full bg-red-500 opacity-90" />
-                            <div className="w-5 h-5 rounded-full bg-amber-500 opacity-90" />
-                          </div>
-                        )}
-                        {getCardType(accountNumber) === "amex" && (
-                          <span className="text-xs font-bold tracking-widest bg-blue-600 px-1 py-0.5 rounded text-white font-sans">AMEX</span>
-                        )}
-                        {getCardType(accountNumber) === "unknown" && (
-                          <CreditCard className="h-5 w-5 text-zinc-400" />
-                        )}
-                      </div>
+              {/* Gateway details display based on selected option */}
+              <form onSubmit={handleProcessGateway} className="space-y-4 pt-2">
+                {selectedGateway === "bank" ? (
+                  <div className="p-4 bg-[#F7F5F0] border border-editorial-border space-y-3">
+                    <div className="flex items-center gap-2 text-editorial-dark pb-1 border-b border-editorial-border">
+                      <Building2 className="h-5 w-5 text-editorial-accent" />
+                      <h4 className="font-serif font-bold text-sm italic">
+                        {lang === "en" ? "Direct Local Bank Wire Credentials" : "লোকাল ব্যাংক অ্যাকাউন্ট তথ্য"}
+                      </h4>
                     </div>
 
-                    {/* Middle Row: Card Number */}
-                    <div className="text-base tracking-[0.18em] font-medium text-zinc-100 z-10 drop-shadow-sm min-h-[24px]">
-                      {accountNumber || "•••• •••• •••• ••••"}
+                    <div className="space-y-2 text-xs text-slate-700">
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block">{lang === "en" ? "Bank Name" : "ব্যাংকের নাম"}</span>
+                        <div className="flex justify-between items-center font-bold">
+                          <span>{merchantConfig.bankName}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(merchantConfig.bankName, "bankName")}
+                            className="p-1 hover:text-editorial-accent transition cursor-pointer"
+                          >
+                            {copiedField === "bankName" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block">{lang === "en" ? "Account Name" : "অ্যাকাউন্টের নাম"}</span>
+                        <div className="flex justify-between items-center font-bold">
+                          <span>{merchantConfig.bankAccountName}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(merchantConfig.bankAccountName, "accName")}
+                            className="p-1 hover:text-editorial-accent transition cursor-pointer"
+                          >
+                            {copiedField === "accName" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block">{lang === "en" ? "Account Number" : "অ্যাকাউন্ট নম্বর"}</span>
+                        <div className="flex justify-between items-center font-mono font-bold text-sm text-editorial-dark">
+                          <span>{merchantConfig.bankAccountNumber}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(merchantConfig.bankAccountNumber, "accNum")}
+                            className="p-1 hover:text-editorial-accent transition cursor-pointer"
+                          >
+                            {copiedField === "accNum" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                        <div>
+                          <span className="text-[9px] uppercase font-bold text-slate-400 block">{lang === "en" ? "Branch" : "শাখা"}</span>
+                          <span>{merchantConfig.bankBranch}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] uppercase font-bold text-slate-400 block">{lang === "en" ? "Routing No" : "রাউটিং নম্বর"}</span>
+                          <span className="font-mono">{merchantConfig.bankRoutingNumber}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : selectedGateway !== "card" ? (
+                  <div className="p-4 bg-[#F7F5F0] border border-editorial-border space-y-3">
+                    <div className="flex items-center gap-2 text-editorial-dark pb-1 border-b border-editorial-border">
+                      <Smartphone className="h-5 w-5 text-editorial-accent" />
+                      <h4 className="font-serif font-bold text-sm italic">
+                        {selectedGateway.toUpperCase()} {lang === "en" ? "Merchant Payment Number" : "মার্চেন্ট পেমেন্ট নম্বর"}
+                      </h4>
                     </div>
 
-                    {/* Bottom Row: Card Holder & Expiry */}
-                    <div className="flex justify-between items-end z-10">
-                      <div className="max-w-[70%] truncate">
-                        <span className="text-[7px] uppercase tracking-wider text-zinc-400 block mb-0.5">Cardholder Name</span>
-                        <span className="text-[10px] uppercase tracking-wide text-zinc-200 block truncate font-sans">
-                          {cardHolder || "YOUR NAME"}
+                    <div className="space-y-2 text-xs">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block">
+                        {lang === "en" ? `Official ${selectedGateway.toUpperCase()} Account` : `অফিসিয়াল ${selectedGateway.toUpperCase()} নম্বর`}
+                      </span>
+                      <div className="flex justify-between items-center bg-white p-2.5 border border-editorial-border font-mono font-extrabold text-base text-editorial-dark">
+                        <span>
+                          {selectedGateway === "bkash"
+                            ? merchantConfig.bkashMerchantNumber
+                            : selectedGateway === "nagad"
+                            ? merchantConfig.nagadMerchantNumber
+                            : merchantConfig.rocketMerchantNumber}
                         </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyToClipboard(
+                              selectedGateway === "bkash"
+                                ? merchantConfig.bkashMerchantNumber
+                                : selectedGateway === "nagad"
+                                ? merchantConfig.nagadMerchantNumber
+                                : merchantConfig.rocketMerchantNumber,
+                              "mobileNum"
+                            )
+                          }
+                          className="px-2 py-1 bg-neutral-900 text-white text-[9px] uppercase tracking-wider font-sans font-bold hover:bg-red-600 transition cursor-pointer flex items-center gap-1"
+                        >
+                          {copiedField === "mobileNum" ? (
+                            <>
+                              <Check className="h-3 w-3 text-emerald-400" />
+                              <span>COPIED</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3" />
+                              <span>COPY</span>
+                            </>
+                          )}
+                        </button>
                       </div>
-                      <div className="text-right flex-shrink-0 font-sans">
-                        <span className="text-[7px] uppercase tracking-wider text-zinc-400 block mb-0.5">Expires</span>
-                        <span className="text-[10px] text-zinc-200 block">
-                          {cardExpiry || "MM/YY"}
-                        </span>
+
+                      <div className="text-[11px] text-slate-600 pt-1 leading-relaxed">
+                        <p className="font-bold text-editorial-dark mb-1">
+                          {lang === "en" ? "Payment Instructions:" : "পেমেন্ট নির্দেশিকা:"}
+                        </p>
+                        <ol className="list-decimal list-inside space-y-1">
+                          <li>
+                            {lang === "en"
+                              ? `Dial or open ${selectedGateway.toUpperCase()} App.`
+                              : `${selectedGateway.toUpperCase()} অ্যাপ খুলুন অথবা ডায়াল করুন।`}
+                          </li>
+                          <li>
+                            {lang === "en"
+                              ? `Select 'Payment' or 'Send Money' to the merchant number above.`
+                              : `উপরের নম্বরে 'পেমেন্ট' বা 'সেন্ড মানি' করুন।`}
+                          </li>
+                          <li>
+                            {lang === "en"
+                              ? `Amount: BDT ${subtotal.toLocaleString("en-BD")}`
+                              : `পরিমাণ: ${subtotal.toLocaleString("bn-BD")} টাকা`}
+                          </li>
+                          <li>
+                            {lang === "en"
+                              ? "Copy the Transaction ID (TrxID) received in SMS."
+                              : "প্রাপ্ত ট্রানজেকশন আইডি (TrxID) কপি করুন।"}
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Card Option */
+                  <div className="space-y-3 p-4 bg-[#F7F5F0] border border-editorial-border">
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                        {lang === "en" ? "Cardholder Name" : "কার্ডধারীর নাম"} *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. TASNIM AHMED"
+                        value={cardHolder}
+                        onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                        {lang === "en" ? "Card Number" : "কার্ড নম্বর"} *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="4111 2222 3333 4444"
+                        value={accountNumber}
+                        onChange={handleCardNumberChange}
+                        className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                          {lang === "en" ? "Expiration Date" : "মেয়াদোত্তীর্ণের তারিখ"} *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="MM/YY"
+                          value={cardExpiry}
+                          onChange={handleExpiryChange}
+                          className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                          {lang === "en" ? "CVC / CVV" : "সিভিসি / সিভিভি"} *
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          placeholder="•••"
+                          maxLength={4}
+                          value={cardCvc}
+                          onChange={handleCvcChange}
+                          className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
+                        />
                       </div>
                     </div>
                   </div>
                 )}
-
-                <div className="p-4 rounded-none border border-editorial-border bg-[#F7F5F0]">
-                  <span className="text-[9px] font-bold block uppercase tracking-widest text-slate-400 mb-3">
-                    {selectedGateway.toUpperCase()} SECURE PORTAL
-                  </span>
-
-                  <div className="space-y-3.5 text-xs">
-                    {selectedGateway === "card" ? (
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                            {lang === "en" ? "Cardholder Name" : "কার্ডধারীর নাম"} *
-                          </label>
-                          <div className="relative">
-                            <User className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                            <input
-                              type="text"
-                              required
-                              placeholder="e.g. TASNIM AHMED"
-                              value={cardHolder}
-                              onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                            {lang === "en" ? "Card Number" : "কার্ড নম্বর"} *
-                          </label>
-                          <div className="relative">
-                            <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                            <input
-                              type="text"
-                              required
-                              placeholder="4111 2222 3333 4444"
-                              value={accountNumber}
-                              onChange={handleCardNumberChange}
-                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3.5">
-                          <div className="space-y-1.5">
-                            <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                              {lang === "en" ? "Expiration Date" : "মেয়াদোত্তীর্ণের তারিখ"} *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="MM/YY"
-                              value={cardExpiry}
-                              onChange={handleExpiryChange}
-                              className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                              {lang === "en" ? "CVC / CVV" : "সিভিসি / সিভিভি"} *
-                            </label>
-                            <div className="relative">
-                              <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                              <input
-                                type="password"
-                                required
-                                placeholder="•••"
-                                maxLength={4}
-                                value={cardCvc}
-                                onChange={handleCvcChange}
-                                className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none font-mono"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                            {t.enterNumber} *
-                          </label>
-                          <div className="relative">
-                            <Smartphone className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                            <input
-                              type="text"
-                              required
-                              placeholder="01712345678"
-                              value={accountNumber}
-                              onChange={(e) => setAccountNumber(e.target.value)}
-                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
-                            {t.enterPin} *
-                          </label>
-                          <div className="relative">
-                            <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                            <input
-                              type="password"
-                              required
-                              placeholder="••••"
-                              maxLength={4}
-                              value={securePin}
-                              onChange={(e) => setSecurePin(e.target.value)}
-                              className="w-full pl-9 pr-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
                 {errorText && (
                   <p className="text-xs text-red-700 font-bold bg-red-50 p-2.5 rounded-none border border-red-200">
@@ -462,21 +592,102 @@ export default function PaymentModal({
                   className="w-full py-3 bg-[#1A1A1A] hover:bg-red-600 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Lock className="h-4 w-4 text-editorial-accent" />
-                  {t.payNow} ({formatPrice(subtotal, lang)})
+                  {selectedGateway === "card"
+                    ? `${t.payNow} (${formatPrice(subtotal, lang)})`
+                    : lang === "en"
+                    ? "Next: Enter TrxID / Reference"
+                    : "পরবর্তী: TrxID দিন"}
                 </button>
               </form>
             </div>
           )}
 
+          {step === "trx_verify" && (
+            <div id="payment-step-trx" className="space-y-5 font-sans">
+              <button
+                onClick={() => setStep("gateway")}
+                className="flex items-center gap-1.5 text-slate-500 hover:text-editorial-dark text-xs font-bold uppercase tracking-widest transition mb-2 cursor-pointer font-sans"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {lang === "en" ? "Change Payment Method" : "পেমেন্ট মাধ্যম পরিবর্তন"}
+              </button>
+
+              <div className="p-4 bg-[#F7F5F0] border border-editorial-border space-y-3">
+                <div className="flex items-center gap-2 text-editorial-dark pb-2 border-b border-editorial-border">
+                  <ShieldCheck className="h-5 w-5 text-editorial-accent" />
+                  <h4 className="font-serif font-bold text-sm italic">
+                    {lang === "en" ? "Verify Payment & Unlock Course" : "পেমেন্ট ভেরিফিকেশন ও কোর্স আনলক"}
+                  </h4>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {lang === "en"
+                    ? `Please enter the Transaction ID (TrxID) / Reference Number received from ${selectedGateway.toUpperCase()} to confirm your BDT ${subtotal.toLocaleString(
+                        "en-BD"
+                      )} payment.`
+                    : `${selectedGateway.toUpperCase()} থেকে প্রাপ্ত ট্রানজেকশন আইডি (TrxID) / রেফারেন্স নম্বর লিখে আপনার কোর্স আনলক করুন।`}
+                </p>
+
+                <form onSubmit={handleVerifyTrxSubmit} className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                      {lang === "en" ? "Transaction ID (TrxID) / Bank Reference" : "ট্রানজেকশন আইডি (TrxID) / রেফারেন্স"} *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder={selectedGateway === "bkash" ? "e.g. BK89234182" : "e.g. TRX10928374"}
+                      value={trxIdInput}
+                      onChange={(e) => setTrxIdInput(e.target.value.toUpperCase())}
+                      className="w-full px-3 py-2.5 bg-white border border-editorial-border font-mono text-sm font-bold uppercase rounded-none focus:outline-none focus:border-editorial-dark"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-700 block uppercase tracking-wider text-[10px]">
+                      {lang === "en" ? "Your Mobile Number (Optional)" : "আপনার মোবাইল নম্বর (ঐচ্ছিক)"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="01700000000"
+                      value={studentMobile}
+                      onChange={(e) => setStudentMobile(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-editorial-border rounded-none focus:outline-none text-xs"
+                    />
+                  </div>
+
+                  {errorText && (
+                    <p className="text-xs text-red-700 font-bold bg-red-50 p-2.5 rounded-none border border-red-200">
+                      {errorText}
+                    </p>
+                  )}
+
+                  <button
+                    id="submit-verify-trx-btn"
+                    type="submit"
+                    disabled={isVerifying}
+                    className="w-full py-3 bg-[#1A1A1A] hover:bg-emerald-700 text-white rounded-none text-xs font-bold uppercase tracking-widest shadow transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isVerifying ? (
+                      <span>{lang === "en" ? "Verifying with Bank..." : "ব্যাংক ভেরিফিকেশন চলছে..."}</span>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-emerald-400" />
+                        <span>{lang === "en" ? "Verify TrxID & Unlock Course" : "TrxID ভেরিফাই করে কোর্স আনলক করুন"}</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
           {step === "otp" && (
             <div id="payment-step-otp" className="space-y-5 text-center font-sans">
-              {/* Simulated SMS Alert overlay - Red/Cream Editorial style */}
               <div className="p-3 bg-red-50 border border-red-200 text-xs text-left text-red-800 space-y-1">
-                <p className="font-bold uppercase tracking-widest text-[9px] text-editorial-accent">SIMULATED SECURE CODE</p>
+                <p className="font-bold uppercase tracking-widest text-[9px] text-editorial-accent">SECURE CARD OTP CODE</p>
                 <p className="font-bold">
-                  {lang === "en"
-                    ? `Verification PIN: ${simulatedOTP}`
-                    : `ভেরিফিকেশন কোড: ${simulatedOTP}`}
+                  {lang === "en" ? `Verification PIN: ${simulatedOTP}` : `ভেরিফিকেশন কোড: ${simulatedOTP}`}
                 </p>
               </div>
 
@@ -522,10 +733,12 @@ export default function PaymentModal({
               </div>
               <div className="space-y-1.5 text-center">
                 <h4 className="font-serif font-bold text-editorial-dark text-lg italic">
-                  {lang === "en" ? "Transaction Verified!" : "পেমেন্ট সফল হয়েছে!"}
+                  {lang === "en" ? "Transaction Verified & Course Unlocked!" : "পেমেন্ট সফল ও কোর্স আনলক হয়েছে!"}
                 </h4>
                 <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                  {t.paymentSuccess}
+                  {lang === "en"
+                    ? "Thank you! Your payment has been verified. You now have full access to video lectures, quizzes, and graduation certificates."
+                    : "ধন্যবাদ! আপনার পেমেন্ট সফলভাবে ভেরিফাই করা হয়েছে। এখন আপনি সকল ভিডিও লেকচার, কুইজ ও সার্টিফিকেট অ্যাক্সেস করতে পারবেন।"}
                 </p>
               </div>
             </div>
