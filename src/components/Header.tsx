@@ -37,9 +37,11 @@ export default function Header({
     { id: "courses", label: t.ourCourses },
     { id: "recipes", label: t.myRecipes },
     { id: "chefs", label: t.ourChefs },
+    { id: "jobs", label: t.chefJobsAccommodation },
+    { id: "gallery", label: t.gallery },
     { id: "live", label: t.liveMasterclass },
     { id: "blogs", label: t.blogs },
-    { id: "about", label: lang === "en" ? "About Us" : "আমাদের সম্পর্কে" },
+    { id: "about", label: t.aboutUs },
   ];
 
   return (

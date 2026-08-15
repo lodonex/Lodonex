@@ -29,6 +29,8 @@ import AdminSimulationPanel from "./components/AdminSimulationPanel";
 import { OurChefs } from "./components/OurChefs";
 import Policies from "./components/Policies";
 import AboutUs from "./components/AboutUs";
+import ChefJobAccommodation from "./components/ChefJobAccommodation";
+import Gallery from "./components/Gallery";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
@@ -622,9 +624,47 @@ export default function App() {
               />
             )}
 
+            {currentTab === "jobs" && (
+              <ChefJobAccommodation
+                lang={lang}
+                onSelectCourse={(courseId) => {
+                  const target = INITIAL_COURSES.find((c) => c.id === courseId);
+                  if (target) {
+                    setSelectedCourse(target);
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              />
+            )}
+
+            {currentTab === "gallery" && (
+              <Gallery
+                lang={lang}
+                onSelectCourse={(courseId) => {
+                  const target = INITIAL_COURSES.find((c) => c.id === courseId);
+                  if (target) {
+                    setSelectedCourse(target);
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              />
+            )}
+
             {currentTab === "about" && (
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <AboutUs lang={lang} />
+                <AboutUs
+                  lang={lang}
+                  onNavigateToJobs={() => {
+                    setCurrentTab("jobs");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  onNavigateToCourses={() => {
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
               </div>
             )}
           </>
@@ -701,6 +741,8 @@ export default function App() {
                     { id: "chefs", label: t.ourChefs },
                     { id: "live", label: t.liveMasterclass },
                     { id: "blogs", label: t.blogs },
+                    { id: "jobs", label: t.chefJobsAccommodation || (lang === "en" ? "Job & Accommodation" : "চাকরি ও আবাসন") },
+                    { id: "gallery", label: t.gallery || (lang === "en" ? "Gallery" : "গ্যালারি") },
                     { id: "about", label: lang === "en" ? "About Us" : "আমাদের সম্পর্কে" },
                   ].map((link) => (
                     <li key={link.id}>

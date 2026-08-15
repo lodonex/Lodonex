@@ -1,6 +1,6 @@
 {
   "name": "Lodonex",
-  "description": "An interactive cooking academy platform featuring video tutorials, recipe management, live class schedules, course selling, and progress tracking with English and Bangla language support.",
+  "description": "An accredited culinary academy platform with Bengali & English localization, structured masterclasses, student dashboard, recipe journal, local bank & mobile wallet payments, international chef job and accommodation portal for Dubai & Europe, and visual gallery.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
