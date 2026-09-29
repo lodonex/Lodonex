@@ -64,6 +64,9 @@ interface AdminPanelProps {
   courses: Course[];
   onSelectCourse: (course: Course) => void;
   onUpdateUserAccount?: (user: UserAccount) => void;
+  initialEnrollments?: EnrollmentApplication[];
+  onApproveEnrollmentGlobal?: (appId: string) => void;
+  initialUsers?: UserAccount[];
 }
 
 export default function AdminPanel({
@@ -71,7 +74,10 @@ export default function AdminPanel({
   currentUser,
   courses,
   onSelectCourse,
-  onUpdateUserAccount
+  onUpdateUserAccount,
+  initialEnrollments,
+  onApproveEnrollmentGlobal,
+  initialUsers
 }: AdminPanelProps) {
   const isEn = lang === "en";
   const userRole = currentUser.role || "admin";
@@ -96,8 +102,20 @@ export default function AdminPanel({
   >("overview");
 
   // Stores
-  const [usersList, setUsersList] = useState<UserAccount[]>(INITIAL_LMS_USERS);
-  const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(MOCK_ENROLLMENT_APPLICATIONS);
+  const [usersList, setUsersList] = useState<UserAccount[]>(initialUsers || INITIAL_LMS_USERS);
+  const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(initialEnrollments || MOCK_ENROLLMENT_APPLICATIONS);
+
+  React.useEffect(() => {
+    if (initialEnrollments) {
+      setEnrollmentsList(initialEnrollments);
+    }
+  }, [initialEnrollments]);
+
+  React.useEffect(() => {
+    if (initialUsers) {
+      setUsersList(initialUsers);
+    }
+  }, [initialUsers]);
   const [batchesList, setBatchesList] = useState<Batch[]>(MOCK_BATCHES);
   const [certificatesList, setCertificatesList] = useState<DigitalCertificate[]>(MOCK_DIGITAL_CERTIFICATES);
   const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE_RECORDS);
@@ -115,6 +133,15 @@ export default function AdminPanel({
   const [isAddBatchOpen, setIsAddBatchOpen] = useState(false);
   const [isIssueCertOpen, setIsIssueCertOpen] = useState(false);
   const [isAddAssignmentOpen, setIsAddAssignmentOpen] = useState(false);
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+
+  // New Staff Form State (Super Admin Only)
+  const [newStaffName, setNewStaffName] = useState("");
+  const [newStaffEmail, setNewStaffEmail] = useState("");
+  const [newStaffPhone, setNewStaffPhone] = useState("");
+  const [newStaffRole, setNewStaffRole] = useState<"admin" | "trainer">("admin");
+  const [newStaffPassword, setNewStaffPassword] = useState("StaffPass@2026");
+  const [newStaffError, setNewStaffError] = useState("");
 
   // New Batch Form State
   const [newBatchName, setNewBatchName] = useState("");
@@ -156,6 +183,9 @@ export default function AdminPanel({
 
   // Quick Approve Enrollment Application
   const handleApproveEnrollment = (appId: string) => {
+    if (onApproveEnrollmentGlobal) {
+      onApproveEnrollmentGlobal(appId);
+    }
     const updated = enrollmentsList.map((app) => {
       if (app.id === appId) {
         return {
@@ -240,6 +270,72 @@ export default function AdminPanel({
       headers: { "Content-Type": "application/json", "x-user-role": userRole },
       body: JSON.stringify(newBatch)
     }).catch(() => {});
+  };
+
+  // Handle Create Staff / Trainer (Super Admin Only)
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewStaffError("");
+
+    if (!newStaffName.trim() || !newStaffEmail.trim() || !newStaffPassword) {
+      setNewStaffError(isEn ? "All fields are required." : "সকল তথ্য পূরণ করুন।");
+      return;
+    }
+
+    const cleanEmail = newStaffEmail.trim().toLowerCase();
+    if (usersList.some((u) => u.email.toLowerCase() === cleanEmail)) {
+      setNewStaffError(isEn ? "A user with this email address already exists." : "এই ইমেলে ইতোমধ্যে একজন ব্যবহারকারী আছেন।");
+      return;
+    }
+
+    const newStaffUser: UserAccount = {
+      id: `${newStaffRole}-${Date.now()}`,
+      name: newStaffName.trim(),
+      email: cleanEmail,
+      phone: newStaffPhone.trim(),
+      password: newStaffPassword,
+      role: newStaffRole,
+      status: "active",
+      emailVerified: true,
+      createdAt: new Date().toISOString(),
+      progress: {
+        enrolledCourses: newStaffRole === "trainer" ? ["course-1"] : [],
+        completedLessons: [],
+        quizScores: {},
+        customRecipes: [],
+        badges: []
+      }
+    };
+
+    setUsersList((prev) => [...prev, newStaffUser]);
+    if (onUpdateUserAccount) {
+      onUpdateUserAccount(newStaffUser);
+    }
+
+    // Call backend API
+    try {
+      await fetch("/api/admin/users/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": userRole,
+          "x-user-id": currentUser.id
+        },
+        body: JSON.stringify({
+          name: newStaffName.trim(),
+          email: cleanEmail,
+          phone: newStaffPhone.trim(),
+          role: newStaffRole,
+          password: newStaffPassword,
+        })
+      });
+    } catch (err) {}
+
+    setIsAddStaffOpen(false);
+    setNewStaffName("");
+    setNewStaffEmail("");
+    setNewStaffPhone("");
+    setNewStaffPassword("StaffPass@2026");
   };
 
   // Handle Issue Digital Certificate
@@ -1151,6 +1247,122 @@ export default function AdminPanel({
         )}
 
         {/* ========================================================
+            TAB: STAFF & TRAINERS (SUPER ADMIN ONLY)
+           ======================================================== */}
+        {adminTab === "staff" && isSuperAdmin && (
+          <div className="mt-6 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-red-100 text-editorial-accent text-[9px] font-mono font-bold uppercase tracking-wider">
+                    Super Admin Exclusive
+                  </span>
+                </div>
+                <h2 className="font-serif font-extrabold text-2xl text-editorial-dark mt-1">
+                  {isEn ? "Faculty, Registrar & Staff Management" : "ফ্যাকাল্টি ও স্টাফ প্রশাসন"}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {isEn
+                    ? "Security Rule #8: Only the Super Admin can provision and manage administrative accounts. Random public visitors cannot register as staff."
+                    : "নিরাপত্তা বিধি: শুধুমাত্র সুপার অ্যাডমিন নতুন অ্যাডমিন ও ট্রেইনারদের অ্যাকাউন্ট তৈরি করতে পারেন।"}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsAddStaffOpen(true)}
+                className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <Plus className="h-4 w-4" />
+                <span>{isEn ? "Create Staff Account" : "নতুন স্টাফ নিয়োগ"}</span>
+              </button>
+            </div>
+
+            <div className="bg-white border border-editorial-border overflow-hidden">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                    <th className="p-3">Staff Name</th>
+                    <th className="p-3">Email & Contact</th>
+                    <th className="p-3">System Role</th>
+                    <th className="p-3">Account Status</th>
+                    <th className="p-3">Creation Date</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {usersList
+                    .filter((u) => ["superadmin", "admin", "trainer"].includes(u.role || ""))
+                    .map((staff) => (
+                      <tr key={staff.id} className="hover:bg-slate-50">
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{staff.name}</div>
+                          <span className="text-[10px] font-mono text-slate-400">ID: {staff.id}</span>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-mono text-slate-700">{staff.email}</div>
+                          <div className="text-[10px] text-slate-500">{staff.phone || "—"}</div>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
+                              staff.role === "superadmin"
+                                ? "bg-purple-100 text-purple-900 border border-purple-300"
+                                : staff.role === "trainer"
+                                ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                : "bg-blue-100 text-blue-900 border border-blue-300"
+                            }`}
+                          >
+                            {staff.role === "superadmin"
+                              ? "SUPER ADMIN"
+                              : staff.role === "trainer"
+                              ? "TRAINER CHEF"
+                              : "ADMIN / REGISTRAR"}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              staff.status === "active" || staff.status === "approved"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {staff.status}
+                          </span>
+                        </td>
+                        <td className="p-3 font-mono text-[11px] text-slate-500">
+                          {staff.createdAt ? staff.createdAt.split("T")[0] : "2026-01-01"}
+                        </td>
+                        <td className="p-3 text-right">
+                          {staff.role !== "superadmin" && (
+                            <div className="flex items-center justify-end gap-1.5">
+                              {staff.status === "active" ? (
+                                <button
+                                  onClick={() => handleUpdateStudentStatus(staff.id, "suspended")}
+                                  className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[10px] uppercase cursor-pointer"
+                                >
+                                  Suspend
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdateStudentStatus(staff.id, "active")}
+                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase cursor-pointer"
+                                >
+                                  Activate
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
             TAB 10: SETTINGS & MERCHANT CREDENTIALS
            ======================================================== */}
         {adminTab === "settings" && isSuperAdmin && (
@@ -1524,6 +1736,128 @@ export default function AdminPanel({
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          CREATE STAFF MODAL (SUPER ADMIN ONLY)
+         ======================================================== */}
+      {isAddStaffOpen && isSuperAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs font-sans">
+          <div className="bg-white border-2 border-editorial-border max-w-lg w-full p-6 space-y-4 shadow-xl text-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-editorial-accent font-mono">
+                  SECURITY RULE #8: SUPER ADMIN PROVISIONING
+                </span>
+                <h3 className="font-serif font-bold text-base text-editorial-dark mt-0.5">
+                  {isEn ? "Create Administrator / Trainer Account" : "নতুন অ্যাডমিন বা ট্রেইনার নিয়োগ"}
+                </h3>
+              </div>
+              <button onClick={() => setIsAddStaffOpen(false)}>
+                <X className="h-5 w-5 text-slate-400 hover:text-slate-800" />
+              </button>
+            </div>
+
+            {newStaffError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs">
+                {newStaffError}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateStaff} className="space-y-3 text-xs">
+              <div>
+                <label className="text-slate-600 font-bold block mb-1">
+                  {isEn ? "Staff Full Name *" : "পুরো নাম *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Chef Tanvir Ahmed"
+                  value={newStaffName}
+                  onChange={(e) => setNewStaffName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 focus:outline-none focus:border-editorial-accent font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-600 font-bold block mb-1">
+                  {isEn ? "Staff Official Email *" : "অফিসিয়াল ইমেল *"}
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="chef.tanvir@lodonex.com"
+                  value={newStaffEmail}
+                  onChange={(e) => setNewStaffEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 font-mono focus:outline-none focus:border-editorial-accent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-600 font-bold block mb-1">
+                    {isEn ? "Contact Phone" : "ফোন নম্বর"}
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+880 1711-..."
+                    value={newStaffPhone}
+                    onChange={(e) => setNewStaffPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 focus:outline-none focus:border-editorial-accent font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-600 font-bold block mb-1">
+                    {isEn ? "Assigned Role *" : "পদবি নির্বাচন করুন *"}
+                  </label>
+                  <select
+                    value={newStaffRole}
+                    onChange={(e) => setNewStaffRole(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-300 focus:outline-none focus:border-editorial-accent font-semibold"
+                  >
+                    <option value="admin">ADMIN / REGISTRAR STAFF</option>
+                    <option value="trainer">TRAINER CHEF</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-600 font-bold block mb-1">
+                  {isEn ? "Initial Password / Invitation Key *" : "পাসওয়ার্ড নির্ধারণ করুন *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newStaffPassword}
+                  onChange={(e) => setNewStaffPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 font-mono focus:outline-none focus:border-editorial-accent"
+                />
+                <span className="text-[10px] text-slate-400 block mt-1">
+                  {isEn
+                    ? "The user will use these credentials to log in via /admin/login."
+                    : "এই পাসওয়ার্ড দিয়ে কর্মকর্তা /admin/login এ প্রবেশ করবেন।"}
+                </span>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddStaffOpen(false)}
+                  className="px-4 py-2 border border-slate-300 uppercase font-semibold text-slate-600"
+                >
+                  {isEn ? "Cancel" : "বাতিল"}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold uppercase tracking-wider"
+                >
+                  {isEn ? "Activate Staff User" : "অ্যাকাউন্ট চালু করুন"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

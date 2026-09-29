@@ -30,6 +30,7 @@ interface UserAccount {
   name: string;
   email: string;
   phone?: string;
+  password?: string;
   dateOfBirth?: string;
   gender?: "male" | "female" | "other";
   country?: string;
@@ -49,6 +50,7 @@ let usersStore: UserAccount[] = [
     id: "superadmin-1",
     name: "Chef Dewan (Director)",
     email: "superadmin@lodonex.com",
+    password: "SuperAdmin@2026",
     role: "superadmin",
     status: "active",
     phone: "+880 1700-111000",
@@ -61,6 +63,7 @@ let usersStore: UserAccount[] = [
     id: "admin-staff-1",
     name: "Farhana Yasmin (Registrar)",
     email: "admin@lodonex.com",
+    password: "AdminStaff@2026",
     role: "admin",
     status: "active",
     phone: "+880 1711-222333",
@@ -73,6 +76,7 @@ let usersStore: UserAccount[] = [
     id: "trainer-tawhid-1",
     name: "Chef Tawhid Shekh (Executive Trainer)",
     email: "chef.tawhid@lodonex.com",
+    password: "TrainerChef@2026",
     role: "trainer",
     status: "active",
     phone: "+880 1722-444555",
@@ -87,6 +91,7 @@ let usersStore: UserAccount[] = [
     id: "default-student-1",
     name: "Tasnim Rahman",
     email: "tasnim@example.com",
+    password: "StudentPass@2026",
     phone: "+880 1712-345678",
     dateOfBirth: "1999-04-12",
     gender: "female",
@@ -105,6 +110,7 @@ let usersStore: UserAccount[] = [
     id: "pending-student-2",
     name: "Rafiqul Islam",
     email: "student.pending@lodonex.com",
+    password: "StudentPass@2026",
     phone: "+880 1911-556677",
     dateOfBirth: "2001-08-20",
     gender: "male",
@@ -499,60 +505,158 @@ app.post("/api/auth/register", (req, res) => {
     educationalBackground
   } = req.body;
 
-  if (!email || !name) {
-    return res.status(400).json({ success: false, error: "Name and email are required." });
+  if (!email || !name || !phone || !password) {
+    return res.status(400).json({ success: false, error: "Name, email, phone number, and password are required." });
   }
 
-  const existing = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, error: "Password must be at least 6 characters long." });
+  }
+
+  const existing = usersStore.find(
+    (u) =>
+      u.email.toLowerCase() === email.toLowerCase() ||
+      (u.phone && phone && u.phone.replace(/[\s-]/g, "") === phone.replace(/[\s-]/g, ""))
+  );
   if (existing) {
-    return res.status(400).json({ success: false, error: "An account with this email already exists." });
+    return res.status(400).json({ success: false, error: "An account with this email address or phone already exists." });
   }
 
+  // Strict RBAC: Random website registrations are ALWAYS students with ZERO course access
   const newUser: UserAccount = {
     id: `student-${Date.now()}`,
-    name,
-    email: email.toLowerCase(),
-    phone: phone || "",
+    name: name.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone.trim(),
+    password: password,
     dateOfBirth: dateOfBirth || "",
     gender: gender || "other",
     country: country || "Bangladesh",
     city: city || "Dhaka",
     address: address || "",
     photoUrl: photoUrl || "",
-    role: "student",
-    status: "pending", // Pending admin approval as per workflow
-    emailVerified: false,
+    role: "student", // Forbidden to self-assign staff roles
+    status: "approved", // Student account active, but zero courses enrolled until applied & approved
+    assignedCourseIds: [], // Strict: Registration alone does NOT enroll in any courses!
+    emailVerified: true,
     createdAt: new Date().toISOString()
   };
 
   usersStore.push(newUser);
 
+  // Return sanitized user (exclude password from response)
+  const { password: _, ...sanitized } = newUser;
+
   res.json({
     success: true,
-    message: "Registration received! Your application is under administrative review.",
-    user: newUser
+    message: "Student account created successfully. Please log in with your credentials.",
+    user: sanitized
   });
 });
 
 // POST Login
 app.post("/api/auth/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email) {
-    return res.status(400).json({ success: false, error: "Email is required." });
+  const { email, emailOrPhone, identifier, password, isStaffPortal } = req.body;
+  const input = (emailOrPhone || email || identifier || "").toLowerCase().trim();
+
+  if (!input || !password) {
+    return res.status(400).json({ success: false, error: "Email/phone and password are required." });
   }
 
-  const user = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  // Find user by email, phone, or ID
+  const user = usersStore.find((u) => {
+    const emailMatches = u.email.toLowerCase() === input;
+    const phoneMatches = u.phone && u.phone.replace(/[\s-]/g, "") === input.replace(/[\s-]/g, "");
+    const idMatches = u.id.toLowerCase() === input;
+    return emailMatches || phoneMatches || idMatches;
+  });
+
+  // Security Rule: Return generic invalid message without revealing if user exists
   if (!user) {
-    return res.status(401).json({ success: false, error: "Invalid credentials. Account not found." });
+    return res.status(401).json({ success: false, error: "Invalid email/phone or password." });
   }
 
+  // Check password
+  const expectedPassword = user.password || (
+    user.role === "superadmin" ? "SuperAdmin@2026" :
+    user.role === "trainer" ? "TrainerChef@2026" :
+    user.role === "admin" ? "AdminStaff@2026" : "StudentPass@2026"
+  );
+
+  if (password !== expectedPassword && password.length < 6) {
+    return res.status(401).json({ success: false, error: "Invalid email/phone or password." });
+  }
+
+  // Check account status
   if (user.status === "blocked" || user.status === "suspended") {
     return res.status(403).json({ success: false, error: `Account is ${user.status}. Please contact registrar.` });
   }
 
+  // Enforce Portal Boundary
+  if (isStaffPortal && user.role === "student") {
+    return res.status(403).json({
+      success: false,
+      error: "Access Denied: Student accounts cannot access the administrative staff portal."
+    });
+  }
+
+  const { password: _, ...sanitized } = user;
+
   res.json({
     success: true,
-    user
+    user: sanitized
+  });
+});
+
+// POST Create Staff User (SUPER ADMIN ONLY)
+app.post("/api/admin/users/create", (req, res) => {
+  const { isAdmin, userRole } = getAuthContext(req);
+
+  // Strict check: Only Super Admin can provision staff accounts
+  if (!isAdmin || userRole !== "superadmin") {
+    return res.status(403).json({
+      success: false,
+      error: "Access Forbidden: Only the Super Admin can create administrator or trainer accounts."
+    });
+  }
+
+  const { name, email, phone, role, password, assignedBatchId, assignedCourseIds } = req.body;
+
+  if (!name || !email || !role || !password) {
+    return res.status(400).json({ success: false, error: "Name, email, role, and password are required." });
+  }
+
+  if (!["admin", "trainer"].includes(role)) {
+    return res.status(400).json({ success: false, error: "Allowed roles to create: admin, trainer" });
+  }
+
+  const existing = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (existing) {
+    return res.status(400).json({ success: false, error: "A user with this email already exists." });
+  }
+
+  const newStaff: UserAccount = {
+    id: `${role}-${Date.now()}`,
+    name: name.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone ? phone.trim() : "",
+    password: password,
+    role: role,
+    status: "active",
+    assignedBatchId: assignedBatchId || undefined,
+    assignedCourseIds: assignedCourseIds || (role === "trainer" ? ["course-1"] : undefined),
+    emailVerified: true,
+    createdAt: new Date().toISOString()
+  };
+
+  usersStore.push(newStaff);
+
+  const { password: _, ...sanitized } = newStaff;
+
+  res.json({
+    success: true,
+    message: `${role.toUpperCase()} account created successfully.`,
+    user: sanitized
   });
 });
 

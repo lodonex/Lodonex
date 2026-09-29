@@ -41,7 +41,8 @@ import {
   StudentGradeResult,
   DigitalCertificate,
   PaymentRecord,
-  LMSNotification
+  LMSNotification,
+  EnrollmentApplication
 } from "../types";
 import { formatPrice } from "../utils/price";
 import {
@@ -65,6 +66,10 @@ interface StudentPortalProps {
   onSelectCourse: (course: Course) => void;
   onViewCertificateModal?: (course: Course) => void;
   onVerifyCertificatePublic?: (certNumber: string) => void;
+  initialSubTab?: string;
+  onSubTabChange?: (tab: string) => void;
+  enrollments?: EnrollmentApplication[];
+  onBrowseCourses?: () => void;
 }
 
 export default function StudentPortal({
@@ -73,9 +78,20 @@ export default function StudentPortal({
   courses,
   onSelectCourse,
   onViewCertificateModal,
-  onVerifyCertificatePublic
+  onVerifyCertificatePublic,
+  initialSubTab,
+  onSubTabChange,
+  enrollments = [],
+  onBrowseCourses
 }: StudentPortalProps) {
   const isEn = lang === "en";
+
+  // Map initialSubTab (e.g. from /student/dashboard or /student/courses) to valid tab
+  const getValidTab = (tabName?: string): any => {
+    const valid = ["overview", "courses", "classes", "calendar", "attendance", "assignments", "exams", "results", "payments", "certificates", "notifications", "profile", "support"];
+    if (tabName && valid.includes(tabName)) return tabName;
+    return "overview";
+  };
 
   // Active navigation tab inside Student Panel
   const [activeTab, setActiveTab] = useState<
@@ -92,7 +108,22 @@ export default function StudentPortal({
     | "notifications"
     | "profile"
     | "support"
-  >("overview");
+  >(getValidTab(initialSubTab));
+
+  // Sync activeTab when initialSubTab changes via router
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setActiveTab(getValidTab(initialSubTab));
+    }
+  }, [initialSubTab]);
+
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId as any);
+    setViewingCourse(null);
+    if (onSubTabChange) {
+      onSubTabChange(tabId);
+    }
+  };
 
   // State stores for student interactions
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>(MOCK_ASSIGNMENT_SUBMISSIONS);
@@ -117,12 +148,18 @@ export default function StudentPortal({
   const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>(
-    currentUser.progress.completedLessons || ["c1-l1", "c1-l2"]
+    currentUser.progress.completedLessons || []
   );
 
-  // Filter only courses the student is authorized to view
-  const enrolledCourseIds = currentUser.assignedCourseIds || currentUser.progress.enrolledCourses || ["course-1"];
+  // Strict Course Access Control: Only courses with approved / active enrollment
+  // Never default unapproved users to course-1!
+  const enrolledCourseIds = currentUser.assignedCourseIds || currentUser.progress.enrolledCourses || [];
   const enrolledCourses = courses.filter((c) => enrolledCourseIds.includes(c.id));
+
+  // Student's applications list
+  const studentEnrollments = enrollments.filter(
+    (e) => e.studentId === currentUser.id || e.studentEmail.toLowerCase() === currentUser.email.toLowerCase()
+  );
 
   // Attendance statistics
   const studentAttendance = MOCK_ATTENDANCE_RECORDS.filter(
@@ -301,10 +338,7 @@ export default function StudentPortal({
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id as any);
-                  setViewingCourse(null);
-                }}
+                onClick={() => handleTabClick(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap border-b-2 transition cursor-pointer ${
                   isActive
                     ? "border-editorial-accent text-editorial-accent font-extrabold bg-red-50/50"
@@ -494,59 +528,136 @@ export default function StudentPortal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {enrolledCourses.map((c) => {
-                    const completedCount = c.lessons.filter((l) => completedLessonIds.includes(l.id)).length;
-                    const percent = c.lessons.length ? Math.round((completedCount / c.lessons.length) * 100) : 0;
+                {enrolledCourses.length === 0 ? (
+                  <div className="bg-white border-2 border-dashed border-editorial-border p-8 text-center space-y-4 max-w-2xl mx-auto">
+                    <div className="h-12 w-12 bg-amber-50 text-editorial-accent border border-amber-200 flex items-center justify-center mx-auto">
+                      <GraduationCap className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-serif font-bold text-lg text-editorial-dark">
+                        {isEn ? "No Active Course Access Granted Yet" : "এখনও কোনো কোর্স অনুমোদিত হয়নি"}
+                      </h3>
+                      <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                        {isEn
+                          ? "Course access is strictly controlled by enrollment approval. Browse our professional culinary qualifications, submit an enrollment application, and once approved by the registrar, your course materials and kitchen labs will unlock here."
+                          : "কোর্স অ্যাক্সেস শুধুমাত্র অনুমোদিত শিক্ষার্থীদের জন্য উন্মুক্ত। কোর্সে ভর্তির আবেদন জমা দিন, অ্যাডমিন ভেরিফিকেশনের পর কোর্সটি এখানে চালু হবে।"}
+                      </p>
+                    </div>
 
-                    return (
-                      <div key={c.id} className="bg-white border border-editorial-border overflow-hidden shadow-xs hover:shadow-md transition">
-                        <img src={c.image} alt={c.titleEn} className="h-48 w-full object-cover" />
-                        <div className="p-6 space-y-4">
-                          <div className="space-y-1">
-                            <span className="text-[10px] uppercase font-bold text-editorial-accent tracking-wider">
-                              {c.levelEn} • {c.duration}
+                    {/* Show any pending applications submitted by this student */}
+                    {studentEnrollments.length > 0 && (
+                      <div className="p-4 bg-amber-50/90 border border-amber-300 text-left space-y-2 mt-4 text-xs">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-900 block">
+                          Submitted Applications Under Review:
+                        </span>
+                        {studentEnrollments.map((app) => (
+                          <div key={app.id} className="p-2.5 bg-white border border-amber-200 flex items-center justify-between">
+                            <div>
+                              <div className="font-bold text-slate-900">{app.courseTitle}</div>
+                              <div className="text-[10px] text-slate-500 font-mono">App ID: {app.id} • Applied: {app.appliedAt.split("T")[0]}</div>
+                            </div>
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold uppercase">
+                              {app.status === "payment_submitted" ? "Payment Under Review" : "Pending Approval"}
                             </span>
-                            <h3 className="font-serif font-bold text-lg text-editorial-dark">
-                              {isEn ? c.titleEn : c.titleBn}
-                            </h3>
-                            <p className="text-xs text-slate-600 line-clamp-2">
-                              {isEn ? c.descriptionEn : c.descriptionBn}
-                            </p>
                           </div>
+                        ))}
+                      </div>
+                    )}
 
-                          <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                            <div className="flex items-center justify-between text-xs font-semibold">
-                              <span className="text-slate-500">{isEn ? "Progress" : "অগ্রগতি"}</span>
-                              <span className="text-editorial-accent">{percent}% Complete ({completedCount}/{c.lessons.length})</span>
-                            </div>
-                            <div className="h-2 w-full bg-slate-100">
-                              <div className="h-full bg-editorial-accent" style={{ width: `${percent}%` }} />
-                            </div>
-                          </div>
+                    <div className="pt-2">
+                      <button
+                        onClick={onBrowseCourses}
+                        className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                      >
+                        {isEn ? "Browse Courses & Apply Now" : "কোর্স দেখুন ও আবেদন করুন"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {enrolledCourses.map((c) => {
+                      const completedCount = c.lessons.filter((l) => completedLessonIds.includes(l.id)).length;
+                      const percent = c.lessons.length ? Math.round((completedCount / c.lessons.length) * 100) : 0;
 
-                          <div className="flex items-center gap-3 pt-2">
-                            <button
-                              onClick={() => {
-                                setViewingCourse(c);
-                                setActiveLesson(c.lessons[0] || null);
-                              }}
-                              className="flex-1 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
-                            >
-                              <Play className="h-4 w-4" />
-                              <span>{isEn ? "Open Classroom" : "ক্লাসরুমে প্রবেশ করুন"}</span>
-                            </button>
-                            <button
-                              onClick={() => onSelectCourse(c)}
-                              className="px-3 py-2.5 border border-slate-300 hover:border-slate-800 text-slate-700 text-xs font-bold uppercase transition cursor-pointer"
-                            >
-                              {isEn ? "Syllabus" : "সিলেবাস"}
-                            </button>
+                      return (
+                        <div key={c.id} className="bg-white border border-editorial-border overflow-hidden shadow-xs hover:shadow-md transition">
+                          <img src={c.image} alt={c.titleEn} className="h-48 w-full object-cover" />
+                          <div className="p-6 space-y-4">
+                            <div className="space-y-1">
+                              <span className="text-[10px] uppercase font-bold text-editorial-accent tracking-wider">
+                                {c.levelEn} • {c.duration}
+                              </span>
+                              <h3 className="font-serif font-bold text-lg text-editorial-dark">
+                                {isEn ? c.titleEn : c.titleBn}
+                              </h3>
+                              <p className="text-xs text-slate-600 line-clamp-2">
+                                {isEn ? c.descriptionEn : c.descriptionBn}
+                              </p>
+                            </div>
+
+                            <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                              <div className="flex items-center justify-between text-xs font-semibold">
+                                <span className="text-slate-500">{isEn ? "Progress" : "অগ্রগতি"}</span>
+                                <span className="text-editorial-accent">{percent}% Complete ({completedCount}/{c.lessons.length})</span>
+                              </div>
+                              <div className="h-2 w-full bg-slate-100">
+                                <div className="h-full bg-editorial-accent" style={{ width: `${percent}%` }} />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-2">
+                              <button
+                                onClick={() => {
+                                  setViewingCourse(c);
+                                  setActiveLesson(c.lessons[0] || null);
+                                }}
+                                className="flex-1 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
+                              >
+                                <Play className="h-4 w-4" />
+                                <span>{isEn ? "Open Classroom" : "ক্লাসরুমে প্রবেশ করুন"}</span>
+                              </button>
+                              <button
+                                onClick={() => onSelectCourse(c)}
+                                className="px-3 py-2.5 border border-slate-300 hover:border-slate-800 text-slate-700 text-xs font-bold uppercase transition cursor-pointer"
+                              >
+                                {isEn ? "Syllabus" : "সিলেবাস"}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : !enrolledCourses.some((c) => c.id === viewingCourse.id) ? (
+              <div className="bg-red-50 border-2 border-red-300 p-8 text-center space-y-4 max-w-xl mx-auto my-8">
+                <div className="h-12 w-12 bg-red-100 text-red-700 rounded-full flex items-center justify-center mx-auto font-mono font-bold text-xl">
+                  403
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-serif font-bold text-lg text-red-900">
+                    {isEn ? "Course Access Restricted (403 Forbidden)" : "কোর্স অ্যাক্সেস সীমাবদ্ধ (৪০৩)"}
+                  </h3>
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    {isEn
+                      ? `Security Policy Rule #5: You do not have an approved enrollment for "${viewingCourse.titleEn}". Only students with APPROVED or ACTIVE admission can access kitchen lessons and laboratory materials.`
+                      : `নিরাপত্তা বিধি: "${viewingCourse.titleBn}" কোর্সে আপনার ভর্তি এখনও অনুমোদিত হয়নি। শুধুমাত্র অনুমোদিত শিক্ষার্থীরা এই পাঠ্যক্রম দেখতে পারবেন।`}
+                  </p>
+                </div>
+                <div className="pt-2 flex justify-center gap-3">
+                  <button
+                    onClick={() => setViewingCourse(null)}
+                    className="px-4 py-2 bg-white border border-slate-300 text-xs uppercase font-bold text-slate-700 cursor-pointer hover:bg-slate-50"
+                  >
+                    {isEn ? "Back to My Courses" : "আমার কোর্সে ফেরত যান"}
+                  </button>
+                  <button
+                    onClick={onBrowseCourses}
+                    className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white text-xs uppercase font-bold cursor-pointer"
+                  >
+                    {isEn ? "Browse & Apply" : "কোর্স তালিকা ও আবেদন"}
+                  </button>
                 </div>
               </div>
             ) : (

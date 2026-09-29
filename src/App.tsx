@@ -36,10 +36,15 @@ import AboutUs from "./components/AboutUs";
 import ChefJobAccommodation from "./components/ChefJobAccommodation";
 import Gallery from "./components/Gallery";
 
-import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
+// Dedicated Strict Authentication Pages (No guest bypass)
+import PortalLoginPage from "./components/PortalLoginPage";
+import StudentRegisterPage from "./components/StudentRegisterPage";
+import AdminLoginPage from "./components/AdminLoginPage";
+
+import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount, EnrollmentApplication } from "./types";
 import { INITIAL_COURSES, INITIAL_RECIPES, INITIAL_LIVE_CLASSES, BADGES, MOCK_BLOGS } from "./data/mockData";
-import { INITIAL_LMS_USERS } from "./data/lmsMockData";
+import { INITIAL_LMS_USERS, MOCK_ENROLLMENT_APPLICATIONS } from "./data/lmsMockData";
 import { TRANSLATIONS } from "./data/translations";
 import { db, auth, handleFirestoreError, OperationType } from "./utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -59,7 +64,9 @@ export default function App() {
     localStorage.setItem("lodonex_lang", newLang);
   };
 
-  // Navigation state
+  // URL and Navigation state
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname || "/");
+  const [redirectNotice, setRedirectNotice] = useState<string>("");
   const [currentTab, setCurrentTab] = useState<string>("dashboard");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
@@ -82,6 +89,18 @@ export default function App() {
 
   // Welcome Email Modal open state
   const [isWelcomeEmailOpen, setIsWelcomeEmailOpen] = useState<boolean>(false);
+
+  // Stored enrollment applications
+  const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(() => {
+    const saved = localStorage.getItem("lodonex_enrollments");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return MOCK_ENROLLMENT_APPLICATIONS;
+  });
 
   // Database of Registered Users with Firestore + Local fallback (Seeded with INITIAL_LMS_USERS)
   const [users, setUsers] = useState<UserAccount[]>(() => {
@@ -107,23 +126,76 @@ export default function App() {
     return null;
   });
 
+  // Navigation router function
+  const navigate = (path: string, notice?: string) => {
+    if (notice) {
+      setRedirectNotice(notice);
+    } else {
+      setRedirectNotice("");
+    }
+    window.history.pushState({}, "", path);
+    setCurrentPath(path);
+    setSelectedCourse(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname || "/");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleEnrollNow = (course: Course) => {
+    if (!currentUser) {
+      navigate(
+        "/portal/login",
+        lang === "en"
+          ? "Please log in or create a student account to apply for course enrollment."
+          : "কোর্সে আবেদন করার জন্য প্রথমে লগইন বা অ্যাকাউন্ট তৈরি করুন।"
+      );
+      return;
+    }
     setEnrollingCourse(course);
     setIsEnrollmentOpen(true);
   };
 
+  // Rule #6: Do NOT grant course access immediately when student submits application.
+  // Access must wait until Admin reviews and marks as approved!
   const handleEnrollmentSubmitted = (app: EnrollmentApplication) => {
-    // If student user submitted an application
-    if (currentUser && (app.studentId === currentUser.id || app.studentEmail === currentUser.email)) {
-      if (!currentUser.assignedCourseIds?.includes(app.courseId)) {
-        const updatedUser: UserAccount = {
-          ...currentUser,
-          assignedBatchId: app.batchId || currentUser.assignedBatchId,
-          assignedCourseIds: [...(currentUser.assignedCourseIds || []), app.courseId]
-        };
-        setCurrentUser(updatedUser);
-        localStorage.setItem("lodonex_current_user", JSON.stringify(updatedUser));
-      }
+    const updated = [app, ...enrollmentsList.filter((e) => e.id !== app.id)];
+    setEnrollmentsList(updated);
+    localStorage.setItem("lodonex_enrollments", JSON.stringify(updated));
+
+    // Show brief feedback and navigate to student dashboard courses
+    navigate("/student/courses");
+  };
+
+  // Admin approval of an enrollment
+  const handleApproveEnrollment = (appId: string) => {
+    const targetApp = enrollmentsList.find((e) => e.id === appId);
+    if (!targetApp) return;
+
+    const updated = enrollmentsList.map((e) =>
+      e.id === appId ? { ...e, status: "approved" as const } : e
+    );
+    setEnrollmentsList(updated);
+    localStorage.setItem("lodonex_enrollments", JSON.stringify(updated));
+
+    if (
+      currentUser &&
+      (currentUser.id === targetApp.studentId ||
+        currentUser.email.toLowerCase() === targetApp.studentEmail.toLowerCase())
+    ) {
+      const updatedUser: UserAccount = {
+        ...currentUser,
+        assignedCourseIds: Array.from(
+          new Set([...(currentUser.assignedCourseIds || []), targetApp.courseId])
+        )
+      };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("lodonex_current_user", JSON.stringify(updatedUser));
     }
   };
 
@@ -268,7 +340,14 @@ export default function App() {
       }
     }
     setCurrentUser(user);
-    setCurrentTab("dashboard");
+    setIsAuthOpen(false);
+
+    const isStaff = ["superadmin", "admin", "trainer"].includes(user.role || "");
+    if (isStaff) {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/student/dashboard");
+    }
 
     // Trigger Lodonex Welcome & Confirmation Email for visitors/students
     if (isNewSignup || user.email.toLowerCase() !== "lodonexcookingacademy@gmail.com") {
@@ -285,7 +364,7 @@ export default function App() {
     }
     setCurrentUser(null);
     setCart([]);
-    setCurrentTab("dashboard");
+    navigate("/");
   };
 
   // Cart operations
@@ -487,20 +566,214 @@ export default function App() {
         setCurrentTab={(tab) => {
           setSelectedCourse(null);
           setCurrentTab(tab);
+          if (tab === "courses") navigate("/courses");
+          else if (tab === "verify-cert") navigate("/verify-cert");
+          else if (tab === "dashboard") navigate(currentUser ? (["superadmin", "admin", "trainer"].includes(currentUser.role || "") ? "/admin/dashboard" : "/student/dashboard") : "/");
         }}
         lang={lang}
         setLang={handleSetLang}
         cart={cart}
         setIsCartOpen={setIsCartOpen}
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => navigate("/portal/login")}
         onLogOut={handleLogOut}
         onOpenWelcomeEmail={() => setIsWelcomeEmailOpen(true)}
+        onNavigate={navigate}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 mb-16">
-        {selectedCourse ? (
+        {/* ========================================================
+            DEDICATED ROUTE 1: /portal/login
+           ======================================================== */}
+        {currentPath === "/portal/login" ? (
+          <PortalLoginPage
+            lang={lang}
+            onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+            onNavigate={navigate}
+            redirectMessage={redirectNotice}
+            existingUsers={users}
+          />
+        ) : /* ========================================================
+            DEDICATED ROUTE 2: /portal/register
+           ======================================================== */
+        currentPath === "/portal/register" ? (
+          <StudentRegisterPage
+            lang={lang}
+            onRegisterSuccess={(user) => handleAuthSuccess(user, true)}
+            onNavigate={navigate}
+            existingUsers={users}
+          />
+        ) : /* ========================================================
+            DEDICATED ROUTE 3: /admin/login
+           ======================================================== */
+        currentPath === "/admin/login" ? (
+          <AdminLoginPage
+            lang={lang}
+            onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+            onNavigate={navigate}
+            redirectMessage={redirectNotice}
+            existingUsers={users}
+          />
+        ) : /* ========================================================
+            DEDICATED ROUTE 4: /student/* (STRICT ACCESS CONTROL)
+           ======================================================== */
+        currentPath.startsWith("/student") ? (
+          !currentUser ? (
+            /* Redirect unauthenticated visitor to /portal/login */
+            <PortalLoginPage
+              lang={lang}
+              onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+              onNavigate={navigate}
+              existingUsers={users}
+              redirectMessage={
+                lang === "en"
+                  ? "Please log in to access your student portal."
+                  : "শিক্ষার্থী পোর্টালে প্রবেশের জন্য অনুগ্রহ করে লগইন করুন।"
+              }
+            />
+          ) : (
+            <StudentPortal
+              lang={lang}
+              currentUser={currentUser}
+              courses={INITIAL_COURSES}
+              enrollments={enrollmentsList}
+              initialSubTab={currentPath.replace("/student/", "").replace("/student", "") || "dashboard"}
+              onSubTabChange={(subTab) => navigate(`/student/${subTab}`)}
+              onBrowseCourses={() => navigate("/courses")}
+              onSelectCourse={(course) => {
+                setSelectedCourse(course);
+                navigate(`/courses/${course.id}`);
+              }}
+              onViewCertificateModal={(course) => setSelectedCertCourse(course)}
+              onVerifyCertificatePublic={(certNum) => {
+                setVerifyCertQuery(certNum);
+                navigate("/verify-cert");
+              }}
+            />
+          )
+        ) : /* ========================================================
+            DEDICATED ROUTE 5: /admin/* (STRICT RBAC & 403 FORBIDDEN)
+           ======================================================== */
+        currentPath.startsWith("/admin") ? (
+          !currentUser ? (
+            /* Redirect unauthenticated user to /admin/login */
+            <AdminLoginPage
+              lang={lang}
+              onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+              onNavigate={navigate}
+              existingUsers={users}
+              redirectMessage={
+                lang === "en"
+                  ? "Please sign in to access the administration portal."
+                  : "অ্যাডমিন পোর্টালে প্রবেশের জন্য অনুগ্রহ করে সাইন ইন করুন।"
+              }
+            />
+          ) : currentUser.role === "student" ? (
+            /* Security Rule #9: Students are forbidden from admin dashboard */
+            <div className="max-w-xl mx-auto my-12 p-8 bg-red-50 border-2 border-red-300 text-center space-y-4 shadow-sm">
+              <div className="h-14 w-14 bg-red-100 text-red-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold font-mono">
+                403
+              </div>
+              <h2 className="font-serif font-extrabold text-2xl text-red-900">
+                {lang === "en" ? "403 Forbidden: Access Denied" : "৪০৩ নিষিদ্ধ: অ্যাক্সেস অস্বীকৃত"}
+              </h2>
+              <p className="text-xs text-red-700 leading-relaxed">
+                {lang === "en"
+                  ? "Security Policy Rule #9: Student apprentice accounts are strictly prohibited from accessing administrator consoles and faculty dashboards. All unauthorized attempts are logged for security compliance."
+                  : "নিরাপত্তা নীতি ৯: শিক্ষার্থীদের প্রশাসনিক পোর্টালে প্রবেশ সম্পূর্ণ নিষিদ্ধ। অননুমোদিত চেষ্টা নিরাপত্তা কারণে লিপিবদ্ধ করা হচ্ছে।"}
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => navigate("/student/dashboard")}
+                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                >
+                  {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Authorized Super Admin, Admin, Trainer */
+            <AdminPanel
+              lang={lang}
+              currentUser={currentUser}
+              courses={INITIAL_COURSES}
+              initialEnrollments={enrollmentsList}
+              onApproveEnrollmentGlobal={handleApproveEnrollment}
+              onSelectCourse={(course) => {
+                setSelectedCourse(course);
+                navigate(`/courses/${course.id}`);
+              }}
+              onUpdateUserAccount={(u) =>
+                setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+              }
+              initialUsers={users}
+            />
+          )
+        ) : /* ========================================================
+            DEDICATED ROUTE 6: /courses/:slug
+           ======================================================== */
+        currentPath.startsWith("/courses/") ? (
+          (() => {
+            const slug = currentPath.replace("/courses/", "").trim();
+            const matchedCourse =
+              INITIAL_COURSES.find(
+                (c) =>
+                  c.id === slug ||
+                  c.titleEn.toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug ||
+                  (slug === "level-1-culinary-foundation" && c.id === "course-1") ||
+                  (slug === "professional-chef-course" && c.id === "course-2") ||
+                  (slug === "master-pastry-baking" && c.id === "course-3") ||
+                  (slug === "bengali-culinary-heritage" && c.id === "course-4")
+              ) || INITIAL_COURSES[0];
+
+            return (
+              <CourseDetails
+                lang={lang}
+                course={matchedCourse}
+                progress={activeProgress}
+                onBack={() => navigate("/courses")}
+                onMarkLessonComplete={handleMarkLessonComplete}
+                onViewCertificate={(course) => setSelectedCertCourse(course)}
+                isLoggedIn={!!currentUser}
+                onOpenAuth={() => navigate("/portal/login")}
+                currentUser={currentUser}
+                onEnrollNow={(course) => handleEnrollNow(course)}
+              />
+            );
+          })()
+        ) : /* ========================================================
+            DEDICATED ROUTE 7: /courses
+           ======================================================== */
+        currentPath === "/courses" ? (
+          <CourseCatalog
+            lang={lang}
+            courses={INITIAL_COURSES}
+            progress={activeProgress}
+            cart={cart}
+            onAddToCart={handleAddToCart}
+            onSelectCourse={(course) => {
+              setSelectedCourse(course);
+              navigate(`/courses/${course.id}`);
+            }}
+            onEnrollNow={handleEnrollNow}
+          />
+        ) : /* ========================================================
+            DEDICATED ROUTE 8: /verify-cert
+           ======================================================== */
+        currentPath === "/verify-cert" ? (
+          <CertificateVerification
+            lang={lang}
+            initialCertNumber={verifyCertQuery}
+            onNavigateToCourse={(courseId) => {
+              const target = INITIAL_COURSES.find((c) => c.id === courseId);
+              if (target) {
+                setSelectedCourse(target);
+                navigate(`/courses/${target.id}`);
+              }
+            }}
+          />
+        ) : selectedCourse ? (
           <CourseDetails
             lang={lang}
             course={selectedCourse}
@@ -511,7 +784,7 @@ export default function App() {
             onMarkLessonComplete={handleMarkLessonComplete}
             onViewCertificate={(course) => setSelectedCertCourse(course)}
             isLoggedIn={!!currentUser}
-            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAuth={() => navigate("/portal/login")}
             currentUser={currentUser}
             onEnrollNow={(course) => handleEnrollNow(course)}
           />
@@ -524,10 +797,17 @@ export default function App() {
                   /* Public Visitor Landing Experience */
                   <VisitorLanding
                     lang={lang}
-                    onOpenAuth={() => setIsAuthOpen(true)}
+                    onOpenAuth={() => navigate("/portal/login")}
                     courses={INITIAL_COURSES}
-                    onSelectTab={(tab) => setCurrentTab(tab)}
-                    onSelectCourse={handleSelectCourse}
+                    onSelectTab={(tab) => {
+                      if (tab === "courses") navigate("/courses");
+                      else if (tab === "verify-cert") navigate("/verify-cert");
+                      else setCurrentTab(tab);
+                    }}
+                    onSelectCourse={(course) => {
+                      setSelectedCourse(course);
+                      navigate(`/courses/${course.id}`);
+                    }}
                   />
                 ) : ["superadmin", "admin", "trainer"].includes(currentUser.role || "") ? (
                   /* Admin & Trainer Management Portal */
@@ -535,7 +815,13 @@ export default function App() {
                     lang={lang}
                     currentUser={currentUser}
                     courses={INITIAL_COURSES}
+                    initialEnrollments={enrollmentsList}
+                    onApproveEnrollmentGlobal={handleApproveEnrollment}
                     onSelectCourse={handleSelectCourse}
+                    onUpdateUserAccount={(u) =>
+                      setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+                    }
+                    initialUsers={users}
                   />
                 ) : currentUser.status === "pending" ? (
                   /* Pending Student Section waiting for Admin Approval */
@@ -550,12 +836,18 @@ export default function App() {
                     lang={lang}
                     currentUser={currentUser}
                     courses={INITIAL_COURSES}
-                    onSelectCourse={handleSelectCourse}
+                    enrollments={enrollmentsList}
+                    initialSubTab="dashboard"
+                    onSubTabChange={(subTab) => navigate(`/student/${subTab}`)}
+                    onBrowseCourses={() => navigate("/courses")}
+                    onSelectCourse={(course) => {
+                      setSelectedCourse(course);
+                      navigate(`/courses/${course.id}`);
+                    }}
                     onViewCertificateModal={(course) => setSelectedCertCourse(course)}
                     onVerifyCertificatePublic={(certNum) => {
                       setVerifyCertQuery(certNum);
-                      setCurrentTab("verify-cert");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      navigate("/verify-cert");
                     }}
                   />
                 )}
@@ -564,12 +856,50 @@ export default function App() {
 
             {/* Direct Admin Portal Tab */}
             {currentTab === "admin" && (
-              <AdminPanel
-                lang={lang}
-                currentUser={currentUser || INITIAL_LMS_USERS[0]}
-                courses={INITIAL_COURSES}
-                onSelectCourse={handleSelectCourse}
-              />
+              !currentUser ? (
+                <AdminLoginPage
+                  lang={lang}
+                  onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+                  onNavigate={navigate}
+                  existingUsers={users}
+                  redirectMessage={
+                    lang === "en"
+                      ? "Please sign in to access the administration portal."
+                      : "অ্যাডমিন পোর্টালে প্রবেশের জন্য অনুগ্রহ করে সাইন ইন করুন।"
+                  }
+                />
+              ) : currentUser.role === "student" ? (
+                <div className="max-w-xl mx-auto my-12 p-8 bg-red-50 border-2 border-red-300 text-center space-y-4 shadow-sm">
+                  <div className="h-14 w-14 bg-red-100 text-red-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold font-mono">
+                    403
+                  </div>
+                  <h2 className="font-serif font-extrabold text-2xl text-red-900">
+                    403 Forbidden: Access Denied
+                  </h2>
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    Student accounts are not authorized to access the administration portal.
+                  </p>
+                  <button
+                    onClick={() => navigate("/student/dashboard")}
+                    className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
+                  >
+                    Return to Student Dashboard
+                  </button>
+                </div>
+              ) : (
+                <AdminPanel
+                  lang={lang}
+                  currentUser={currentUser}
+                  courses={INITIAL_COURSES}
+                  initialEnrollments={enrollmentsList}
+                  onApproveEnrollmentGlobal={handleApproveEnrollment}
+                  onSelectCourse={handleSelectCourse}
+                  onUpdateUserAccount={(u) =>
+                    setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+                  }
+                  initialUsers={users}
+                />
+              )
             )}
 
             {/* Public Certificate Verification Page */}
@@ -829,9 +1159,23 @@ export default function App() {
                     <li key={link.id}>
                       <button
                         onClick={() => {
-                          setSelectedCourse(null);
-                          setCurrentTab(link.id);
-                          window.scrollTo({ top: 0, behavior: "smooth" });
+                          if (link.id === "courses") {
+                            navigate("/courses");
+                          } else if (link.id === "verify-cert") {
+                            navigate("/verify-cert");
+                          } else if (link.id === "dashboard") {
+                            navigate(
+                              currentUser
+                                ? ["superadmin", "admin", "trainer"].includes(currentUser.role || "")
+                                  ? "/admin/dashboard"
+                                  : "/student/dashboard"
+                                : "/portal/login"
+                            );
+                          } else {
+                            setSelectedCourse(null);
+                            setCurrentTab(link.id);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
                         }}
                         className="hover:text-editorial-accent transition-colors text-left cursor-pointer"
                       >

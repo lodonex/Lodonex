@@ -158,6 +158,7 @@ export interface UserAccount {
   city?: string;
   address?: string;
   photoUrl?: string;
+  password?: string;
   role?: UserRole;
   status: UserStatus;
   emailVerified?: boolean;

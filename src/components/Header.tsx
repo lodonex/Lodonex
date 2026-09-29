@@ -15,6 +15,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
   onLogOut: () => void;
   onOpenWelcomeEmail?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
 export default function Header({
@@ -28,6 +29,7 @@ export default function Header({
   onOpenAuth,
   onLogOut,
   onOpenWelcomeEmail,
+  onNavigate,
 }: HeaderProps) {
   const t = TRANSLATIONS[lang];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,12 +37,21 @@ export default function Header({
   const isStaff = currentUser && ["superadmin", "admin", "trainer"].includes(currentUser.role || "");
 
   const menuItems = [
-    {
-      id: "dashboard",
-      label: isStaff
-        ? (lang === "en" ? "Admin Panel" : "অ্যাডমিন প্যানেল")
-        : t.studentDashboard
-    },
+    ...(currentUser
+      ? [
+          {
+            id: "dashboard",
+            label: isStaff
+              ? (lang === "en" ? "Admin Panel" : "অ্যাডমিন প্যানেল")
+              : (lang === "en" ? "Student Portal" : "শিক্ষার্থী পোর্টাল")
+          }
+        ]
+      : [
+          {
+            id: "home",
+            label: lang === "en" ? "Home" : "মূল পাতা"
+          }
+        ]),
     { id: "courses", label: t.ourCourses },
     { id: "verify-cert", label: lang === "en" ? "Verify Certificate" : "সার্টিফিকেট যাচাই", badge: "PUBLIC" },
     { id: "recipes", label: t.myRecipes },
@@ -72,7 +83,11 @@ export default function Header({
             id="header-logo"
             className="flex items-center space-x-3 cursor-pointer"
             onClick={() => {
-              setCurrentTab("dashboard");
+              if (onNavigate) {
+                onNavigate(currentUser ? (isStaff ? "/admin/dashboard" : "/student/dashboard") : "/");
+              } else {
+                setCurrentTab("dashboard");
+              }
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
@@ -101,7 +116,17 @@ export default function Header({
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => {
-                  setCurrentTab(item.id);
+                  if (item.id === "courses" && onNavigate) {
+                    onNavigate("/courses");
+                  } else if (item.id === "verify-cert" && onNavigate) {
+                    onNavigate("/verify-cert");
+                  } else if (item.id === "dashboard" && onNavigate) {
+                    onNavigate(isStaff ? "/admin/dashboard" : "/student/dashboard");
+                  } else if (item.id === "home" && onNavigate) {
+                    onNavigate("/");
+                  } else {
+                    setCurrentTab(item.id);
+                  }
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className={`px-2.5 py-1.5 text-xs uppercase tracking-widest font-bold transition-all duration-200 border-b-2 cursor-pointer flex items-center gap-1 ${
@@ -154,7 +179,13 @@ export default function Header({
             {!currentUser ? (
               <button
                 id="header-auth-btn"
-                onClick={onOpenAuth}
+                onClick={() => {
+                  if (onNavigate) {
+                    onNavigate("/portal/login");
+                  } else {
+                    onOpenAuth();
+                  }
+                }}
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-editorial-accent hover:bg-red-800 text-white text-[11px] font-extrabold uppercase tracking-wider transition duration-200 cursor-pointer shadow-xs"
               >
                 <User className="h-3.5 w-3.5" />
@@ -194,7 +225,11 @@ export default function Header({
                 {isStaff && (
                   <button
                     onClick={() => {
-                      setCurrentTab(currentTab === "admin" ? "dashboard" : "admin");
+                      if (onNavigate) {
+                        onNavigate(currentTab === "admin" ? "/student/dashboard" : "/admin/dashboard");
+                      } else {
+                        setCurrentTab(currentTab === "admin" ? "dashboard" : "admin");
+                      }
                     }}
                     className="p-1 text-slate-600 hover:text-black transition cursor-pointer"
                     title={lang === "en" ? "Toggle Admin View" : "অ্যাডমিন ভিউ পরিবর্তন"}
@@ -248,7 +283,17 @@ export default function Header({
                 key={item.id}
                 id={`nav-mob-${item.id}`}
                 onClick={() => {
-                  setCurrentTab(item.id);
+                  if (item.id === "courses" && onNavigate) {
+                    onNavigate("/courses");
+                  } else if (item.id === "verify-cert" && onNavigate) {
+                    onNavigate("/verify-cert");
+                  } else if (item.id === "dashboard" && onNavigate) {
+                    onNavigate(isStaff ? "/admin/dashboard" : "/student/dashboard");
+                  } else if (item.id === "home" && onNavigate) {
+                    onNavigate("/");
+                  } else {
+                    setCurrentTab(item.id);
+                  }
                   setIsMobileMenuOpen(false);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
