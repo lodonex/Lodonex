@@ -2,13 +2,18 @@
   "entities": {
     "users": {
       "title": "users",
-      "description": "User profiles, activation statuses, and culinary training progress.",
+      "description": "User profiles, activation statuses, roles, and culinary training progress.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
         "email": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved"] },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["superadmin", "admin", "trainer", "student"] },
+        "status": { "type": "string", "enum": ["pending", "active", "approved", "suspended", "blocked"] },
+        "assignedBatchId": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" },
         "progress": {
           "type": "object",
           "properties": {
@@ -20,61 +25,92 @@
           }
         }
       },
-      "required": ["id", "name", "email", "status", "progress"]
+      "required": ["id", "name", "email", "status"]
     },
-    "reviews": {
-      "title": "reviews",
-      "description": "Student reviews and feedback for courses.",
+    "batches": {
+      "title": "batches",
+      "description": "Culinary training cohorts and course batches.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "name": { "type": "string" },
         "courseId": { "type": "string" },
+        "courseTitle": { "type": "string" },
+        "trainerId": { "type": "string" },
+        "trainerName": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["upcoming", "active", "completed", "cancelled"] }
+      },
+      "required": ["id", "name", "courseId", "trainerId", "status"]
+    },
+    "enrollments": {
+      "title": "enrollments",
+      "description": "Student course enrollment applications, reviews, and admissions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
         "studentId": { "type": "string" },
         "studentName": { "type": "string" },
         "studentEmail": { "type": "string" },
-        "rating": { "type": "number" },
-        "feedback": { "type": "string" },
-        "createdAt": { "type": "string" }
-      },
-      "required": ["id", "courseId", "studentId", "rating", "feedback"]
-    },
-    "recipes": {
-      "title": "recipes",
-      "description": "Custom recipes created and persisted by students.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "titleEn": { "type": "string" },
-        "titleBn": { "type": "string" },
-        "categoryEn": { "type": "string" },
-        "categoryBn": { "type": "string" },
-        "prepTime": { "type": "string" },
-        "cookTime": { "type": "string" },
-        "servings": { "type": "number" },
-        "ingredientsEn": { "type": "array", "items": { "type": "string" } },
-        "ingredientsBn": { "type": "array", "items": { "type": "string" } },
-        "stepsEn": { "type": "array", "items": { "type": "string" } },
-        "stepsBn": { "type": "array", "items": { "type": "string" } },
-        "image": { "type": "string" }
-      },
-      "required": ["id", "titleEn", "ingredientsEn", "stepsEn"]
-    },
-    "applications": {
-      "title": "applications",
-      "description": "Student enrollment and admission inquiries.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
         "courseId": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string" },
-        "phone": { "type": "string" },
-        "status": { "type": "string" },
-        "createdAt": { "type": "string" }
+        "courseTitle": { "type": "string" },
+        "batchId": { "type": "string" },
+        "status": { "type": "string", "enum": ["applied", "pending_payment", "payment_submitted", "under_review", "approved", "active", "completed", "cancelled", "rejected"] },
+        "totalFee": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "appliedAt": { "type": "string" }
       },
-      "required": ["id", "courseId", "name", "email"]
+      "required": ["id", "studentId", "courseId", "status"]
+    },
+    "attendance": {
+      "title": "attendance",
+      "description": "Daily practical and theoretical attendance logs.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "batchId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "absent", "late", "excused"] },
+        "markedBy": { "type": "string" }
+      },
+      "required": ["id", "batchId", "studentId", "date", "status"]
+    },
+    "assignments": {
+      "title": "assignments",
+      "description": "Culinary coursework, knife portfolios, and HACCP assignments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "courseId": { "type": "string" },
+        "batchId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "maxMarks": { "type": "number" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "courseId", "title", "dueDate", "maxMarks"]
+    },
+    "certificates": {
+      "title": "certificates",
+      "description": "Verifiable accredited digital culinary diplomas and certificates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "certificateNumber": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "courseId": { "type": "string" },
+        "courseTitle": { "type": "string" },
+        "issueDate": { "type": "string" },
+        "grade": { "type": "string" },
+        "isValid": { "type": "boolean" }
+      },
+      "required": ["id", "certificateNumber", "studentId", "courseId", "isValid"]
     }
   }
 }

@@ -26,6 +26,10 @@ import WelcomeEmailModal from "./components/WelcomeEmailModal";
 import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
 import AdminSimulationPanel from "./components/AdminSimulationPanel";
+import StudentPortal from "./components/StudentPortal";
+import AdminPanel from "./components/AdminPanel";
+import CertificateVerification from "./components/CertificateVerification";
+import EnrollmentModal from "./components/EnrollmentModal";
 import { OurChefs } from "./components/OurChefs";
 import Policies from "./components/Policies";
 import AboutUs from "./components/AboutUs";
@@ -33,8 +37,9 @@ import ChefJobAccommodation from "./components/ChefJobAccommodation";
 import Gallery from "./components/Gallery";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock } from "lucide-react";
-import { Language, Course, Recipe, StudentProgress, Badge, UserAccount } from "./types";
+import { Language, Course, Recipe, StudentProgress, Badge, UserAccount, EnrollmentApplication } from "./types";
 import { INITIAL_COURSES, INITIAL_RECIPES, INITIAL_LIVE_CLASSES, BADGES, MOCK_BLOGS } from "./data/mockData";
+import { INITIAL_LMS_USERS } from "./data/lmsMockData";
 import { TRANSLATIONS } from "./data/translations";
 import { db, auth, handleFirestoreError, OperationType } from "./utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -65,21 +70,29 @@ export default function App() {
   // Certificate Modal state
   const [selectedCertCourse, setSelectedCertCourse] = useState<Course | null>(null);
 
+  // Course Enrollment Workflow modal state
+  const [isEnrollmentOpen, setIsEnrollmentOpen] = useState<boolean>(false);
+  const [enrollingCourse, setEnrollingCourse] = useState<Course | null>(null);
+
+  // Certificate Public Verification Query
+  const [verifyCertQuery, setVerifyCertQuery] = useState<string>("");
+
   // Auth modal open state
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
 
   // Welcome Email Modal open state
   const [isWelcomeEmailOpen, setIsWelcomeEmailOpen] = useState<boolean>(false);
 
-  // Database of Registered Users with Firestore + Local fallback
+  // Database of Registered Users with Firestore + Local fallback (Seeded with INITIAL_LMS_USERS)
   const [users, setUsers] = useState<UserAccount[]>(() => {
     const saved = localStorage.getItem("lodonex_users");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    return [];
+    return INITIAL_LMS_USERS;
   });
 
   // Current logged in user
@@ -93,6 +106,26 @@ export default function App() {
     }
     return null;
   });
+
+  const handleEnrollNow = (course: Course) => {
+    setEnrollingCourse(course);
+    setIsEnrollmentOpen(true);
+  };
+
+  const handleEnrollmentSubmitted = (app: EnrollmentApplication) => {
+    // If student user submitted an application
+    if (currentUser && (app.studentId === currentUser.id || app.studentEmail === currentUser.email)) {
+      if (!currentUser.assignedCourseIds?.includes(app.courseId)) {
+        const updatedUser: UserAccount = {
+          ...currentUser,
+          assignedBatchId: app.batchId || currentUser.assignedBatchId,
+          assignedCourseIds: [...(currentUser.assignedCourseIds || []), app.courseId]
+        };
+        setCurrentUser(updatedUser);
+        localStorage.setItem("lodonex_current_user", JSON.stringify(updatedUser));
+      }
+    }
+  };
 
   // Load and sync users from Firestore on mount
   useEffect(() => {
@@ -480,23 +513,28 @@ export default function App() {
             isLoggedIn={!!currentUser}
             onOpenAuth={() => setIsAuthOpen(true)}
             currentUser={currentUser}
-            onEnrollNow={(course) => {
-              handleAddToCart(course);
-              setIsCartOpen(true);
-            }}
+            onEnrollNow={(course) => handleEnrollNow(course)}
           />
         ) : (
           <>
-            {/* Dashboard Rendering based on User Role (Visitor vs Pending vs Approved Student) */}
+            {/* Dashboard Rendering based on User Role (Visitor vs Staff Admin vs Pending vs Approved Student) */}
             {currentTab === "dashboard" && (
               <>
                 {!currentUser ? (
-                  /* Random Visitor Landing Section */
+                  /* Public Visitor Landing Experience */
                   <VisitorLanding
                     lang={lang}
                     onOpenAuth={() => setIsAuthOpen(true)}
                     courses={INITIAL_COURSES}
                     onSelectTab={(tab) => setCurrentTab(tab)}
+                    onSelectCourse={handleSelectCourse}
+                  />
+                ) : ["superadmin", "admin", "trainer"].includes(currentUser.role || "") ? (
+                  /* Admin & Trainer Management Portal */
+                  <AdminPanel
+                    lang={lang}
+                    currentUser={currentUser}
+                    courses={INITIAL_COURSES}
                     onSelectCourse={handleSelectCourse}
                   />
                 ) : currentUser.status === "pending" ? (
@@ -507,17 +545,47 @@ export default function App() {
                     onSimulateApprove={() => handleUpdateUserStatus(currentUser.id, "approved")}
                   />
                 ) : (
-                  /* Approved Student Dashboard */
-                  <Dashboard
+                  /* Full Student Panel LMS for Approved & Active Apprentices */
+                  <StudentPortal
                     lang={lang}
-                    progress={activeProgress}
+                    currentUser={currentUser}
                     courses={INITIAL_COURSES}
                     onSelectCourse={handleSelectCourse}
-                    setCurrentTab={setCurrentTab}
-                    onViewCertificate={(course) => setSelectedCertCourse(course)}
+                    onViewCertificateModal={(course) => setSelectedCertCourse(course)}
+                    onVerifyCertificatePublic={(certNum) => {
+                      setVerifyCertQuery(certNum);
+                      setCurrentTab("verify-cert");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
                   />
                 )}
               </>
+            )}
+
+            {/* Direct Admin Portal Tab */}
+            {currentTab === "admin" && (
+              <AdminPanel
+                lang={lang}
+                currentUser={currentUser || INITIAL_LMS_USERS[0]}
+                courses={INITIAL_COURSES}
+                onSelectCourse={handleSelectCourse}
+              />
+            )}
+
+            {/* Public Certificate Verification Page */}
+            {currentTab === "verify-cert" && (
+              <CertificateVerification
+                lang={lang}
+                initialCertNumber={verifyCertQuery}
+                onNavigateToCourse={(courseId) => {
+                  const target = INITIAL_COURSES.find((c) => c.id === courseId);
+                  if (target) {
+                    setSelectedCourse(target);
+                    setCurrentTab("courses");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+              />
             )}
 
             {currentTab === "courses" && (
@@ -528,6 +596,7 @@ export default function App() {
                 cart={cart}
                 onAddToCart={handleAddToCart}
                 onSelectCourse={handleSelectCourse}
+                onEnrollNow={handleEnrollNow}
               />
             )}
 
@@ -681,6 +750,17 @@ export default function App() {
         onPaymentSuccess={handlePaymentSuccess}
       />
 
+      {/* Course Enrollment & Admissions Workflow Modal */}
+      <EnrollmentModal
+        lang={lang}
+        isOpen={isEnrollmentOpen}
+        onClose={() => setIsEnrollmentOpen(false)}
+        course={enrollingCourse}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onEnrollmentSubmitted={handleEnrollmentSubmitted}
+      />
+
       {/* Credentials Diploma Visualizer */}
       <CertificateModal
         lang={lang}
@@ -737,6 +817,7 @@ export default function App() {
                   {[
                     { id: "dashboard", label: t.studentDashboard },
                     { id: "courses", label: t.ourCourses },
+                    { id: "verify-cert", label: lang === "en" ? "Verify Certificate" : "সার্টিফিকেট যাচাই" },
                     { id: "recipes", label: t.myRecipes },
                     { id: "chefs", label: t.ourChefs },
                     { id: "live", label: t.liveMasterclass },

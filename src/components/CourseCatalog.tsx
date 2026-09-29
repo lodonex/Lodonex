@@ -12,6 +12,7 @@ interface CourseCatalogProps {
   cart: Course[];
   onAddToCart: (course: Course) => void;
   onSelectCourse: (course: Course) => void;
+  onEnrollNow?: (course: Course) => void;
 }
 
 export default function CourseCatalog({
@@ -21,6 +22,7 @@ export default function CourseCatalog({
   cart,
   onAddToCart,
   onSelectCourse,
+  onEnrollNow,
 }: CourseCatalogProps) {
   const t = TRANSLATIONS[lang];
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -250,20 +252,34 @@ export default function CourseCatalog({
                           <BookOpen className="h-4 w-4 text-editorial-accent" />
                           {t.startLearning}
                         </button>
-                      ) : isInCart ? (
-                        <span className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-none">
-                          <Check className="h-4 w-4" />
-                          {lang === "en" ? "In Cart" : "কার্টে আছে"}
-                        </span>
                       ) : (
-                        <button
-                          id={`action-buy-${course.id}`}
-                          onClick={() => onAddToCart(course)}
-                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#1A1A1A] text-white rounded-none hover:bg-red-600 border border-transparent hover:border-red-600 shadow-sm transition flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          {t.buyCourse}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          {onEnrollNow && (
+                            <button
+                              id={`action-enroll-${course.id}`}
+                              onClick={() => onEnrollNow(course)}
+                              className="px-3 py-2.5 text-xs font-bold uppercase tracking-widest bg-editorial-accent text-white hover:bg-red-800 transition cursor-pointer"
+                            >
+                              {lang === "en" ? "Apply" : "ভর্তি"}
+                            </button>
+                          )}
+                          {isInCart ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <Check className="h-4 w-4" />
+                              {lang === "en" ? "In Cart" : "কার্টে আছে"}
+                            </span>
+                          ) : (
+                            <button
+                              id={`action-buy-${course.id}`}
+                              onClick={() => onAddToCart(course)}
+                              className="px-3 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#1A1A1A] text-white hover:bg-black transition flex items-center gap-1 cursor-pointer"
+                              title="Add to shopping cart"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              <span className="hidden sm:inline">{t.buyCourse}</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

@@ -1,35 +1,85 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     // Users collection
     match /users/{userId} {
-      allow read: if true;
-      allow create, update: if true;
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || request.auth.token.email == 'lodonexcookingacademy@gmail.com');
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Reviews collection
-    match /reviews/{reviewId} {
+    // Public Course information
+    match /courses/{courseId} {
       allow read: if true;
-      allow create, update: if true;
-      allow delete: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    // Recipes collection
-    match /recipes/{recipeId} {
+    // Batches
+    match /batches/{batchId} {
       allow read: if true;
-      allow create, update, delete: if true;
+      allow write: if isSignedIn();
     }
 
-    // Applications collection
-    match /applications/{applicationId} {
+    // Enrollments
+    match /enrollments/{enrollmentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
+    // Attendance
+    match /attendance/{attendanceId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Assignments & Submissions
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    match /submissions/{submissionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // Exams & Results
+    match /exams/{examId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    match /results/{resultId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    // Digital Certificates: Publicly readable for digital verification!
+    match /certificates/{certId} {
       allow read: if true;
-      allow create, update, delete: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Payment logs
+    match /payments/{paymentId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     // Default fallback
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
   }
 }

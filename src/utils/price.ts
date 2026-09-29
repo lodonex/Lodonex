@@ -5,7 +5,7 @@ import { Language } from "../types";
  * In English mode, shows in USD ($) using a conversion rate of 1 USD = 120 BDT.
  * In Bengali mode, shows in BDT (৳).
  */
-export function formatPrice(price: number, lang: Language): string {
+export function formatPrice(price: number, lang: Language = "en"): string {
   if (lang === "en") {
     const usdPrice = Math.round(price / 120);
     return `$${usdPrice}`;
