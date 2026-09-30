@@ -27,7 +27,8 @@ import {
   Settings,
   RefreshCw,
   X,
-  GraduationCap
+  GraduationCap,
+  Terminal
 } from "lucide-react";
 import {
   Language,
@@ -41,7 +42,8 @@ import {
   Exam,
   StudentGradeResult,
   DigitalCertificate,
-  PaymentRecord
+  PaymentRecord,
+  AuditLogEntry
 } from "../types";
 import { formatPrice } from "../utils/price";
 import {
@@ -81,7 +83,7 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const isEn = lang === "en";
   const userRole = currentUser.role || "admin";
-  const isSuperAdmin = userRole === "superadmin";
+  const isSuperAdmin = userRole === "superadmin" || userRole === "super_admin";
   const isTrainer = userRole === "trainer";
 
   // Tab State
@@ -98,12 +100,36 @@ export default function AdminPanel({
     | "certificates"
     | "payments"
     | "staff"
+    | "audit_logs"
     | "settings"
   >("overview");
 
   // Stores
   const [usersList, setUsersList] = useState<UserAccount[]>(initialUsers || INITIAL_LMS_USERS);
   const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(initialEnrollments || MOCK_ENROLLMENT_APPLICATIONS);
+  const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
+
+  React.useEffect(() => {
+    async function loadAuditLogs() {
+      try {
+        const res = await fetch("/api/admin/audit-logs", {
+          headers: {
+            "x-user-role": userRole,
+            "x-user-id": currentUser.id
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.logs) {
+            setAuditLogsList(data.logs);
+          }
+        }
+      } catch (err) {}
+    }
+    if (isSuperAdmin) {
+      loadAuditLogs();
+    }
+  }, [isSuperAdmin, userRole, currentUser.id]);
 
   React.useEffect(() => {
     if (initialEnrollments) {
@@ -139,7 +165,7 @@ export default function AdminPanel({
   const [newStaffName, setNewStaffName] = useState("");
   const [newStaffEmail, setNewStaffEmail] = useState("");
   const [newStaffPhone, setNewStaffPhone] = useState("");
-  const [newStaffRole, setNewStaffRole] = useState<"admin" | "trainer">("admin");
+  const [newStaffRole, setNewStaffRole] = useState<"admin" | "staff" | "trainer">("admin");
   const [newStaffPassword, setNewStaffPassword] = useState("StaffPass@2026");
   const [newStaffError, setNewStaffError] = useState("");
 
@@ -441,11 +467,15 @@ export default function AdminPanel({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-editorial-accent text-white font-mono text-[9px] font-extrabold uppercase tracking-widest">
-                  {userRole.toUpperCase()} ACCESS
+                <span className={`px-2.5 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-widest border ${
+                  isSuperAdmin
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                    : "bg-editorial-accent text-white border-transparent"
+                }`}>
+                  {userRole === "super_admin" || userRole === "superadmin" ? "SUPER ADMIN" : userRole.toUpperCase()} ACCESS
                 </span>
                 <span className="text-white/40 text-xs">•</span>
-                <span className="text-xs text-white/70 font-mono">Operator: {currentUser.name}</span>
+                <span className="text-xs text-white/90 font-mono font-bold">Operator: {currentUser.name}</span>
               </div>
               <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
                 {isEn ? "Lodonex Academy Administration Portal" : "লোডোনেক্স একাডেমি প্রশাসনিক প্যানেল"}
@@ -488,6 +518,7 @@ export default function AdminPanel({
             { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: true },
             { id: "payments", label: isEn ? "Payments & Trx" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer },
             { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
+            { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
             { id: "settings", label: isEn ? "Gateways / Settings" : "পেমেন্ট গেটওয়ে", icon: Settings, show: isSuperAdmin },
           ]
             .filter((t) => t.show)
@@ -512,50 +543,120 @@ export default function AdminPanel({
         </div>
 
         {/* ========================================================
-            TAB 1: OVERVIEW DASHBOARD
+            TAB 1: OVERVIEW DASHBOARD (STEP 7: 10 Core Statistics)
            ======================================================== */}
         {adminTab === "overview" && (
           <div className="space-y-8 mt-6">
-            {/* KPI Metrics Bento Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
+            {/* KPI Metrics Grid: All 10 Required Super Admin Statistics */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+              {/* 1. Total Students */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Registered Students" : "নিবন্ধিত শিক্ষার্থী"}
+                  {isEn ? "Total Students" : "মোট শিক্ষার্থী"}
                 </span>
                 <div className="font-serif text-2xl font-extrabold text-editorial-dark">
                   {usersList.filter((u) => u.role === "student").length}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold">Active & Pending Apprentices</p>
+                <p className="text-[10px] text-slate-500">{isEn ? "All Registered" : "সর্বমোট নিবন্ধিত"}</p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
+              {/* 2. Active Students */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Pending Admissions" : "অপেক্ষমাণ আবেদন"}
+                  {isEn ? "Active Students" : "সক্রিয় শিক্ষার্থী"}
+                </span>
+                <div className="font-serif text-2xl font-extrabold text-emerald-700">
+                  {usersList.filter((u) => u.role === "student" && (u.status === "active" || u.status === "approved")).length}
+                </div>
+                <p className="text-[10px] text-emerald-600 font-semibold">{isEn ? "Enrolled & Attending" : "কোর্সে যুক্ত"}</p>
+              </div>
+
+              {/* 3. Pending Enrollments */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Pending Enrollments" : "অপেক্ষমাণ আবেদন"}
                 </span>
                 <div className="font-serif text-2xl font-extrabold text-amber-700">
                   {enrollmentsList.filter((e) => ["applied", "under_review", "payment_submitted"].includes(e.status)).length}
                 </div>
-                <p className="text-[11px] text-slate-500">{isEn ? "Requires registrar review" : "রিভিউ প্রয়োজন"}</p>
+                <p className="text-[10px] text-amber-600">{isEn ? "Needs Approval" : "অনুমোদন প্রয়োজন"}</p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
+              {/* 4. Active Courses */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Active Batches" : "চলমান ব্যাচসমূহ"}
+                  {isEn ? "Active Courses" : "চলমান কোর্স"}
                 </span>
                 <div className="font-serif text-2xl font-extrabold text-editorial-accent">
-                  {batchesList.filter((b) => b.status === "active").length}
+                  {courses.length}
                 </div>
-                <p className="text-[11px] text-slate-500">{batchesList.length} Total Cohorts</p>
+                <p className="text-[10px] text-slate-500">{isEn ? "Culinary Curricula" : "কারিকুলাম"}</p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
+              {/* 5. Active Batches */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Tuitions Logged" : "মোট সংগৃহীত ফি"}
+                  {isEn ? "Active Batches" : "চলমান ব্যাচ"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-slate-800">
+                <div className="font-serif text-2xl font-extrabold text-blue-700">
+                  {batchesList.filter((b) => b.status === "active").length}
+                </div>
+                <p className="text-[10px] text-slate-500">{batchesList.length} {isEn ? "Total Batches" : "মোট ব্যাচ"}</p>
+              </div>
+
+              {/* 6. Total Payments */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Total Payments" : "মোট সংগৃহীত ফি"}
+                </span>
+                <div className="font-serif text-xl font-extrabold text-slate-900 truncate">
                   {formatPrice(paymentsList.filter((p) => p.status === "verified").reduce((a, b) => a + b.amount, 0))}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold">{isEn ? "Verified Receipts" : "যাচাইকৃত রসিদ"}</p>
+                <p className="text-[10px] text-emerald-700 font-semibold">{isEn ? "Verified Receipts" : "যাচাইকৃত রসিদ"}</p>
+              </div>
+
+              {/* 7. Pending Payments */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Pending Payments" : "অমীমাংসিত ফি"}
+                </span>
+                <div className="font-serif text-2xl font-extrabold text-amber-800">
+                  {paymentsList.filter((p) => p.status === "pending" || p.status === "submitted").length}
+                </div>
+                <p className="text-[10px] text-slate-500">{isEn ? "Unverified TrxIDs" : "যাচাই বাকি"}</p>
+              </div>
+
+              {/* 8. Certificates Issued */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Certificates Issued" : "ইস্যুকৃত সনদ"}
+                </span>
+                <div className="font-serif text-2xl font-extrabold text-purple-700">
+                  {certificatesList.length}
+                </div>
+                <p className="text-[10px] text-purple-600">{isEn ? "Digital Credentials" : "ডিজিটাল সনদ"}</p>
+              </div>
+
+              {/* 9. Total Admins */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Total Admins" : "প্রশাসনিক কর্মী"}
+                </span>
+                <div className="font-serif text-2xl font-extrabold text-indigo-700">
+                  {usersList.filter((u) => ["super_admin", "superadmin", "admin", "staff"].includes(u.role || "")).length}
+                </div>
+                <p className="text-[10px] text-slate-500">{isEn ? "Super Admin & Staff" : "অ্যাডমিন ও স্টাফ"}</p>
+              </div>
+
+              {/* 10. Total Trainers */}
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {isEn ? "Total Trainers" : "মোট ট্রেইনার"}
+                </span>
+                <div className="font-serif text-2xl font-extrabold text-teal-700">
+                  {usersList.filter((u) => u.role === "trainer").length}
+                </div>
+                <p className="text-[10px] text-teal-600">{isEn ? "Executive Chefs" : "শেফ ট্রেইনার"}</p>
               </div>
             </div>
 
@@ -1305,17 +1406,21 @@ export default function AdminPanel({
                         <td className="p-3">
                           <span
                             className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
-                              staff.role === "superadmin"
-                                ? "bg-purple-100 text-purple-900 border border-purple-300"
+                              staff.role === "super_admin" || staff.role === "superadmin"
+                                ? "bg-amber-100 text-amber-900 border border-amber-300 font-extrabold"
                                 : staff.role === "trainer"
-                                ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                ? "bg-teal-100 text-teal-900 border border-teal-300"
+                                : staff.role === "staff"
+                                ? "bg-indigo-100 text-indigo-900 border border-indigo-300"
                                 : "bg-blue-100 text-blue-900 border border-blue-300"
                             }`}
                           >
-                            {staff.role === "superadmin"
+                            {staff.role === "super_admin" || staff.role === "superadmin"
                               ? "SUPER ADMIN"
                               : staff.role === "trainer"
                               ? "TRAINER CHEF"
+                              : staff.role === "staff"
+                              ? "FACULTY STAFF"
                               : "ADMIN / REGISTRAR"}
                           </span>
                         </td>
@@ -1334,7 +1439,7 @@ export default function AdminPanel({
                           {staff.createdAt ? staff.createdAt.split("T")[0] : "2026-01-01"}
                         </td>
                         <td className="p-3 text-right">
-                          {staff.role !== "superadmin" && (
+                          {staff.role !== "superadmin" && staff.role !== "super_admin" && (
                             <div className="flex items-center justify-end gap-1.5">
                               {staff.status === "active" ? (
                                 <button
@@ -1356,6 +1461,83 @@ export default function AdminPanel({
                         </td>
                       </tr>
                     ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: AUDIT LOGS (SUPER ADMIN ONLY - STEP 16)
+           ======================================================== */}
+        {adminTab === "audit_logs" && isSuperAdmin && (
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-serif font-extrabold text-2xl text-editorial-dark">
+                  {isEn ? "System Audit Trail & Security Logs" : "সিস্টেম অডিট ট্রেইল ও নিরাপত্তা লগ"}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {isEn
+                    ? "Immutable event log recording all privileged administrative operations and authorization actions."
+                    : "প্রশাসনিক কার্যক্রম এবং অনুমোদন সংক্রান্ত সমস্ত অপরিবর্তনীয় নিরাপত্তা লগ।"}
+                </p>
+              </div>
+              <span className="px-2.5 py-1 bg-slate-900 text-amber-400 font-mono text-xs font-bold uppercase rounded border border-slate-700">
+                {auditLogsList.length} {isEn ? "Logged Events" : "লগ রেকর্ড"}
+              </span>
+            </div>
+
+            <div className="bg-white border border-editorial-border overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                    <th className="p-3">Timestamp</th>
+                    <th className="p-3">Action</th>
+                    <th className="p-3">Operator / Actor</th>
+                    <th className="p-3">Target Resource</th>
+                    <th className="p-3">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {auditLogsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-slate-400 italic">
+                        {isEn ? "No audit events recorded yet." : "কোনো অডিট রেকর্ড পাওয়া যায়নি।"}
+                      </td>
+                    </tr>
+                  ) : (
+                    auditLogsList.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-50">
+                        <td className="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded border ${
+                            log.action.includes("SUPER_ADMIN")
+                              ? "bg-amber-100 text-amber-900 border-amber-300 font-extrabold"
+                              : log.action.includes("SUSPENDED") || log.action.includes("BLOCKED")
+                              ? "bg-red-100 text-red-900 border-red-300"
+                              : log.action.includes("CREATED") || log.action.includes("ACTIVATED")
+                              ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                              : "bg-blue-100 text-blue-900 border-blue-300"
+                          }`}>
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-800">{log.actorName}</div>
+                          <span className="text-[10px] font-mono text-slate-400 uppercase">{log.actorRole}</span>
+                        </td>
+                        <td className="p-3 font-mono text-[11px] text-slate-600">
+                          {log.targetResource || log.targetUid || "—"}
+                        </td>
+                        <td className="p-3 text-slate-600">
+                          {log.details || "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1818,8 +2000,9 @@ export default function AdminPanel({
                     onChange={(e) => setNewStaffRole(e.target.value as any)}
                     className="w-full px-3 py-2 border border-slate-300 focus:outline-none focus:border-editorial-accent font-semibold"
                   >
-                    <option value="admin">ADMIN / REGISTRAR STAFF</option>
-                    <option value="trainer">TRAINER CHEF</option>
+                    <option value="admin">ADMIN (Administrator / Registrar)</option>
+                    <option value="staff">STAFF (Faculty & Operations Staff)</option>
+                    <option value="trainer">TRAINER (Executive Chef Trainer)</option>
                   </select>
                 </div>
               </div>

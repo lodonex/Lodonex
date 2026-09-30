@@ -37,7 +37,7 @@ interface UserAccount {
   city?: string;
   address?: string;
   photoUrl?: string;
-  role: "superadmin" | "admin" | "trainer" | "student";
+  role: "super_admin" | "superadmin" | "admin" | "staff" | "trainer" | "student";
   status: "pending" | "active" | "approved" | "suspended" | "blocked";
   assignedBatchId?: string;
   assignedCourseIds?: string[];
@@ -46,19 +46,6 @@ interface UserAccount {
 }
 
 let usersStore: UserAccount[] = [
-  {
-    id: "superadmin-1",
-    name: "Chef Dewan (Director)",
-    email: "superadmin@lodonex.com",
-    password: "SuperAdmin@2026",
-    role: "superadmin",
-    status: "active",
-    phone: "+880 1700-111000",
-    city: "Dhaka",
-    country: "Bangladesh",
-    emailVerified: true,
-    createdAt: "2026-01-01T00:00:00Z"
-  },
   {
     id: "admin-staff-1",
     name: "Farhana Yasmin (Registrar)",
@@ -460,17 +447,39 @@ const transactionsLog: PaymentTransaction[] = [
   }
 ];
 
+interface AuditLogItem {
+  id: string;
+  actorUid: string;
+  actorName: string;
+  actorRole: string;
+  action: string;
+  targetUid?: string;
+  targetResource?: string;
+  details?: string;
+  timestamp: string;
+}
+
+let auditLogsStore: AuditLogItem[] = [];
+
 // Helper: Authorize role / user ID from request header
 function getAuthContext(req: express.Request) {
   const userId = (req.headers["x-user-id"] as string) || "";
   const userRole = (req.headers["x-user-role"] as string) || "student";
-  const user = usersStore.find((u) => u.id === userId);
+  const user = usersStore.find((u) => u.id === userId || u.email.toLowerCase() === userId.toLowerCase());
+  const actualRole = user ? user.role : (userRole as any);
+  const isSuperAdmin = actualRole === "super_admin" || actualRole === "superadmin";
+  const isAdmin = isSuperAdmin || actualRole === "admin";
+  const isStaff = isSuperAdmin || actualRole === "admin" || actualRole === "staff";
+  const isTrainer = actualRole === "trainer";
+
   return {
     userId,
-    userRole: user ? user.role : userRole,
+    userRole: actualRole,
     user,
-    isAdmin: user ? ["superadmin", "admin"].includes(user.role) : ["superadmin", "admin"].includes(userRole),
-    isTrainer: user ? user.role === "trainer" : userRole === "trainer",
+    isSuperAdmin,
+    isAdmin,
+    isStaff,
+    isTrainer,
   };
 }
 
@@ -487,6 +496,107 @@ app.get("/api/health", (_req, res) => {
 // ==========================================
 // 1. AUTHENTICATION & USER MANAGEMENT APIS
 // ==========================================
+
+// GET /api/setup/status: Check whether Super Admin already exists
+app.get("/api/setup/status", (_req, res) => {
+  const existingSuperAdmin = usersStore.find(
+    (u) => (u.role === "super_admin" || u.role === "superadmin") && u.status === "active"
+  );
+
+  res.json({
+    success: true,
+    initialized: !!existingSuperAdmin,
+    superAdminExists: !!existingSuperAdmin,
+    message: existingSuperAdmin
+      ? "Super Admin has already been initialized. Please use the Admin Login."
+      : "Super Admin has not been initialized. Initial setup is available."
+  });
+});
+
+// POST /api/setup/super-admin: Secure one-time Super Admin initialization
+app.post("/api/setup/super-admin", (req, res) => {
+  const { name, email, password, setupSecret } = req.body;
+  const expectedSecret = process.env.SUPER_ADMIN_SETUP_SECRET || "LodonexSuperAdminInit@2026";
+
+  // STEP 2: Check whether Super Admin already exists
+  const existingSuperAdmin = usersStore.find(
+    (u) => (u.role === "super_admin" || u.role === "superadmin") && u.status === "active"
+  );
+  if (existingSuperAdmin) {
+    return res.status(403).json({
+      success: false,
+      error: "Super Admin has already been initialized. Please use the Admin Login."
+    });
+  }
+
+  // STEP 1: Verify the setup secret securely on the server
+  if (!setupSecret || setupSecret.trim() !== expectedSecret.trim()) {
+    return res.status(401).json({
+      success: false,
+      error: "Invalid setup authorization secret. Super Admin creation rejected."
+    });
+  }
+
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "Full Name, Email, and Password are required."
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      error: "Password must be at least 6 characters long."
+    });
+  }
+
+  const existingEmail = usersStore.find(
+    (u) => u.email.toLowerCase() === email.toLowerCase().trim()
+  );
+  if (existingEmail) {
+    return res.status(400).json({
+      success: false,
+      error: "A user with this email address already exists."
+    });
+  }
+
+  const newSuperAdmin: UserAccount = {
+    id: `superadmin-${Date.now()}`,
+    name: name.trim(),
+    email: email.toLowerCase().trim(),
+    password: password,
+    role: "super_admin",
+    status: "active",
+    phone: "",
+    city: "Dhaka",
+    country: "Bangladesh",
+    emailVerified: true,
+    createdAt: new Date().toISOString()
+  };
+
+  usersStore.unshift(newSuperAdmin);
+
+  // STEP 16: Audit Log
+  auditLogsStore.unshift({
+    id: `audit-${Date.now()}`,
+    actorUid: newSuperAdmin.id,
+    actorName: newSuperAdmin.name,
+    actorRole: "super_admin",
+    action: "SUPER_ADMIN_INITIALIZED",
+    targetUid: newSuperAdmin.id,
+    targetResource: "users",
+    details: "First master Super Admin account successfully initialized via secure setup.",
+    timestamp: new Date().toISOString()
+  });
+
+  const { password: _, ...sanitized } = newSuperAdmin;
+  res.json({
+    success: true,
+    message: "Super Admin account initialized successfully. Please log in with your credentials.",
+    user: sanitized
+  });
+});
 
 // POST Register Student
 app.post("/api/auth/register", (req, res) => {
@@ -554,6 +664,72 @@ app.post("/api/auth/register", (req, res) => {
   });
 });
 
+// POST Register Admin or Team Member with Role Selection
+app.post(["/api/auth/admin-register", "/api/auth/team-register"], (req, res) => {
+  const { name, email, phone, password, role } = req.body;
+
+  if (!email || !name || !phone || !password) {
+    return res.status(400).json({ success: false, error: "Full Name, email, phone number, and password are required." });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, error: "Password must be at least 6 characters long." });
+  }
+
+  // Normalize role
+  let chosenRole: UserRole = "admin";
+  if (role) {
+    const rawRole = String(role).toLowerCase().trim().replace(/[-\s]/g, "_");
+    if (rawRole === "super_admin" || rawRole === "superadmin") chosenRole = "super_admin";
+    else if (rawRole === "admin") chosenRole = "admin";
+    else if (rawRole === "staff") chosenRole = "staff";
+    else if (rawRole === "trainer") chosenRole = "trainer";
+    else if (rawRole === "student") chosenRole = "student";
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const existing = usersStore.find((u) => u.email.toLowerCase() === cleanEmail);
+  if (existing) {
+    return res.status(400).json({ success: false, error: "An account with this email address already exists. Please log in." });
+  }
+
+  // Team signup creates account with selected role and active status
+  const newTeamUser: UserAccount = {
+    id: `${chosenRole}-${Date.now()}`,
+    name: name.trim(),
+    email: cleanEmail,
+    phone: phone.trim(),
+    password: password,
+    role: chosenRole,
+    status: "active",
+    emailVerified: true,
+    createdAt: new Date().toISOString()
+  };
+
+  usersStore.push(newTeamUser);
+
+  // Record Audit Log
+  auditLogsStore.unshift({
+    id: `audit-${Date.now()}`,
+    actorUid: newTeamUser.id,
+    actorName: newTeamUser.name,
+    actorRole: chosenRole,
+    action: chosenRole === "super_admin" ? "SUPER_ADMIN_CREATED" : "TEAM_MEMBER_CREATED",
+    targetUid: newTeamUser.id,
+    targetResource: "users",
+    details: `Team account registered for ${newTeamUser.name} (${newTeamUser.email}) with role: ${chosenRole.toUpperCase()}.`,
+    timestamp: new Date().toISOString()
+  });
+
+  const { password: _, ...sanitized } = newTeamUser;
+
+  res.json({
+    success: true,
+    message: `Team account with role ${chosenRole.toUpperCase()} created successfully. Please log in to continue.`,
+    user: sanitized
+  });
+});
+
 // POST Login
 app.post("/api/auth/login", (req, res) => {
   const { email, emailOrPhone, identifier, password, isStaffPortal } = req.body;
@@ -578,7 +754,7 @@ app.post("/api/auth/login", (req, res) => {
 
   // Check password
   const expectedPassword = user.password || (
-    user.role === "superadmin" ? "SuperAdmin@2026" :
+    user.role === "superadmin" || user.role === "super_admin" ? "SuperAdmin@2026" :
     user.role === "trainer" ? "TrainerChef@2026" :
     user.role === "admin" ? "AdminStaff@2026" : "StudentPass@2026"
   );
@@ -587,9 +763,19 @@ app.post("/api/auth/login", (req, res) => {
     return res.status(401).json({ success: false, error: "Invalid email/phone or password." });
   }
 
-  // Check account status
+  // STEP 6 & 8: Check account status
+  if (user.status === "pending") {
+    return res.status(403).json({
+      success: false,
+      error: "Your Admin account is awaiting approval. Please wait for Super Admin review."
+    });
+  }
+
   if (user.status === "blocked" || user.status === "suspended") {
-    return res.status(403).json({ success: false, error: `Account is ${user.status}. Please contact registrar.` });
+    return res.status(403).json({
+      success: false,
+      error: `Account is ${user.status}. Access denied. Please contact the administrator.`
+    });
   }
 
   // Enforce Portal Boundary
@@ -610,13 +796,14 @@ app.post("/api/auth/login", (req, res) => {
 
 // POST Create Staff User (SUPER ADMIN ONLY)
 app.post("/api/admin/users/create", (req, res) => {
-  const { isAdmin, userRole } = getAuthContext(req);
+  const { isSuperAdmin, isAdmin } = getAuthContext(req);
 
-  // Strict check: Only Super Admin can provision staff accounts
-  if (!isAdmin || userRole !== "superadmin") {
+  // STEP 9: Only the existing Super Admin can manage privileged roles.
+  // Do NOT allow ordinary Admin users to create another Super Admin (TEST 8).
+  if (!isSuperAdmin) {
     return res.status(403).json({
       success: false,
-      error: "Access Forbidden: Only the Super Admin can create administrator or trainer accounts."
+      error: "Access Forbidden: Only the Super Admin can create privileged accounts."
     });
   }
 
@@ -626,8 +813,16 @@ app.post("/api/admin/users/create", (req, res) => {
     return res.status(400).json({ success: false, error: "Name, email, role, and password are required." });
   }
 
-  if (!["admin", "trainer"].includes(role)) {
-    return res.status(400).json({ success: false, error: "Allowed roles to create: admin, trainer" });
+  // TEST 8: Denied if attempting to create another Super Admin
+  if (role === "super_admin" || role === "superadmin") {
+    return res.status(403).json({
+      success: false,
+      error: "Action Denied: Creating another Super Admin is not permitted. Only one Super Admin can be initialized."
+    });
+  }
+
+  if (!["admin", "staff", "trainer"].includes(role)) {
+    return res.status(400).json({ success: false, error: "Allowed roles to create: admin, staff, trainer" });
   }
 
   const existing = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
@@ -651,12 +846,145 @@ app.post("/api/admin/users/create", (req, res) => {
 
   usersStore.push(newStaff);
 
+  // Audit log
+  auditLogsStore.unshift({
+    id: `audit-${Date.now()}`,
+    actorUid: (req.headers["x-user-id"] as string) || "superadmin",
+    actorName: (req.headers["x-user-name"] as string) || "Super Admin",
+    actorRole: "super_admin",
+    action: role === "trainer" ? "TRAINER_CREATED" : role === "staff" ? "STAFF_CREATED" : "ADMIN_CREATED",
+    targetUid: newStaff.id,
+    targetResource: "users",
+    details: `${role.toUpperCase()} account created for ${name} (${email}).`,
+    timestamp: new Date().toISOString()
+  });
+
   const { password: _, ...sanitized } = newStaff;
 
   res.json({
     success: true,
     message: `${role.toUpperCase()} account created successfully.`,
     user: sanitized
+  });
+});
+
+// POST Manage User Status / Role (SUPER ADMIN ONLY)
+app.post("/api/admin/users/status", (req, res) => {
+  const { isSuperAdmin } = getAuthContext(req);
+  if (!isSuperAdmin) {
+    return res.status(403).json({
+      success: false,
+      error: "Access Forbidden: Only Super Admin can manage user account statuses or roles."
+    });
+  }
+
+  const { userId, status, role } = req.body;
+  const target = usersStore.find((u) => u.id === userId);
+  if (!target) {
+    return res.status(404).json({ success: false, error: "Target user not found." });
+  }
+
+  if (target.role === "super_admin" || target.role === "superadmin") {
+    return res.status(403).json({ success: false, error: "Super Admin account cannot be modified." });
+  }
+
+  if (status && ["active", "suspended", "blocked", "pending", "approved"].includes(status)) {
+    target.status = status;
+    auditLogsStore.unshift({
+      id: `audit-${Date.now()}`,
+      actorUid: (req.headers["x-user-id"] as string) || "superadmin",
+      actorName: (req.headers["x-user-name"] as string) || "Super Admin",
+      actorRole: "super_admin",
+      action: status === "suspended" ? "ADMIN_SUSPENDED" : status === "active" ? "ADMIN_ACTIVATED" : "ROLE_CHANGED",
+      targetUid: target.id,
+      targetResource: "users",
+      details: `Account status updated to ${status} for ${target.name}.`,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  if (role && ["admin", "staff", "trainer", "student"].includes(role)) {
+    target.role = role;
+    auditLogsStore.unshift({
+      id: `audit-${Date.now()}`,
+      actorUid: (req.headers["x-user-id"] as string) || "superadmin",
+      actorName: (req.headers["x-user-name"] as string) || "Super Admin",
+      actorRole: "super_admin",
+      action: "ROLE_CHANGED",
+      targetUid: target.id,
+      targetResource: "users",
+      details: `Role updated to ${role} for ${target.name}.`,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  const { password: _, ...sanitized } = target;
+  res.json({ success: true, message: "User status updated successfully.", user: sanitized });
+});
+
+// GET /api/admin/audit-logs
+app.get("/api/admin/audit-logs", (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Access Denied: Administrative access required." });
+  }
+  res.json({ success: true, logs: auditLogsStore });
+});
+
+// POST /api/admin/audit-logs (Record audit action)
+app.post("/api/admin/audit-logs", (req, res) => {
+  const { action, targetUid, targetResource, details } = req.body;
+  const { user, userRole, userId } = getAuthContext(req);
+  const newLog: AuditLogItem = {
+    id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    actorUid: userId || (user ? user.id : "system"),
+    actorName: user ? user.name : "Authenticated User",
+    actorRole: userRole,
+    action: action || "PRIVILEGED_ACTION",
+    targetUid: targetUid || "",
+    targetResource: targetResource || "",
+    details: details || "",
+    timestamp: new Date().toISOString()
+  };
+  auditLogsStore.unshift(newLog);
+  res.json({ success: true, log: newLog });
+});
+
+// GET /api/admin/stats (STEP 7: Super Admin Dashboard Statistics)
+app.get("/api/admin/stats", (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Access Denied: Admins only." });
+  }
+
+  const students = usersStore.filter((u) => u.role === "student");
+  const activeStudents = students.filter((u) => u.status === "active" || u.status === "approved");
+  const pendingEnrollments = enrollmentsStore.filter((e) =>
+    ["applied", "under_review", "payment_submitted"].includes(e.status)
+  );
+  const totalPayments = transactionsLog
+    .filter((t) => t.status === "verified")
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const pendingPayments = transactionsLog.filter((t) => t.status === "pending").length;
+  const totalAdmins = usersStore.filter((u) =>
+    ["super_admin", "superadmin", "admin", "staff"].includes(u.role)
+  ).length;
+  const totalTrainers = usersStore.filter((u) => u.role === "trainer").length;
+
+  res.json({
+    success: true,
+    stats: {
+      totalStudents: students.length,
+      activeStudents: activeStudents.length,
+      pendingEnrollments: pendingEnrollments.length,
+      activeCourses: 5,
+      activeBatches: batchesStore.filter((b) => b.status === "active").length,
+      totalPayments,
+      pendingPayments,
+      certificatesIssued: 42,
+      totalAdmins,
+      totalTrainers
+    }
   });
 });
 

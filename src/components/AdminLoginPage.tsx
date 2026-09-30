@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { Language, UserAccount } from "../types";
 import { INITIAL_LMS_USERS } from "../data/lmsMockData";
+import { auth, db } from "../utils/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
 interface AdminLoginPageProps {
@@ -65,7 +68,64 @@ export default function AdminLoginPage({
     setLoading(true);
 
     try {
-      // 1. Call backend API for staff authentication
+      // 1. First attempt Firebase Authentication
+      try {
+        const cred = await signInWithEmailAndPassword(auth, cleanInput, cleanPassword);
+        if (cred.user) {
+          const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+          if (userDoc.exists()) {
+            const profile = userDoc.data() as UserAccount;
+            const role = profile.role || "";
+
+            // STEP 6: Reject student accounts attempting admin login
+            if (role === "student") {
+              setError(
+                isEn
+                  ? "Access Denied: Student accounts cannot access the administrative staff portal. Please use the Student Portal."
+                  : "অনুমতি অস্বীকৃত: শিক্ষার্থী অ্যাকাউন্ট দিয়ে প্রশাসনিক পোর্টালে প্রবেশ করা যাবে না। শিক্ষার্থী পোর্টাল ব্যবহার করুন।"
+              );
+              await auth.signOut();
+              setLoading(false);
+              return;
+            }
+
+            // STEP 6 & 8: Check account status - Pending check
+            if (profile.status === "pending") {
+              setError(
+                isEn
+                  ? "Your Admin account is awaiting approval."
+                  : "আপনার অ্যাডমিন অ্যাকাউন্টটি অনুমোদনের অপেক্ষায় রয়েছে।"
+              );
+              await auth.signOut();
+              setLoading(false);
+              return;
+            }
+
+            if (profile.status === "suspended" || profile.status === "blocked") {
+              setError(
+                isEn
+                  ? `Access Denied: Account is ${profile.status}. Please contact the Super Admin.`
+                  : `অ্যাক্সেস অস্বীকৃত: অ্যাকাউন্টটি ${profile.status} অবস্থায় আছে। অনুগ্রহ করে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।`
+              );
+              await auth.signOut();
+              setLoading(false);
+              return;
+            }
+
+            if (["super_admin", "superadmin", "admin", "trainer", "staff"].includes(role)) {
+              onLoginSuccess(profile);
+              return;
+            }
+          }
+        }
+      } catch (fbErr: any) {
+        // Continue to server API if Firebase auth fails (e.g. invalid credential or network)
+        if (fbErr?.code === "auth/invalid-credential" || fbErr?.code === "auth/user-not-found") {
+          // Will also check server store
+        }
+      }
+
+      // 2. Call backend API for staff authentication
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -80,7 +140,27 @@ export default function AdminLoginPage({
       const data = await res.json();
 
       if (res.ok && data.success && data.user) {
-        if (!["superadmin", "admin", "trainer"].includes(data.user.role || "")) {
+        if (data.user.role === "student") {
+          setError(
+            isEn
+              ? "Access Denied: Student accounts cannot access the administrative staff portal. Please use the Student Portal."
+              : "অনুমতি অস্বীকৃত: শিক্ষার্থী আইডি দিয়ে অ্যাডমিন পোর্টালে প্রবেশ করা যাবে না।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (data.user.status === "suspended" || data.user.status === "blocked") {
+          setError(
+            isEn
+              ? `Access Denied: Account is ${data.user.status}. Please contact the Super Admin.`
+              : `অ্যাক্সেস অস্বীকৃত: অ্যাকাউন্টটি ${data.user.status} অবস্থায় আছে।`
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (!["super_admin", "superadmin", "admin", "trainer", "staff"].includes(data.user.role || "")) {
           setError(
             isEn
               ? "Access Denied: Student accounts cannot access the administrative staff portal."
@@ -94,18 +174,38 @@ export default function AdminLoginPage({
         return;
       }
 
-      // 2. Fallback check on users store
+      // 3. Fallback check on users store
       const matched = existingUsers.find(
         (u) =>
           u.email.toLowerCase() === cleanInput ||
           u.id.toLowerCase() === cleanInput ||
-          (cleanInput === "superadmin" && u.role === "superadmin") ||
+          (cleanInput === "superadmin" && (u.role === "super_admin" || u.role === "superadmin")) ||
           (cleanInput === "admin" && u.role === "admin") ||
           (cleanInput === "trainer" && u.role === "trainer")
       );
 
       if (matched) {
-        if (!["superadmin", "admin", "trainer"].includes(matched.role || "")) {
+        if (matched.role === "student") {
+          setError(
+            isEn
+              ? "Access Denied: Student accounts cannot access the administrative staff portal."
+              : "অনুমতি অস্বীকৃত: শিক্ষার্থী আইডি দিয়ে অ্যাডমিন পোর্টালে প্রবেশ করা যাবে না।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (matched.status === "suspended" || matched.status === "blocked") {
+          setError(
+            isEn
+              ? `Access Denied: Account is ${matched.status}. Please contact the Super Admin.`
+              : `অ্যাক্সেস অস্বীকৃত: অ্যাকাউন্টটি ${matched.status} অবস্থায় আছে।`
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (!["super_admin", "superadmin", "admin", "trainer", "staff"].includes(matched.role || "")) {
           setError(
             isEn
               ? "Access Denied: Student accounts cannot access the administrative staff portal."
@@ -118,7 +218,7 @@ export default function AdminLoginPage({
         // Validate password
         const expected =
           matched.password ||
-          (matched.role === "superadmin"
+          (matched.role === "super_admin" || matched.role === "superadmin"
             ? "SuperAdmin@2026"
             : matched.role === "trainer"
             ? "TrainerChef@2026"
@@ -141,7 +241,7 @@ export default function AdminLoginPage({
       const matched = existingUsers.find(
         (u) =>
           (u.email.toLowerCase() === cleanInput || u.id.toLowerCase() === cleanInput) &&
-          ["superadmin", "admin", "trainer"].includes(u.role || "")
+          ["super_admin", "superadmin", "admin", "trainer", "staff"].includes(u.role || "")
       );
       if (matched) {
         onLoginSuccess(matched);
@@ -203,15 +303,15 @@ export default function AdminLoginPage({
             </div>
             <div className="space-y-0.5">
               <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-editorial-accent font-mono block">
-                LODONEX COOKING ACADEMY
+                LODONEX TEAM & FACULTY
               </span>
               <h1 className="font-serif font-extrabold text-2xl text-white tracking-tight">
-                {isEn ? "Administration Gateway" : "প্রশাসনিক নিয়ন্ত্রণ প্যানেল"}
+                {isEn ? "LODONEX TEAM PORTAL" : "লোডোনেক্স টিম পোর্টাল"}
               </h1>
               <p className="text-xs text-stone-400 font-sans">
                 {isEn
-                  ? "Authorized access for Super Admin, Registrar Staff, and Faculty Chefs."
-                  : "শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন, রেজিস্ট্রার এবং ট্রেইনারদের জন্য।"}
+                  ? "Authorized login for Super Admin, Admin, Staff, and Trainer members."
+                  : "সুপার অ্যাডমিন, অ্যাডমিন, স্টাফ এবং ট্রেইনারদের জন্য অনুমোদিত লগইন।"}
               </p>
             </div>
           </div>
@@ -229,7 +329,7 @@ export default function AdminLoginPage({
             {/* Email / Username */}
             <div className="space-y-1.5">
               <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-300">
-                {isEn ? "Faculty Email / Staff Username" : "অ্যাডমিন ইমেল বা ইউজারনেম"}
+                {isEn ? "Email Address" : "ইমেল ঠিকানা"}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-500">
@@ -239,7 +339,7 @@ export default function AdminLoginPage({
                   id="admin-email-input"
                   type="text"
                   required
-                  placeholder={isEn ? "superadmin@lodonex.com or admin@lodonex.com" : "ইমেল বা ইউজারনেম লিখুন"}
+                  placeholder={isEn ? "Enter team email" : "ইমেল লিখুন"}
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-900 border border-stone-700 text-white placeholder:text-stone-500 focus:outline-none focus:border-editorial-accent focus:ring-1 focus:ring-editorial-accent transition"
@@ -249,9 +349,18 @@ export default function AdminLoginPage({
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-300">
-                {isEn ? "Administrator Password" : "অ্যাডমিন পাসওয়ার্ড"}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-stone-300">
+                  {isEn ? "Password" : "পাসওয়ার্ড"}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("/admin/forgot-password")}
+                  className="text-[11px] text-editorial-accent hover:text-red-400 font-semibold cursor-pointer transition underline underline-offset-2"
+                >
+                  {isEn ? "Forgot Password?" : "পাসওয়ার্ড ভুলে গেছেন?"}
+                </button>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-500">
                   <Lock className="h-4 w-4" />
@@ -260,7 +369,7 @@ export default function AdminLoginPage({
                   id="admin-password-input"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder={isEn ? "Enter master key" : "পাসওয়ার্ড লিখুন"}
+                  placeholder={isEn ? "Enter password" : "পাসওয়ার্ড লিখুন"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-9 pr-10 py-2.5 bg-stone-900 border border-stone-700 text-white placeholder:text-stone-500 focus:outline-none focus:border-editorial-accent focus:ring-1 focus:ring-editorial-accent transition"
@@ -306,24 +415,37 @@ export default function AdminLoginPage({
               className="w-full py-3 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-lg flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
             >
               {loading ? (
-                <span>{isEn ? "Authenticating Clearance..." : "যাচাই করা হচ্ছে..."}</span>
+                <span>{isEn ? "Authenticating..." : "যাচাই করা হচ্ছে..."}</span>
               ) : (
                 <>
-                  <span>{isEn ? "Authenticate & Enter Admin Portal" : "অ্যাডমিন প্যানেলে প্রবেশ করুন"}</span>
+                  <span>{isEn ? "LOGIN" : "লগইন"}</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Security Policy Reminder */}
-          <div className="p-3 bg-stone-900 border border-stone-800 text-[10px] text-stone-400 leading-relaxed font-mono">
-            <span className="text-editorial-accent font-bold block mb-1">
-              [SECURITY RULE #8 ENFORCED]
-            </span>
-            {isEn
-              ? "Notice: Public registration for administrator accounts is prohibited. Administrative, registrar, and trainer credentials are provisioned exclusively by the Super Admin."
-              : "বিজ্ঞপ্তি: সাধারণ দর্শনার্থীদের জন্য অ্যাডমিন রেজিস্ট্রেশন নিষিদ্ধ। শুধুমাত্র সুপার অ্যাডমিন নতুন স্টাফ অ্যাকাউন্ট তৈরি করতে পারেন।"}
+          {/* Team Registration Link */}
+          <div className="pt-2 border-t border-stone-800 space-y-2">
+            <div className="text-center">
+              <span className="text-[11px] text-stone-400 block">
+                {isEn ? "Don't have a team account?" : "টিম অ্যাকাউন্ট নেই?"}
+              </span>
+            </div>
+            <button
+              id="team-signup-btn"
+              type="button"
+              onClick={() => onNavigate("/team/register")}
+              className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+            >
+              <Shield className="h-4 w-4 text-amber-500" />
+              <span>{isEn ? "TEAM SIGN UP" : "টিম সাইন আপ"}</span>
+            </button>
+            <p className="text-[10px] text-stone-500 text-center leading-tight font-mono">
+              {isEn
+                ? "Register as Super Admin, Admin, Staff, or Trainer."
+                : "সুপার অ্যাডমিন, অ্যাডমিন, স্টাফ বা ট্রেইনার হিসেবে যোগ দিন।"}
+            </p>
           </div>
 
           {/* Link back to Student Portal */}
@@ -338,6 +460,16 @@ export default function AdminLoginPage({
             >
               <span>{isEn ? "Go to Student Portal Login →" : "শিক্ষার্থী পোর্টালে যান →"}</span>
             </button>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => onNavigate("/setup/super-admin")}
+                className="text-[11px] font-mono text-stone-500 hover:text-amber-400 transition cursor-pointer inline-flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3 text-amber-500" />
+                <span>{isEn ? "First-time setup? Initialize Super Admin" : "প্রথমবার সেটআপ? সুপার অ্যাডমিন তৈরি"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Evaluator Testing Credentials Guide */}

@@ -1,52 +1,156 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Users collection
+    // Super Admin: Has role super_admin or superadmin, or master admin email
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'lodonexcookingacademy@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          getUserData(request.auth.uid).role == 'super_admin' ||
+          getUserData(request.auth.uid).role == 'superadmin'
+        ))
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).role == 'admin')
+      );
+    }
+
+    function isTrainer() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).role == 'trainer')
+      );
+    }
+
+    // ==========================================
+    // 1. USERS COLLECTION (STEP 5 & TEST 6)
+    // ==========================================
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || request.auth.token.email == 'lodonexcookingacademy@gmail.com');
-      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Document Creation:
+      // - Normal Public Student Signup: Role MUST be "student" (STEP 12).
+      //   Students are forbidden from creating super_admin or admin!
+      // - Super Admin: Can create admin, staff, or trainer accounts.
+      // - Bootstrapped master email or initial setup
+      allow create: if isSignedIn() && (
+        // Public registration: strictly role = student
+        (request.auth.uid == userId && 
+         request.resource.data.role == 'student' &&
+         request.resource.data.status in ['active', 'approved', 'pending'])
+        ||
+        // Admin public registration: strictly role = admin and status = pending (TEST 7)
+        (request.auth.uid == userId && 
+         request.resource.data.role == 'admin' &&
+         request.resource.data.status == 'pending')
+        ||
+        // Super admin provisioning privileged accounts
+        isSuperAdmin()
+        ||
+        // Master account bootstrap
+        (request.auth.uid == userId && 
+         request.auth.token.email == 'lodonexcookingacademy@gmail.com' &&
+         request.resource.data.role in ['super_admin', 'superadmin'])
+      );
+
+      // Document Update:
+      // - Students CANNOT modify their own role, status, or permissions! (TEST 6)
+      // - Only Super Admin can change roles or status of other users!
+      allow update: if isSignedIn() && (
+        isSuperAdmin()
+        ||
+        (request.auth.uid == userId &&
+         // Self-update invariant: role and status MUST remain identical to existing record!
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.status == resource.data.status)
+      );
+
+      // Delete: Only Super Admin can delete or archive user accounts
+      allow delete: if isSuperAdmin();
     }
 
-    // Public Course information
+    // ==========================================
+    // 2. AUDIT LOGS (STEP 16: IMMUTABLE AUDIT TRAIL)
+    // ==========================================
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin() || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Immutable!
+    }
+
+    // ==========================================
+    // 3. COURSES & BATCHES
+    // ==========================================
     match /courses/{courseId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    // Batches
     match /batches/{batchId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin() || isTrainer();
     }
 
-    // Enrollments
+    // ==========================================
+    // 4. ENROLLMENTS & ADMISSIONS
+    // ==========================================
     match /enrollments/{enrollmentId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
-    // Attendance
+    // ==========================================
+    // 5. DIGITAL CERTIFICATES (PUBLIC VERIFICATION)
+    // ==========================================
+    match /certificates/{certId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // 6. PAYMENTS & TRANSACTIONS
+    // ==========================================
+    match /payments/{paymentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // 7. ACADEMIC RECORDS (TRAINERS & FACULTY)
+    // ==========================================
     match /attendance/{attendanceId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isTrainer() || isAdmin();
     }
 
-    // Assignments & Submissions
     match /assignments/{assignmentId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isTrainer() || isAdmin();
     }
+
     match /submissions/{submissionId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
@@ -54,32 +158,27 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Exams & Results
     match /exams/{examId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isTrainer() || isAdmin();
     }
+
     match /results/{resultId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isTrainer() || isAdmin();
     }
 
-    // Digital Certificates: Publicly readable for digital verification!
-    match /certificates/{certId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    // ==========================================
+    // 8. SETTINGS & DEFAULT SAFETY NET
+    // ==========================================
+    match /settings/{settingId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
 
-    // Payment logs
-    match /payments/{paymentId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-    }
-
-    // Default fallback
     match /{document=**} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
   }
 }

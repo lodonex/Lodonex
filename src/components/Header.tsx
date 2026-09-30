@@ -34,7 +34,7 @@ export default function Header({
   const t = TRANSLATIONS[lang];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isStaff = currentUser && ["superadmin", "admin", "trainer"].includes(currentUser.role || "");
+  const isStaff = currentUser && ["super_admin", "superadmin", "admin", "staff", "trainer"].includes(currentUser.role || "");
 
   const menuItems = [
     ...(currentUser
@@ -63,10 +63,13 @@ export default function Header({
 
   const getRoleLabel = (role?: string) => {
     switch (role) {
+      case "super_admin":
       case "superadmin":
         return "SUPER ADMIN";
       case "admin":
-        return "ADMIN / STAFF";
+        return "ADMIN";
+      case "staff":
+        return "STAFF";
       case "trainer":
         return "TRAINER CHEF";
       default:

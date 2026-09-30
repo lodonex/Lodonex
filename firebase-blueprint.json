@@ -111,6 +111,23 @@
         "isValid": { "type": "boolean" }
       },
       "required": ["id", "certificateNumber", "studentId", "courseId", "isValid"]
+    },
+    "audit_logs": {
+      "title": "audit_logs",
+      "description": "Immutable security and administrative actions audit trail.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "actorUid": { "type": "string" },
+        "actorName": { "type": "string" },
+        "actorRole": { "type": "string" },
+        "action": { "type": "string" },
+        "targetUid": { "type": "string" },
+        "targetResource": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "actorUid", "actorName", "actorRole", "action", "timestamp"]
     }
   }
 }

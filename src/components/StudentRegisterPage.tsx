@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { Language, UserAccount } from "../types";
 import { INITIAL_LMS_USERS } from "../data/lmsMockData";
+import { auth, db } from "../utils/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
 interface StudentRegisterPageProps {
@@ -141,7 +144,7 @@ export default function StudentRegisterPage({
     };
 
     try {
-      // POST to backend API
+      // 1. POST to backend API
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -157,12 +160,46 @@ export default function StudentRegisterPage({
         }
       }
     } catch (err) {
-      // Offline fallback allows continuing with local state
+      // Continue with client registration
     }
+
+    // 2. Create Firebase Authentication Account
+    let firebaseUid = newUser.id;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+      if (userCredential.user) {
+        firebaseUid = userCredential.user.uid;
+        newUser.id = firebaseUid;
+      }
+    } catch (authErr: any) {
+      console.warn("Firebase Auth registration note:", authErr?.message);
+    }
+
+    // 3. Create Firestore user document (role = student, status = active)
+    try {
+      await setDoc(doc(db, "users", firebaseUid), {
+        ...newUser,
+        id: firebaseUid,
+        role: "student",
+        status: "active",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    } catch (dbErr) {
+      console.warn("Firestore student profile write note:", dbErr);
+    }
+
+    // 4. MANDATORY SECURITY REQUIREMENT: NO AUTOMATIC LOGIN!
+    // Sign out from Firebase immediately so the user must manually enter credentials
+    try {
+      await auth.signOut();
+    } catch (signOutErr) {
+      console.warn("Sign out err:", signOutErr);
+    }
+    localStorage.removeItem("lodonex_current_user");
 
     setCreatedStudent(newUser);
     setRegisteredSuccess(true);
-    onRegisterSuccess(newUser);
     setLoading(false);
   };
 
@@ -178,15 +215,18 @@ export default function StudentRegisterPage({
 
             <div className="space-y-2">
               <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-700 font-mono block">
-                {isEn ? "STUDENT ACCOUNT CREATED" : "শিক্ষার্থী অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে"}
+                {isEn ? "ACCOUNT CREATED SUCCESSFULLY" : "অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে"}
               </span>
               <h2 className="font-serif font-extrabold text-2xl text-editorial-dark">
-                {isEn ? `Welcome to Lodonex, ${createdStudent.name}!` : `স্বাগতম, ${createdStudent.name}!`}
+                {isEn ? "Your account has been created successfully." : "আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে।"}
               </h2>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+              <p className="text-sm font-semibold text-slate-700">
+                {isEn ? "Please log in to continue." : "অনুগ্রহ করে চালিয়ে যেতে লগইন করুন।"}
+              </p>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                 {isEn
-                  ? "Your student portal profile has been created. Please log in with your credentials to browse our accredited culinary courses and submit your enrollment application."
-                  : "আপনার শিক্ষার্থী প্রোফাইল সক্রিয় করা হয়েছে। আপনার কোর্সে ভর্তির আবেদন করতে অনুগ্রহ করে পোর্টাল এ লগইন করুন।"}
+                  ? `Welcome, ${createdStudent.name}! Your student profile has been created with role: student and status: active. Enter your email and password at the login screen to access your portal.`
+                  : `স্বাগতম, ${createdStudent.name}! আপনার প্রোফাইল তৈরি হয়েছে। পোর্টালে প্রবেশ করতে লগইন করুন।`}
               </p>
             </div>
 
@@ -200,8 +240,8 @@ export default function StudentRegisterPage({
                 <span className="font-bold text-slate-900">{createdStudent.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status:</span>
-                <span className="font-bold text-emerald-700 uppercase">ACTIVE ACCOUNT (NO COURSES ENROLLED)</span>
+                <span className="text-slate-500">Role & Status:</span>
+                <span className="font-bold text-emerald-700 uppercase">ROLE: STUDENT | STATUS: ACTIVE</span>
               </div>
             </div>
 
@@ -210,7 +250,7 @@ export default function StudentRegisterPage({
               onClick={() => onNavigate("/portal/login")}
               className="w-full py-3 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2"
             >
-              <span>{isEn ? "Proceed to Student Login →" : "শিক্ষার্থী লগইনে এগিয়ে যান →"}</span>
+              <span>{isEn ? "Proceed to Portal Login →" : "পোর্টাল লগইনে এগিয়ে যান →"}</span>
             </button>
           </div>
         ) : (

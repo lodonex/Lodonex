@@ -660,26 +660,6 @@ export const MOCK_NOTIFICATIONS: LMSNotification[] = [
 
 export const INITIAL_LMS_USERS: UserAccount[] = [
   {
-    id: "superadmin-1",
-    name: "Chef Dewan (Director)",
-    email: "superadmin@lodonex.com",
-    password: "SuperAdmin@2026",
-    role: "superadmin",
-    status: "active",
-    phone: "+880 1700-111000",
-    city: "Dhaka",
-    country: "Bangladesh",
-    emailVerified: true,
-    createdAt: "2026-01-01T00:00:00Z",
-    progress: {
-      enrolledCourses: ["course-1", "course-2"],
-      completedLessons: ["c1-l1", "c1-l2", "c1-l3"],
-      quizScores: { "c1-l1": 100 },
-      customRecipes: [],
-      badges: []
-    }
-  },
-  {
     id: "admin-staff-1",
     name: "Farhana Yasmin (Registrar)",
     email: "admin@lodonex.com",

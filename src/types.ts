@@ -1,6 +1,6 @@
 export type Language = "en" | "bn";
 
-export type UserRole = "superadmin" | "admin" | "trainer" | "student";
+export type UserRole = "super_admin" | "superadmin" | "admin" | "staff" | "trainer" | "student";
 export type UserStatus = "pending" | "active" | "approved" | "suspended" | "blocked";
 
 export interface Quiz {
@@ -440,6 +440,31 @@ export interface LMSNotification {
   read: boolean;
   createdAt: string;
   actionTab?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actorUid: string;
+  actorName: string;
+  actorRole: UserRole;
+  action:
+    | "SUPER_ADMIN_INITIALIZED"
+    | "SUPER_ADMIN_CREATED"
+    | "ADMIN_CREATED"
+    | "ADMIN_SUSPENDED"
+    | "ADMIN_ACTIVATED"
+    | "TRAINER_CREATED"
+    | "STAFF_CREATED"
+    | "ROLE_CHANGED"
+    | "PERMISSION_CHANGED"
+    | "STUDENT_SUSPENDED"
+    | "COURSE_CREATED"
+    | "PAYMENT_VERIFIED"
+    | "CERTIFICATE_ISSUED";
+  targetUid?: string;
+  targetResource?: string;
+  details?: string;
+  timestamp: string;
 }
 
 

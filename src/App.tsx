@@ -40,6 +40,8 @@ import Gallery from "./components/Gallery";
 import PortalLoginPage from "./components/PortalLoginPage";
 import StudentRegisterPage from "./components/StudentRegisterPage";
 import AdminLoginPage from "./components/AdminLoginPage";
+import AdminRegisterPage from "./components/AdminRegisterPage";
+import SuperAdminSetupPage from "./components/SuperAdminSetupPage";
 
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount, EnrollmentApplication } from "./types";
@@ -342,8 +344,10 @@ export default function App() {
     setCurrentUser(user);
     setIsAuthOpen(false);
 
-    const isStaff = ["superadmin", "admin", "trainer"].includes(user.role || "");
-    if (isStaff) {
+    const userRole = user.role || "";
+    if (userRole === "trainer") {
+      navigate("/trainer/dashboard");
+    } else if (["super_admin", "superadmin", "admin", "staff"].includes(userRole)) {
       navigate("/admin/dashboard");
     } else {
       navigate("/student/dashboard");
@@ -363,6 +367,7 @@ export default function App() {
       console.error("Error signing out of Firebase:", err);
     }
     setCurrentUser(null);
+    localStorage.removeItem("lodonex_current_user");
     setCart([]);
     navigate("/");
   };
@@ -586,7 +591,15 @@ export default function App() {
         {/* ========================================================
             DEDICATED ROUTE 1: /portal/login
            ======================================================== */}
-        {currentPath === "/portal/login" ? (
+        {(currentPath === "/setup/super-admin" || currentPath === "/admin/setup") ? (
+          <SuperAdminSetupPage
+            lang={lang}
+            onSetupSuccess={(user) => {
+              setUsers((prev) => [user, ...prev.filter((u) => u.id !== user.id)]);
+            }}
+            onNavigate={navigate}
+          />
+        ) : currentPath === "/portal/login" ? (
           <PortalLoginPage
             lang={lang}
             onLoginSuccess={(user) => handleAuthSuccess(user, false)}
@@ -595,9 +608,9 @@ export default function App() {
             existingUsers={users}
           />
         ) : /* ========================================================
-            DEDICATED ROUTE 2: /portal/register
+            DEDICATED ROUTE 2: /portal/register & /portal/signup (STUDENT ONLY)
            ======================================================== */
-        currentPath === "/portal/register" ? (
+        (currentPath === "/portal/register" || currentPath === "/portal/signup") ? (
           <StudentRegisterPage
             lang={lang}
             onRegisterSuccess={(user) => handleAuthSuccess(user, true)}
@@ -605,9 +618,18 @@ export default function App() {
             existingUsers={users}
           />
         ) : /* ========================================================
-            DEDICATED ROUTE 3: /admin/login
+            DEDICATED ROUTE 3: /team/register & /admin/signup (ROLE SELECTION)
            ======================================================== */
-        currentPath === "/admin/login" ? (
+        (currentPath === "/team/register" || currentPath === "/admin/signup") ? (
+          <AdminRegisterPage
+            lang={lang}
+            onNavigate={navigate}
+            existingUsers={users}
+          />
+        ) : /* ========================================================
+            DEDICATED ROUTE 4: /team/login & /admin/login
+           ======================================================== */
+        (currentPath === "/team/login" || currentPath === "/admin/login") ? (
           <AdminLoginPage
             lang={lang}
             onLoginSuccess={(user) => handleAuthSuccess(user, false)}
@@ -694,6 +716,61 @@ export default function App() {
             </div>
           ) : (
             /* Authorized Super Admin, Admin, Trainer */
+            <AdminPanel
+              lang={lang}
+              currentUser={currentUser}
+              courses={INITIAL_COURSES}
+              initialEnrollments={enrollmentsList}
+              onApproveEnrollmentGlobal={handleApproveEnrollment}
+              onSelectCourse={(course) => {
+                setSelectedCourse(course);
+                navigate(`/courses/${course.id}`);
+              }}
+              onUpdateUserAccount={(u) =>
+                setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+              }
+              initialUsers={users}
+            />
+          )
+        ) : /* ========================================================
+            DEDICATED ROUTE 6: /trainer/* (TRAINER FACULTY RBAC)
+           ======================================================== */
+        currentPath.startsWith("/trainer") ? (
+          !currentUser ? (
+            <AdminLoginPage
+              lang={lang}
+              onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+              onNavigate={navigate}
+              existingUsers={users}
+              redirectMessage={
+                lang === "en"
+                  ? "Please sign in with your trainer credentials to access the faculty dashboard."
+                  : "ফ্যাকাল্টি ড্যাশবোর্ডে প্রবেশের জন্য ট্রেইনার আইডি দিয়ে সাইন ইন করুন।"
+              }
+            />
+          ) : currentUser.role === "student" ? (
+            <div className="max-w-xl mx-auto my-12 p-8 bg-red-50 border-2 border-red-300 text-center space-y-4 shadow-sm">
+              <div className="h-14 w-14 bg-red-100 text-red-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold font-mono">
+                403
+              </div>
+              <h2 className="font-serif font-extrabold text-2xl text-red-900">
+                {lang === "en" ? "403 Forbidden: Access Denied" : "৪০৩ নিষিদ্ধ: অ্যাক্সেস অস্বীকৃত"}
+              </h2>
+              <p className="text-xs text-red-700 leading-relaxed">
+                {lang === "en"
+                  ? "Student accounts cannot access faculty and trainer dashboards."
+                  : "শিক্ষার্থী অ্যাকাউন্ট দিয়ে ট্রেইনার ড্যাশবোর্ডে প্রবেশ নিষিদ্ধ।"}
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => navigate("/student/dashboard")}
+                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                >
+                  {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
+                </button>
+              </div>
+            </div>
+          ) : (
             <AdminPanel
               lang={lang}
               currentUser={currentUser}
