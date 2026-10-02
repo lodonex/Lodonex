@@ -18,7 +18,7 @@ import { Language, UserAccount } from "../types";
 import { INITIAL_LMS_USERS } from "../data/lmsMockData";
 import { auth, db } from "../utils/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
 interface PortalLoginPageProps {
@@ -79,6 +79,40 @@ export default function PortalLoginPage({
         try {
           const cred = await signInWithEmailAndPassword(auth, cleanInput, cleanPassword);
           if (cred.user) {
+            const isLodonexMaster = cred.user.email?.toLowerCase() === "lodonexcookingacademy@gmail.com";
+            if (isLodonexMaster) {
+              const superAdminProfile: UserAccount = {
+                id: cred.user.uid,
+                name: "Lodonex Super Admin",
+                email: "lodonexcookingacademy@gmail.com",
+                role: "super_admin",
+                status: "active",
+                emailVerified: true,
+                city: "Dhaka",
+                country: "Bangladesh",
+                updatedAt: new Date().toISOString()
+              };
+              try {
+                await setDoc(doc(db, "users", cred.user.uid), superAdminProfile, { merge: true });
+              } catch (wErr) {
+                console.warn("Firestore super admin profile sync note:", wErr);
+              }
+              try {
+                const idToken = await cred.user.getIdToken(true);
+                await fetch("/api/auth/super-admin/init", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
+                  },
+                  body: JSON.stringify({ uid: cred.user.uid, email: cred.user.email })
+                });
+              } catch (apiErr) {}
+
+              onLoginSuccess(superAdminProfile);
+              return;
+            }
+
             const userDoc = await getDoc(doc(db, "users", cred.user.uid));
             if (userDoc.exists()) {
               const profile = userDoc.data() as UserAccount;

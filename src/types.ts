@@ -149,6 +149,7 @@ export interface BlogPost {
 
 export interface UserAccount {
   id: string;
+  uid?: string;
   name: string;
   email: string;
   phone?: string;
@@ -172,7 +173,8 @@ export interface UserAccount {
   assignedBatchId?: string;
   assignedCourseIds?: string[];
   createdAt?: string;
-  progress: StudentProgress;
+  updatedAt?: string;
+  progress?: StudentProgress;
 }
 
 export interface CourseReview {

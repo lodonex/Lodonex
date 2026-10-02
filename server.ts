@@ -40,6 +40,7 @@ export type UserRole = "super_admin" | "superadmin" | "admin" | "staff" | "train
 
 interface UserAccount {
   id: string;
+  uid?: string;
   name: string;
   email: string;
   phone?: string;
@@ -56,9 +57,22 @@ interface UserAccount {
   assignedCourseIds?: string[];
   emailVerified?: boolean;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 let usersStore: UserAccount[] = [
+  {
+    id: "4AtU806N8xy911gFEdsYGU8vJRq1",
+    name: "Lodonex Super Admin",
+    email: "lodonexcookingacademy@gmail.com",
+    role: "super_admin",
+    status: "active",
+    phone: "+88 01711-924269",
+    city: "Dhaka",
+    country: "Bangladesh",
+    emailVerified: true,
+    createdAt: "2026-01-01T00:00:00Z"
+  },
   {
     id: "admin-staff-1",
     name: "Farhana Yasmin (Registrar)",
@@ -611,6 +625,78 @@ app.post("/api/setup/super-admin", (req, res) => {
   });
 });
 
+// POST /api/auth/super-admin/init & /api/auth/super-admin/claim: Permanent Super Admin Confirmation
+app.post(["/api/auth/super-admin/init", "/api/auth/super-admin/claim"], async (req, res) => {
+  const { uid, email } = req.body;
+  const targetEmail = (email || "").toLowerCase().trim();
+  const verifiedUid = uid || "4AtU806N8xy911gFEdsYGU8vJRq1";
+
+  if (targetEmail && targetEmail !== "lodonexcookingacademy@gmail.com") {
+    return res.status(403).json({
+      success: false,
+      error: "Only the master Lodonex account (lodonexcookingacademy@gmail.com) can be initialized as Super Admin."
+    });
+  }
+
+  // Attempt to set custom claim via Firebase Admin SDK
+  let claimSet = false;
+  try {
+    const { getApps, getApp, initializeApp } = await import("firebase-admin/app");
+    const { getAuth } = await import("firebase-admin/auth");
+    const adminApp = getApps().length ? getApp() : initializeApp({ projectId: "gen-lang-client-0036445018" });
+    const adminAuth = getAuth(adminApp);
+    if (verifiedUid) {
+      await adminAuth.setCustomUserClaims(verifiedUid, { role: "super_admin" });
+      claimSet = true;
+      console.log(`[FIREBASE ADMIN] Custom claim { role: "super_admin" } set for UID: ${verifiedUid}`);
+    }
+  } catch (claimErr: any) {
+    console.warn(`[FIREBASE ADMIN NOTICE] Admin SDK claim set note: ${claimErr.message}`);
+  }
+
+  // Ensure user is active Super Admin in usersStore
+  const existing = usersStore.find((u) => u.email.toLowerCase() === "lodonexcookingacademy@gmail.com");
+  if (existing) {
+    existing.role = "super_admin";
+    existing.status = "active";
+    existing.name = "Lodonex Super Admin";
+    if (verifiedUid) existing.id = verifiedUid;
+  } else {
+    usersStore.unshift({
+      id: verifiedUid,
+      name: "Lodonex Super Admin",
+      email: "lodonexcookingacademy@gmail.com",
+      role: "super_admin",
+      status: "active",
+      phone: "+88 01711-924269",
+      city: "Dhaka",
+      country: "Bangladesh",
+      emailVerified: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  auditLogsStore.unshift({
+    id: `audit-${Date.now()}`,
+    actorUid: verifiedUid,
+    actorName: "Lodonex Super Admin",
+    actorRole: "super_admin",
+    action: "SUPER_ADMIN_AUTHORIZATION_VERIFIED",
+    targetUid: verifiedUid,
+    targetResource: "users",
+    details: "Permanent Super Admin privileges confirmed and secured for lodonexcookingacademy@gmail.com.",
+    timestamp: new Date().toISOString()
+  });
+
+  return res.json({
+    success: true,
+    message: "Super Admin authorization verified and confirmed.",
+    role: "super_admin",
+    status: "active",
+    customClaimSet: claimSet
+  });
+});
+
 // POST Register Student
 app.post("/api/auth/register", (req, res) => {
   const {
@@ -630,6 +716,13 @@ app.post("/api/auth/register", (req, res) => {
 
   if (!email || !name || !phone || !password) {
     return res.status(400).json({ success: false, error: "Name, email, phone number, and password are required." });
+  }
+
+  if (email.toLowerCase().trim() === "lodonexcookingacademy@gmail.com") {
+    return res.status(403).json({
+      success: false,
+      error: "This email address is reserved exclusively for the Lodonex Super Administrator. Please log in using the Admin Login portal."
+    });
   }
 
   if (password.length < 6) {
@@ -776,6 +869,13 @@ app.post("/api/auth/login", (req, res) => {
   // Security Rule: Return generic invalid message without revealing if user exists
   if (!user) {
     return res.status(401).json({ success: false, error: "Invalid email/phone or password." });
+  }
+
+  // Permanent Super Admin guarantee
+  if (user.email.toLowerCase() === "lodonexcookingacademy@gmail.com") {
+    user.role = "super_admin";
+    user.status = "active";
+    user.name = "Lodonex Super Admin";
   }
 
   // Check password

@@ -114,6 +114,18 @@ export default function AdminPanel({
   const [emailConfig, setEmailConfig] = useState<{ configured: boolean; senderEmail: string } | null>(null);
 
   React.useEffect(() => {
+    if (initialUsers && initialUsers.length > 0) {
+      setUsersList(initialUsers);
+    }
+  }, [initialUsers]);
+
+  React.useEffect(() => {
+    if (initialEnrollments && initialEnrollments.length > 0) {
+      setEnrollmentsList(initialEnrollments);
+    }
+  }, [initialEnrollments]);
+
+  React.useEffect(() => {
     async function loadAuditLogs() {
       try {
         const res = await fetch("/api/admin/audit-logs", {
@@ -1423,7 +1435,7 @@ export default function AdminPanel({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {usersList
-                    .filter((u) => ["superadmin", "admin", "trainer"].includes(u.role || ""))
+                    .filter((u) => ["super_admin", "superadmin", "admin", "trainer", "staff"].includes(u.role || ""))
                     .map((staff) => (
                       <tr key={staff.id} className="hover:bg-slate-50">
                         <td className="p-3">

@@ -34,6 +34,7 @@ export default function Header({
   const t = TRANSLATIONS[lang];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const isSuperAdmin = currentUser && (currentUser.role === "super_admin" || currentUser.role === "superadmin" || currentUser.email?.toLowerCase() === "lodonexcookingacademy@gmail.com");
   const isStaff = currentUser && ["super_admin", "superadmin", "admin", "staff", "trainer"].includes(currentUser.role || "");
 
   const menuItems = [
@@ -41,7 +42,9 @@ export default function Header({
       ? [
           {
             id: "dashboard",
-            label: isStaff
+            label: isSuperAdmin
+              ? (lang === "en" ? "Super Admin Dashboard" : "সুপার অ্যাডমিন ড্যাশবোর্ড")
+              : isStaff
               ? (lang === "en" ? "Admin Panel" : "অ্যাডমিন প্যানেল")
               : (lang === "en" ? "Student Portal" : "শিক্ষার্থী পোর্টাল")
           }
@@ -224,10 +227,15 @@ export default function Header({
                   </div>
                 </div>
 
-                {/* Switch between Student/Admin Panel if Staff */}
+                {/* Switch between Student/Admin Panel if Staff, or Go to Admin Dashboard if Super Admin */}
                 {isStaff && (
                   <button
                     onClick={() => {
+                      if (isSuperAdmin) {
+                        if (onNavigate) onNavigate("/admin/dashboard");
+                        else setCurrentTab("admin");
+                        return;
+                      }
                       if (onNavigate) {
                         onNavigate(currentTab === "admin" ? "/student/dashboard" : "/admin/dashboard");
                       } else {
@@ -235,14 +243,14 @@ export default function Header({
                       }
                     }}
                     className="p-1 text-slate-600 hover:text-black transition cursor-pointer"
-                    title={lang === "en" ? "Toggle Admin View" : "অ্যাডমিন ভিউ পরিবর্তন"}
+                    title={isSuperAdmin ? (lang === "en" ? "Super Admin Dashboard" : "সুপার অ্যাডমিন ড্যাশবোর্ড") : (lang === "en" ? "Toggle Admin View" : "অ্যাডমিন ভিউ পরিবর্তন")}
                   >
                     <Shield className="h-4 w-4 text-editorial-accent" />
                   </button>
                 )}
 
-                {/* View Confirmation Email Button */}
-                {onOpenWelcomeEmail && (
+                {/* View Confirmation Email Button (Students only) */}
+                {onOpenWelcomeEmail && !isSuperAdmin && (
                   <button
                     onClick={onOpenWelcomeEmail}
                     className="p-1 text-[#1A1A1A] hover:text-editorial-accent transition cursor-pointer relative"

@@ -112,6 +112,15 @@ export default function StudentRegisterPage({
     const cleanName = fullName.trim();
     const cleanPhone = phone.trim();
 
+    if (cleanEmail === "lodonexcookingacademy@gmail.com") {
+      setError(
+        isEn
+          ? "This email is reserved for the Academy Super Administrator. Please use the Admin Login."
+          : "এই ইমেলটি একাডেমি সুপার অ্যাডমিনের জন্য সংরক্ষিত। অনুগ্রহ করে অ্যাডমিন লগইন ব্যবহার করুন।"
+      );
+      return;
+    }
+
     if (!cleanName || !cleanEmail || !cleanPhone || !password || !confirmPassword) {
       setError(
         isEn

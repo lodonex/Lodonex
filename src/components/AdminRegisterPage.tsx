@@ -97,6 +97,15 @@ export default function AdminRegisterPage({
       return;
     }
 
+    if (cleanEmail === "lodonexcookingacademy@gmail.com") {
+      setError(
+        isEn
+          ? "This email is the permanent Academy Super Administrator. Please log in directly via the Admin Login page."
+          : "এই ইমেলটি স্থায়ী একাডেমি সুপার অ্যাডমিনিস্ট্রেটর। অনুগ্রহ করে সরাসরি অ্যাডমিন লগইন পেজে লগইন করুন।"
+      );
+      return;
+    }
+
     // Check if email already registered locally
     const existing = existingUsers.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existing) {

@@ -25,7 +25,6 @@ import AuthModal from "./components/AuthModal";
 import WelcomeEmailModal from "./components/WelcomeEmailModal";
 import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
-import AdminSimulationPanel from "./components/AdminSimulationPanel";
 import StudentPortal from "./components/StudentPortal";
 import AdminPanel from "./components/AdminPanel";
 import CertificateVerification from "./components/CertificateVerification";
@@ -277,16 +276,69 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          const isLodonexMaster = firebaseUser.email?.toLowerCase() === "lodonexcookingacademy@gmail.com";
+          
           let userDoc;
           try {
             userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           } catch (dbErr) {
-            handleFirestoreError(dbErr, OperationType.GET, `users/${firebaseUser.uid}`);
+            console.warn("Firestore get user notice:", dbErr);
+          }
+
+          const existingData = userDoc && userDoc.exists() ? (userDoc.data() as UserAccount) : null;
+
+          if (isLodonexMaster) {
+            const superAdminProfile: UserAccount = {
+              ...(existingData || {}),
+              id: firebaseUser.uid,
+              name: existingData?.name && existingData.name !== "lodonexcookingacademy" ? existingData.name : "Lodonex Super Admin",
+              email: "lodonexcookingacademy@gmail.com",
+              role: "super_admin",
+              status: "active",
+              emailVerified: true,
+              city: existingData?.city || "Dhaka",
+              country: existingData?.country || "Bangladesh",
+              createdAt: existingData?.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+
+            // Force update Firestore document to super_admin and active
+            if (!existingData || existingData.role !== "super_admin" || existingData.status !== "active") {
+              try {
+                await setDoc(doc(db, "users", firebaseUser.uid), superAdminProfile, { merge: true });
+              } catch (writeErr) {
+                console.warn("Firestore super admin profile write note:", writeErr);
+              }
+            }
+
+            // Sync with server API
+            try {
+              const idToken = await firebaseUser.getIdToken();
+              await fetch("/api/auth/super-admin/init", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ uid: firebaseUser.uid, email: firebaseUser.email })
+              });
+            } catch (apiErr) {
+              console.warn("Server super admin sync note:", apiErr);
+            }
+
+            setCurrentUser(superAdminProfile);
+            setUsers((prev) => [superAdminProfile, ...prev.filter((u) => u.id !== superAdminProfile.id && u.email.toLowerCase() !== superAdminProfile.email.toLowerCase())]);
+
+            // If user is on / or /student/* or /portal/*, navigate straight to /admin/dashboard
+            const curr = window.location.pathname;
+            if (curr === "/" || curr.startsWith("/student") || curr.startsWith("/portal")) {
+              navigate("/admin/dashboard");
+            }
             return;
           }
 
-          if (userDoc && userDoc.exists()) {
-            setCurrentUser(userDoc.data() as UserAccount);
+          if (existingData) {
+            setCurrentUser(existingData);
           }
         } catch (err) {
           console.error("Error restoring user session:", err);
@@ -332,19 +384,26 @@ export default function App() {
 
   // Auth success handler
   const handleAuthSuccess = async (user: UserAccount, isNewSignup?: boolean) => {
-    if (!users.some((u) => u.id === user.id)) {
-      setUsers((prev) => [...prev, user]);
+    let effectiveUser = { ...user };
+    if (user.email.toLowerCase() === "lodonexcookingacademy@gmail.com") {
+      effectiveUser.role = "super_admin";
+      effectiveUser.status = "active";
+      effectiveUser.emailVerified = true;
+      if (!effectiveUser.name || effectiveUser.name === "lodonexcookingacademy") {
+        effectiveUser.name = "Lodonex Super Admin";
+      }
       try {
-        await setDoc(doc(db, "users", user.id), user);
+        await setDoc(doc(db, "users", effectiveUser.id), effectiveUser, { merge: true });
       } catch (err) {
-        console.error("Error saving user to Firestore in auth success:", err);
-        handleFirestoreError(err, OperationType.WRITE, `users/${user.id}`);
+        console.warn("Error saving super admin to Firestore:", err);
       }
     }
-    setCurrentUser(user);
+
+    setUsers((prev) => [effectiveUser, ...prev.filter((u) => u.id !== effectiveUser.id && u.email.toLowerCase() !== effectiveUser.email.toLowerCase())]);
+    setCurrentUser(effectiveUser);
     setIsAuthOpen(false);
 
-    const userRole = user.role || "";
+    const userRole = effectiveUser.role || "";
     if (userRole === "trainer") {
       navigate("/trainer/dashboard");
     } else if (["super_admin", "superadmin", "admin", "staff"].includes(userRole)) {
@@ -354,7 +413,7 @@ export default function App() {
     }
 
     // Trigger Lodonex Welcome & Confirmation Email for visitors/students
-    if (isNewSignup || user.email.toLowerCase() !== "lodonexcookingacademy@gmail.com") {
+    if (isNewSignup && effectiveUser.role === "student") {
       setIsWelcomeEmailOpen(true);
     }
   };
@@ -532,37 +591,6 @@ export default function App() {
     }
   };
 
-  const handleAddSimulatedUser = async () => {
-    const randomNum = Math.floor(100 + Math.random() * 900);
-    const simulated: UserAccount = {
-      id: `user-sim-${Date.now()}`,
-      name: `Chef In-Training ${randomNum}`,
-      email: `student${randomNum}@lodonex.edu.bd`,
-      status: "pending",
-      progress: {
-        enrolledCourses: [],
-        completedLessons: [],
-        quizScores: {},
-        customRecipes: [],
-        badges: [],
-      },
-    };
-    setUsers((prev) => [...prev, simulated]);
-
-    try {
-      await setDoc(doc(db, "users", simulated.id), simulated);
-    } catch (err) {
-      console.error("Error creating simulated user in Firestore:", err);
-      handleFirestoreError(err, OperationType.WRITE, `users/${simulated.id}`);
-    }
-  };
-
-  const handleResetSimulation = () => {
-    localStorage.removeItem("lodonex_users");
-    localStorage.removeItem("lodonex_current_user");
-    window.location.reload();
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-150 transition-colors duration-200">
       {/* Navigation Header */}
@@ -573,7 +601,7 @@ export default function App() {
           setCurrentTab(tab);
           if (tab === "courses") navigate("/courses");
           else if (tab === "verify-cert") navigate("/verify-cert");
-          else if (tab === "dashboard") navigate(currentUser ? (["superadmin", "admin", "trainer"].includes(currentUser.role || "") ? "/admin/dashboard" : "/student/dashboard") : "/");
+          else if (tab === "dashboard") navigate(currentUser ? (["super_admin", "superadmin", "admin", "staff", "trainer"].includes(currentUser.role || "") ? "/admin/dashboard" : "/student/dashboard") : "/");
         }}
         lang={lang}
         setLang={handleSetLang}
@@ -653,6 +681,23 @@ export default function App() {
                   ? "Please log in to access your student portal."
                   : "শিক্ষার্থী পোর্টালে প্রবেশের জন্য অনুগ্রহ করে লগইন করুন।"
               }
+            />
+          ) : (currentUser.role === "super_admin" || currentUser.role === "superadmin" || currentUser.email.toLowerCase() === "lodonexcookingacademy@gmail.com") ? (
+            /* Super Admin MUST NEVER enter student portal -> Route directly to Admin Dashboard */
+            <AdminPanel
+              lang={lang}
+              currentUser={currentUser}
+              courses={INITIAL_COURSES}
+              initialEnrollments={enrollmentsList}
+              onApproveEnrollmentGlobal={handleApproveEnrollment}
+              onSelectCourse={(course) => {
+                setSelectedCourse(course);
+                navigate(`/courses/${course.id}`);
+              }}
+              onUpdateUserAccount={(u) =>
+                setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+              }
+              initialUsers={users}
             />
           ) : (
             <StudentPortal
@@ -886,7 +931,7 @@ export default function App() {
                       navigate(`/courses/${course.id}`);
                     }}
                   />
-                ) : ["superadmin", "admin", "trainer"].includes(currentUser.role || "") ? (
+                ) : ["super_admin", "superadmin", "admin", "staff", "trainer"].includes(currentUser.role || "") ? (
                   /* Admin & Trainer Management Portal */
                   <AdminPanel
                     lang={lang}
@@ -1243,7 +1288,7 @@ export default function App() {
                           } else if (link.id === "dashboard") {
                             navigate(
                               currentUser
-                                ? ["superadmin", "admin", "trainer"].includes(currentUser.role || "")
+                                ? ["super_admin", "superadmin", "admin", "staff", "trainer"].includes(currentUser.role || "")
                                   ? "/admin/dashboard"
                                   : "/student/dashboard"
                                 : "/portal/login"
@@ -1404,18 +1449,6 @@ export default function App() {
         user={currentUser}
         lang={lang}
       />
-
-      {/* Floating Sandbox Administration Panel - ONLY accessible by lodonexcookingacademy@gmail.com */}
-      {currentUser && currentUser.email.toLowerCase() === "lodonexcookingacademy@gmail.com" && (
-        <AdminSimulationPanel
-          lang={lang}
-          users={users}
-          currentUser={currentUser}
-          onUpdateUserStatus={handleUpdateUserStatus}
-          onAddSimulatedUser={handleAddSimulatedUser}
-          onResetSimulation={handleResetSimulation}
-        />
-      )}
     </div>
   );
 }

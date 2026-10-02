@@ -14,9 +14,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Super Admin: Has role super_admin or superadmin, or master admin email
+    // Super Admin: Has custom claim role == 'super_admin', master email, or database super_admin role
     function isSuperAdmin() {
       return isSignedIn() && (
+        request.auth.token.role == 'super_admin' ||
         request.auth.token.email == 'lodonexcookingacademy@gmail.com' ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
           getUserData(request.auth.uid).role == 'super_admin' ||
@@ -48,19 +49,20 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       // Document Creation:
-      // - Normal Public Student Signup: Role MUST be "student" (STEP 12).
-      //   Students are forbidden from creating super_admin or admin!
-      // - Super Admin: Can create admin, staff, or trainer accounts.
-      // - Bootstrapped master email or initial setup
+      // - Normal Public Student Signup: Role MUST be "student", cannot use reserved master email
+      // - Admin public registration: Role MUST be "admin", status MUST be "pending"
+      // - Master Super Admin bootstrap / initialization
       allow create: if isSignedIn() && (
-        // Public registration: strictly role = student
+        // Public student registration: strictly role = student, cannot take master email
         (request.auth.uid == userId && 
          request.resource.data.role == 'student' &&
+         request.resource.data.email != 'lodonexcookingacademy@gmail.com' &&
          request.resource.data.status in ['active', 'approved', 'pending'])
         ||
-        // Admin public registration: strictly role = admin and status = pending (TEST 7)
+        // Admin registration: strictly role = admin and status = pending
         (request.auth.uid == userId && 
          request.resource.data.role == 'admin' &&
+         request.resource.data.email != 'lodonexcookingacademy@gmail.com' &&
          request.resource.data.status == 'pending')
         ||
         // Super admin provisioning privileged accounts
@@ -73,10 +75,14 @@ service cloud.firestore {
       );
 
       // Document Update:
-      // - Students CANNOT modify their own role, status, or permissions! (TEST 6)
+      // - Students CANNOT modify their own role, status, or permissions!
       // - Only Super Admin can change roles or status of other users!
       allow update: if isSignedIn() && (
         isSuperAdmin()
+        ||
+        (request.auth.uid == userId &&
+         request.auth.token.email == 'lodonexcookingacademy@gmail.com' &&
+         request.resource.data.role in ['super_admin', 'superadmin'])
         ||
         (request.auth.uid == userId &&
          // Self-update invariant: role and status MUST remain identical to existing record!
