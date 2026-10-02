@@ -256,6 +256,19 @@ export default function AdminRegisterPage({
               </div>
             </div>
 
+            {/* Email Notification Notice */}
+            <div className="p-3.5 bg-amber-50 border border-amber-200 text-left text-xs text-amber-900 space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-[11px] text-amber-950 uppercase tracking-wider">
+                <Mail className="h-3.5 w-3.5 text-amber-700" />
+                {isEn ? "Email Notification Dispatched" : "ইমেল বিজ্ঞপ্তি পাঠানো হয়েছে"}
+              </span>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                {isEn
+                  ? `An official registration confirmation email was sent to ${createdMember.email} from lodonexcookingacademy@gmail.com.`
+                  : `আপনার ইমেলে একটি কনফার্মেশন পাঠানো হয়েছে।`}
+              </p>
+            </div>
+
             <button
               id="proceed-team-login-btn"
               onClick={() => onNavigate("/team/login")}

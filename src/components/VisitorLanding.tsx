@@ -19,6 +19,8 @@ import {
   MapPin,
   Camera,
   ChevronRight,
+  Calendar,
+  User,
 } from "lucide-react";
 import { Language, Course } from "../types";
 import { motion } from "motion/react";
@@ -26,6 +28,7 @@ import HomeSlider from "./HomeSlider";
 import AboutUs from "./AboutUs";
 import StudentTestimonials from "./StudentTestimonials";
 import { formatPrice } from "../utils/price";
+import { MOCK_BLOGS } from "../data/mockData";
 
 interface VisitorLandingProps {
   lang: Language;
@@ -442,6 +445,117 @@ export default function VisitorLanding({
 
       {/* Student Testimonials Section */}
       <StudentTestimonials lang={lang} />
+
+      {/* 3 FEATURED BLOG POSTS ON HOME PAGE */}
+      <div id="home-featured-blogs" className="space-y-6 pt-4 border-t border-editorial-border">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-editorial-border pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-editorial-accent text-white font-mono text-[9px] uppercase tracking-widest font-extrabold flex items-center gap-1">
+                <BookOpen className="h-3 w-3" />
+                {isEn ? "Culinary Journal & Gazette" : "কালিনারি জার্নাল ও ব্লগ"}
+              </span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">
+                {isEn ? "3 Latest Masterclass Articles" : "৩টি নির্বাচিত সাম্প্রতিক আর্টিকেল"}
+              </span>
+            </div>
+            <h2 className="font-serif font-extrabold text-2xl sm:text-3xl text-editorial-dark mt-2">
+              {isEn ? "Masterclass Insights & Culinary Secrets" : "রন্ধনশিল্পের বিজ্ঞান ও শেফদের রান্নার গোপন কৌশল"}
+            </h2>
+            <p className="text-xs text-slate-500 max-w-2xl mt-1">
+              {isEn
+                ? "Essential professional culinary knowledge, wild sourdough baking science, classical French mother sauces, and authentic heritage spices curated by our master chefs."
+                : "আমাদের মাস্টার শেফদের লেখা পেশাদার রান্নার প্রযুক্তি, ওয়াইল্ড সোয়ারডো বেকিং কেমিস্ট্রি, ফরাসি ক্লাসিক মাদার সস এবং ঐতিহ্যবাহী বাঙালি পাঁচফোড়নের নির্দেশিকা।"}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              onSelectTab("blogs");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="text-xs font-bold text-editorial-accent hover:text-red-800 uppercase tracking-wider flex items-center gap-1 transition cursor-pointer self-start sm:self-auto"
+          >
+            <span>{isEn ? "View All Articles" : "সকল আর্টিকেল পড়ুন"}</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {MOCK_BLOGS.slice(1, 4).map((blog) => (
+            <article
+              key={blog.id}
+              className="border border-editorial-border bg-[#FDFCF9] overflow-hidden flex flex-col justify-between hover:shadow-md transition-all duration-300 group"
+            >
+              <div
+                onClick={() => {
+                  onSelectTab("blogs");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="aspect-video w-full relative overflow-hidden bg-neutral-100 flex-shrink-0 cursor-pointer"
+              >
+                <img
+                  src={blog.image}
+                  alt={isEn ? blog.titleEn : blog.titleBn}
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-2 left-2">
+                  <span className="px-2 py-0.5 bg-[#FDFCF9]/95 backdrop-blur-xs border border-editorial-border text-editorial-dark font-bold text-[8px] uppercase tracking-wider">
+                    {isEn ? blog.categoryEn : blog.categoryBn}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-editorial-accent" />
+                      <span>{blog.date}</span>
+                    </span>
+                    <span className="flex items-center gap-1 font-mono text-[9px]">
+                      <Clock className="h-3 w-3 text-editorial-accent" />
+                      <span>{isEn ? blog.readTimeEn : blog.readTimeBn}</span>
+                    </span>
+                  </div>
+
+                  <h3
+                    onClick={() => {
+                      onSelectTab("blogs");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="font-serif font-bold text-base text-editorial-dark leading-snug cursor-pointer group-hover:text-editorial-accent transition line-clamp-2"
+                  >
+                    {isEn ? blog.titleEn : blog.titleBn}
+                  </h3>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-3">
+                    {isEn ? blog.excerptEn : blog.excerptBn}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-editorial-border/40 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700">
+                    <User className="h-3.5 w-3.5 text-editorial-accent" />
+                    <span>{isEn ? blog.authorEn : blog.authorBn}</span>
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      onSelectTab("blogs");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-2.5 py-1 bg-white border border-editorial-border text-editorial-dark hover:bg-editorial-accent hover:text-white hover:border-editorial-accent text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                  >
+                    <span>{isEn ? "Read Article" : "পড়ুন"}</span>
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
 
       {/* Teaser Quote / Value Proposition */}
       <div className="p-6 sm:p-8 bg-[#F7F5F0] border border-editorial-border flex flex-col sm:flex-row items-center gap-6">

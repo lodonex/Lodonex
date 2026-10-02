@@ -1,6 +1,17 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import {
+  sendLodonexEmail,
+  sendStudentWelcomeEmail,
+  sendAdminRegistrationEmail,
+  sendAdminApprovalEmail,
+  sendEnrollmentApprovalEmail,
+  sendPaymentConfirmationEmail,
+  sendCertificateReadyEmail,
+  checkResendCooldown,
+  emailLogsStore,
+} from "./src/server/emailService";
 
 const app = express();
 const PORT = 3000;
@@ -25,6 +36,8 @@ let merchantGatewayConfig = {
 // LMS SERVER-SIDE DATA STORES (In-Memory)
 // ==========================================
 
+export type UserRole = "super_admin" | "superadmin" | "admin" | "staff" | "trainer" | "student";
+
 interface UserAccount {
   id: string;
   name: string;
@@ -37,7 +50,7 @@ interface UserAccount {
   city?: string;
   address?: string;
   photoUrl?: string;
-  role: "super_admin" | "superadmin" | "admin" | "staff" | "trainer" | "student";
+  role: UserRole;
   status: "pending" | "active" | "approved" | "suspended" | "blocked";
   assignedBatchId?: string;
   assignedCourseIds?: string[];
@@ -654,6 +667,12 @@ app.post("/api/auth/register", (req, res) => {
 
   usersStore.push(newUser);
 
+  // Trigger official transactional welcome & verification email
+  sendStudentWelcomeEmail({
+    email: newUser.email,
+    name: newUser.name,
+  }).catch((err) => console.warn("Async welcome email notice:", err));
+
   // Return sanitized user (exclude password from response)
   const { password: _, ...sanitized } = newUser;
 
@@ -707,6 +726,13 @@ app.post(["/api/auth/admin-register", "/api/auth/team-register"], (req, res) => 
   };
 
   usersStore.push(newTeamUser);
+
+  // Trigger official transactional admin registration email
+  sendAdminRegistrationEmail({
+    email: newTeamUser.email,
+    name: newTeamUser.name,
+    role: chosenRole,
+  }).catch((err) => console.warn("Async admin registration email notice:", err));
 
   // Record Audit Log
   auditLogsStore.unshift({
@@ -889,7 +915,16 @@ app.post("/api/admin/users/status", (req, res) => {
   }
 
   if (status && ["active", "suspended", "blocked", "pending", "approved"].includes(status)) {
+    const wasPending = target.status === "pending";
     target.status = status;
+
+    if (wasPending && ["active", "approved"].includes(status)) {
+      sendAdminApprovalEmail({
+        email: target.email,
+        name: target.name,
+      }).catch((err) => console.warn("Admin approval email notice:", err));
+    }
+
     auditLogsStore.unshift({
       id: `audit-${Date.now()}`,
       actorUid: (req.headers["x-user-id"] as string) || "superadmin",
@@ -1150,6 +1185,26 @@ app.patch("/api/enrollments/:id/status", (req, res) => {
       if (target.batchId) {
         studentUser.assignedBatchId = target.batchId;
       }
+    }
+
+    // Trigger official Enrollment Approval Email
+    sendEnrollmentApprovalEmail({
+      email: target.studentEmail,
+      name: target.studentName,
+      courseName: target.courseTitle,
+      batchName: target.batchName,
+    }).catch((err) => console.warn("Enrollment approval email notice:", err));
+
+    // If payment verified, trigger Payment Confirmation Email
+    if (target.paidAmount > 0 && target.transactionId) {
+      sendPaymentConfirmationEmail({
+        email: target.studentEmail,
+        name: target.studentName,
+        courseName: target.courseTitle,
+        amountPaid: target.paidAmount,
+        paymentDate: new Date().toISOString().split("T")[0],
+        transactionId: target.transactionId,
+      }).catch((err) => console.warn("Payment confirmation email notice:", err));
     }
   }
 
@@ -1468,6 +1523,16 @@ app.post("/api/certificates", (req, res) => {
 
   certificatesStore.push(newCert);
 
+  // Trigger official Certificate Ready Email
+  if (studentEmail) {
+    sendCertificateReadyEmail({
+      email: studentEmail,
+      name: studentName,
+      courseName: courseTitle,
+      certificateNumber: certNumber,
+    }).catch((err) => console.warn("Certificate notification email notice:", err));
+  }
+
   res.json({
     success: true,
     message: `Digital Certificate ${certNumber} issued successfully!`,
@@ -1633,6 +1698,177 @@ app.get("/api/payments/transactions", (_req, res) => {
     count: transactionsLog.length,
     transactions: transactionsLog,
   });
+});
+
+// ==========================================
+// 8. TRANSACTIONAL EMAIL APIS (LODONEX GMAIL)
+// ==========================================
+
+// GET /api/email/status: Check Gmail SMTP configuration & logs count
+app.get("/api/email/status", (_req, res) => {
+  res.json({
+    success: true,
+    configured: !!process.env.GMAIL_APP_PASSWORD,
+    senderEmail: process.env.GMAIL_USER || "lodonexcookingacademy@gmail.com",
+    service: "Gmail SMTP (smtp.gmail.com:465)",
+    logsCount: emailLogsStore.length,
+  });
+});
+
+// GET /api/email/logs: View email dispatch logs (Admin only)
+app.get("/api/email/logs", (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Administrative authorization required to access email logs." });
+  }
+  res.json({ success: true, count: emailLogsStore.length, logs: emailLogsStore });
+});
+
+// POST /api/email/send: Generic authorized transactional email sender
+app.post("/api/email/send", async (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Only administrators can send custom emails." });
+  }
+
+  const { to, subject, html, text, emailType } = req.body;
+  if (!to || !subject || (!html && !text)) {
+    return res.status(400).json({ success: false, error: "Recipient email, subject, and content are required." });
+  }
+
+  const result = await sendLodonexEmail({ to, subject, html: html || text, text: text || html, emailType });
+  res.json(result);
+});
+
+// POST /api/email/welcome: Student welcome & verification email
+app.post("/api/email/welcome", async (req, res) => {
+  const { email, name, verificationUrl } = req.body;
+  if (!email || !name) {
+    return res.status(400).json({ success: false, error: "Recipient email and name are required." });
+  }
+
+  const result = await sendStudentWelcomeEmail({ email, name, verificationUrl });
+  res.json(result);
+});
+
+// POST /api/email/admin-register: Admin registration email
+app.post("/api/email/admin-register", async (req, res) => {
+  const { email, name, role } = req.body;
+  if (!email || !name) {
+    return res.status(400).json({ success: false, error: "Recipient email and name are required." });
+  }
+
+  const result = await sendAdminRegistrationEmail({ email, name, role });
+  res.json(result);
+});
+
+// POST /api/email/resend-verification: Resend verification email with 60-second cooldown
+app.post("/api/email/resend-verification", async (req, res) => {
+  const { email, name } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, error: "Recipient email is required." });
+  }
+
+  const cooldown = checkResendCooldown(email);
+  if (!cooldown.allowed) {
+    return res.status(429).json({
+      success: false,
+      error: `Please wait ${cooldown.remainingSeconds} seconds before requesting another verification email.`,
+      remainingSeconds: cooldown.remainingSeconds,
+    });
+  }
+
+  const targetUser = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
+  const userName = name || (targetUser ? targetUser.name : "Apprentice");
+
+  const result = await sendStudentWelcomeEmail({
+    email,
+    name: userName,
+  });
+
+  if (!result.success) {
+    return res.status(500).json({
+      success: false,
+      error: result.error || "Could not send verification email right now. Please try again later.",
+    });
+  }
+
+  res.json({
+    success: true,
+    message: "Verification email sent successfully. Please check your inbox and spam folder.",
+    details: result,
+  });
+});
+
+// POST /api/email/admin-approval: Trigger admin approval email
+app.post("/api/email/admin-approval", async (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Admin authorization required." });
+  }
+
+  const { email, name } = req.body;
+  if (!email || !name) {
+    return res.status(400).json({ success: false, error: "Recipient email and name are required." });
+  }
+
+  const result = await sendAdminApprovalEmail({ email, name });
+  res.json(result);
+});
+
+// POST /api/email/enrollment-approval: Trigger enrollment approval email
+app.post("/api/email/enrollment-approval", async (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Admin authorization required." });
+  }
+
+  const { email, name, courseName, batchName } = req.body;
+  if (!email || !name || !courseName) {
+    return res.status(400).json({ success: false, error: "Recipient email, student name, and course name are required." });
+  }
+
+  const result = await sendEnrollmentApprovalEmail({ email, name, courseName, batchName });
+  res.json(result);
+});
+
+// POST /api/email/payment-confirmation: Trigger payment confirmation email
+app.post("/api/email/payment-confirmation", async (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Admin authorization required." });
+  }
+
+  const { email, name, courseName, amountPaid, paymentDate, transactionId } = req.body;
+  if (!email || !name || !courseName || !transactionId) {
+    return res.status(400).json({ success: false, error: "Recipient email, student name, course name, and TrxID are required." });
+  }
+
+  const result = await sendPaymentConfirmationEmail({
+    email,
+    name,
+    courseName,
+    amountPaid: amountPaid || 0,
+    paymentDate: paymentDate || new Date().toISOString().split("T")[0],
+    transactionId,
+  });
+  res.json(result);
+});
+
+// POST /api/email/certificate: Trigger certificate notification email
+app.post("/api/email/certificate", async (req, res) => {
+  const { isAdmin } = getAuthContext(req);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, error: "Admin authorization required." });
+  }
+
+  const { email, name, courseName, certificateNumber } = req.body;
+  if (!email || !name || !courseName || !certificateNumber) {
+    return res.status(400).json({ success: false, error: "Recipient email, student name, course name, and certificate number are required." });
+  }
+
+  const result = await sendCertificateReadyEmail({ email, name, courseName, certificateNumber });
+  res.json(result);
 });
 
 // Start server with Vite middleware in Dev / Static in Prod

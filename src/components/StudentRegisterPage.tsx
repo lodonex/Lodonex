@@ -18,7 +18,7 @@ import {
 import { Language, UserAccount } from "../types";
 import { INITIAL_LMS_USERS } from "../data/lmsMockData";
 import { auth, db } from "../utils/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
@@ -58,6 +58,51 @@ export default function StudentRegisterPage({
   const [loading, setLoading] = useState(false);
   const [registeredSuccess, setRegisteredSuccess] = useState(false);
   const [createdStudent, setCreatedStudent] = useState<UserAccount | null>(null);
+
+  // 60-Second Cooldown Resend Email Verification State
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
+
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!createdStudent || resendCooldown > 0 || resending) return;
+    setResending(true);
+    setResendMsg("");
+
+    try {
+      const res = await fetch("/api/email/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: createdStudent.email, name: createdStudent.name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResendCooldown(60);
+        setResendMsg(
+          isEn
+            ? "Verification email resent from lodonexcookingacademy@gmail.com! Please check your inbox or spam folder."
+            : "ভেরিফিকেশন ইমেল পুনরায় পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম ফোল্ডার চেক করুন।"
+        );
+      } else {
+        if (data.remainingSeconds) {
+          setResendCooldown(data.remainingSeconds);
+        }
+        setResendMsg(data.error || (isEn ? "Could not resend right now." : "পুনরায় পাঠানো সম্ভব হয়নি।"));
+      }
+    } catch (err: any) {
+      setResendMsg(isEn ? "Network error. Please try again later." : "পুনরায় চেষ্টা করুন।");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,10 +215,23 @@ export default function StudentRegisterPage({
       if (userCredential.user) {
         firebaseUid = userCredential.user.uid;
         newUser.id = firebaseUid;
+        // Official Firebase Authentication email verification
+        try {
+          await sendEmailVerification(userCredential.user);
+        } catch (verErr) {
+          console.warn("Firebase sendEmailVerification notice:", verErr);
+        }
       }
     } catch (authErr: any) {
       console.warn("Firebase Auth registration note:", authErr?.message);
     }
+
+    // Trigger official Lodonex Transactional Welcome Email via Gmail SMTP
+    fetch("/api/email/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, name: cleanName }),
+    }).catch((emailErr) => console.warn("Welcome email trigger notice:", emailErr));
 
     // 3. Create Firestore user document (role = student, status = active)
     try {
@@ -242,6 +300,48 @@ export default function StudentRegisterPage({
               <div className="flex justify-between">
                 <span className="text-slate-500">Role & Status:</span>
                 <span className="font-bold text-emerald-700 uppercase">ROLE: STUDENT | STATUS: ACTIVE</span>
+              </div>
+            </div>
+
+            {/* Email Verification Box */}
+            <div className="p-4 bg-amber-50 border border-amber-200 text-left space-y-3">
+              <div className="flex items-start gap-2.5">
+                <Mail className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold text-xs text-amber-950 block">
+                    {isEn ? "Email Verification Sent" : "ভেরিফিকেশন ইমেল পাঠানো হয়েছে"}
+                  </span>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    {isEn
+                      ? `An official welcome and verification message was dispatched to ${createdStudent.email} from lodonexcookingacademy@gmail.com. Please check your inbox or spam folder.`
+                      : `আপনার ইমেলে একটি অ্যাক্টিভেশন লিঙ্ক পাঠানো হয়েছে। অনুগ্রহ করে ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।`}
+                  </p>
+                </div>
+              </div>
+
+              {resendMsg && (
+                <div className="text-[11px] font-medium text-amber-900 bg-amber-100/70 p-2 border border-amber-300">
+                  {resendMsg}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1 border-t border-amber-200">
+                <span className="text-[11px] text-slate-600">
+                  {isEn ? "Didn't receive the email?" : "ইমেল পাননি?"}
+                </span>
+                <button
+                  type="button"
+                  id="resend-verification-btn"
+                  onClick={handleResendVerification}
+                  disabled={resendCooldown > 0 || resending}
+                  className="px-3 py-1.5 bg-white border border-amber-400 text-amber-900 hover:bg-amber-100 font-bold text-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                >
+                  {resending
+                    ? (isEn ? "Sending..." : "পাঠানো হচ্ছে...")
+                    : resendCooldown > 0
+                    ? `${isEn ? "Resend in" : "পুনরায় পাঠান"} (${resendCooldown}s)`
+                    : (isEn ? "Resend Verification Email" : "পুনরায় ইমেল পাঠান")}
+                </button>
               </div>
             </div>
 

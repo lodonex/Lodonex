@@ -28,7 +28,8 @@ import {
   RefreshCw,
   X,
   GraduationCap,
-  Terminal
+  Terminal,
+  Mail
 } from "lucide-react";
 import {
   Language,
@@ -101,6 +102,7 @@ export default function AdminPanel({
     | "payments"
     | "staff"
     | "audit_logs"
+    | "email_logs"
     | "settings"
   >("overview");
 
@@ -108,6 +110,8 @@ export default function AdminPanel({
   const [usersList, setUsersList] = useState<UserAccount[]>(initialUsers || INITIAL_LMS_USERS);
   const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(initialEnrollments || MOCK_ENROLLMENT_APPLICATIONS);
   const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
+  const [emailLogsList, setEmailLogsList] = useState<any[]>([]);
+  const [emailConfig, setEmailConfig] = useState<{ configured: boolean; senderEmail: string } | null>(null);
 
   React.useEffect(() => {
     async function loadAuditLogs() {
@@ -126,8 +130,34 @@ export default function AdminPanel({
         }
       } catch (err) {}
     }
+
+    async function loadEmailData() {
+      try {
+        const [statusRes, logsRes] = await Promise.all([
+          fetch("/api/email/status"),
+          fetch("/api/email/logs", {
+            headers: {
+              "x-user-role": userRole,
+              "x-user-id": currentUser.id
+            }
+          })
+        ]);
+        if (statusRes.ok) {
+          const sData = await statusRes.json();
+          setEmailConfig(sData);
+        }
+        if (logsRes.ok) {
+          const lData = await logsRes.json();
+          if (lData.logs) {
+            setEmailLogsList(lData.logs);
+          }
+        }
+      } catch (err) {}
+    }
+
     if (isSuperAdmin) {
       loadAuditLogs();
+      loadEmailData();
     }
   }, [isSuperAdmin, userRole, currentUser.id]);
 
@@ -519,6 +549,7 @@ export default function AdminPanel({
             { id: "payments", label: isEn ? "Payments & Trx" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer },
             { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
             { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
+            { id: "email_logs", label: isEn ? "Email Logs" : "ইমেল লগ", icon: Mail, show: isSuperAdmin },
             { id: "settings", label: isEn ? "Gateways / Settings" : "পেমেন্ট গেটওয়ে", icon: Settings, show: isSuperAdmin },
           ]
             .filter((t) => t.show)
@@ -1534,6 +1565,147 @@ export default function AdminPanel({
                         </td>
                         <td className="p-3 text-slate-600">
                           {log.details || "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: EMAIL LOGS & GMAIL SMTP MONITOR (SUPER ADMIN ONLY)
+           ======================================================== */}
+        {adminTab === "email_logs" && isSuperAdmin && (
+          <div className="mt-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="font-serif font-extrabold text-2xl text-editorial-dark">
+                  {isEn ? "Transactional Email Logs & Delivery Status" : "ট্রানজ্যাকশনাল ইমেল লগ ও ডেলিভারি স্ট্যাটাস"}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {isEn
+                    ? "Official Lodonex Gmail SMTP email delivery log (lodonexcookingacademy@gmail.com). Never stores credentials."
+                    : "লোডোনেক্স অফিসিয়াল জিমেইল এসটিএমপি ডেলিভারি লগ। পাসওয়ার্ড ও গোপন তথ্য সংরক্ষণ করা হয় না।"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className={`px-2.5 py-1 text-xs font-mono font-bold uppercase rounded border ${
+                  emailConfig?.configured
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                    : "bg-blue-50 text-blue-800 border-blue-300"
+                }`}>
+                  {emailConfig?.configured ? "GMAIL SMTP ACTIVE" : "SIMULATED / DEV MODE"}
+                </span>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/email/logs", {
+                        headers: { "x-user-role": userRole, "x-user-id": currentUser.id }
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        if (data.logs) setEmailLogsList(data.logs);
+                      }
+                    } catch (e) {}
+                  }}
+                  className="p-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 cursor-pointer"
+                  title="Refresh Email Logs"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Email Statistics Summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Dispatches</span>
+                <div className="font-serif text-2xl font-extrabold text-slate-900">{emailLogsList.length}</div>
+                <p className="text-[10px] text-slate-400">All recorded transactions</p>
+              </div>
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Delivered (Sent)</span>
+                <div className="font-serif text-2xl font-extrabold text-emerald-700">
+                  {emailLogsList.filter((l) => l.status === "sent").length}
+                </div>
+                <p className="text-[10px] text-emerald-600">Delivered via Gmail SMTP</p>
+              </div>
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Development / Simulated</span>
+                <div className="font-serif text-2xl font-extrabold text-blue-700">
+                  {emailLogsList.filter((l) => l.status === "simulated").length}
+                </div>
+                <p className="text-[10px] text-blue-600">Pending App Password</p>
+              </div>
+              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-red-700">Delivery Errors</span>
+                <div className="font-serif text-2xl font-extrabold text-red-700">
+                  {emailLogsList.filter((l) => l.status === "failed").length}
+                </div>
+                <p className="text-[10px] text-red-500">Failed attempts (non-blocking)</p>
+              </div>
+            </div>
+
+            {/* Email Logs Table */}
+            <div className="bg-white border border-editorial-border overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                    <th className="p-3">Timestamp</th>
+                    <th className="p-3">Recipient</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3">Subject</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Details / Message ID</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {emailLogsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400 italic">
+                        {isEn ? "No transactional emails sent yet. Dispatches will appear here in real-time." : "কোনো ইমেল লগ পাওয়া যায়নি।"}
+                      </td>
+                    </tr>
+                  ) : (
+                    emailLogsList.map((log: any) => (
+                      <tr key={log.emailId} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                          {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
+                        </td>
+                        <td className="p-3 font-bold text-slate-900">
+                          {log.recipient}
+                        </td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 font-mono text-[10px] uppercase font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            {log.emailType || "general"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-700 max-w-xs truncate" title={log.subject}>
+                          {log.subject}
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 text-[10px] uppercase font-bold font-mono ${
+                            log.status === "sent"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : log.status === "simulated"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="p-3 font-mono text-[10px] text-slate-500 max-w-xs truncate" title={log.errorMessage || log.messageId || ""}>
+                          {log.errorMessage ? (
+                            <span className="text-red-600 font-semibold">{log.errorMessage}</span>
+                          ) : log.messageId ? (
+                            <span>{log.messageId}</span>
+                          ) : (
+                            <span className="text-slate-400">OK</span>
+                          )}
                         </td>
                       </tr>
                     ))
