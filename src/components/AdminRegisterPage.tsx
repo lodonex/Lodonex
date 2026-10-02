@@ -13,14 +13,17 @@ import {
   Clock,
   ArrowLeft,
   Briefcase,
-  Award,
-  Crown
+  Award
 } from "lucide-react";
 import { Language, UserAccount, UserRole } from "../types";
 import { auth, db } from "../utils/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
+
+// Approved Team Roles for Public Team Registration
+// Super Admin is strictly reserved and MUST NOT be publicly selectable
+export type SelectableTeamRole = "admin" | "trainer" | "staff";
 
 interface AdminRegisterPageProps {
   lang: Language;
@@ -42,8 +45,8 @@ export default function AdminRegisterPage({
   const [confirmPassword, setConfirmPassword] = useState("");
   
   // Mandatory Role / Account Type Selection for Team Registration:
-  // Options: SUPER ADMIN, ADMIN, STAFF, TRAINER
-  const [role, setRole] = useState<UserRole | "">("");
+  // Approved Options: ADMIN, TRAINER, STAFF (Super Admin is NEVER publicly selectable)
+  const [role, setRole] = useState<SelectableTeamRole | "">("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -70,11 +73,11 @@ export default function AdminRegisterPage({
       return;
     }
 
-    if (!role) {
+    if (!role || !["admin", "trainer", "staff"].includes(role)) {
       setError(
         isEn
-          ? "Please select a Role / Account Type (SUPER ADMIN, ADMIN, STAFF, or TRAINER)."
-          : "অনুগ্রহ করে একটি রোল / অ্যাকাউন্ট টাইপ নির্বাচন করুন।"
+          ? "Please select an approved Role / Account Type (Admin, Trainer, or Staff)."
+          : "অনুগ্রহ করে একটি অনুমোদিত রোল / অ্যাকাউন্ট টাইপ নির্বাচন করুন (অ্যাডমিন, ট্রেইনার অথবা স্টাফ)।"
       );
       return;
     }
@@ -120,27 +123,61 @@ export default function AdminRegisterPage({
     setLoading(true);
 
     try {
-      // 1. Register with backend API
-      const res = await fetch("/api/auth/team-register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: cleanName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          password: password,
-          role: role
-        }),
-      });
+      // 1. Register with backend API using robust, safe JSON error handling
+      let res: Response;
+      try {
+        res = await fetch("/api/auth/team-register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            password: password,
+            role: role
+          }),
+        });
+      } catch (fetchErr) {
+        console.error("Team registration network failure:", fetchErr);
+        throw new Error(
+          isEn
+            ? "Registration service is temporarily unavailable. Please try again."
+            : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        );
+      }
 
-      const data = await res.json();
+      // Safe JSON response checking: Never blindly call response.json()
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          console.error("JSON parsing error on team register response:", jsonErr);
+        }
+      }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to create team member account.");
+      if (!res.ok || !data || !data.success) {
+        if (!data) {
+          console.error("Unexpected non-JSON response from registration service:", res.status, res.statusText);
+          throw new Error(
+            isEn
+              ? "Registration service is temporarily unavailable. Please try again."
+              : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
+          );
+        }
+        throw new Error(
+          data.message ||
+          data.error ||
+          (isEn ? "Failed to create team member account." : "টিম মেম্বার অ্যাকাউন্ট তৈরি সম্ভব হয়নি।")
+        );
       }
 
       // 2. Create in Firebase Authentication
-      let firebaseUid = data.user?.id || `${role}-${Date.now()}`;
+      let firebaseUid = data.data?.user?.id || data.user?.id || `${role}-${Date.now()}`;
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
         if (userCredential.user) {
@@ -150,7 +187,7 @@ export default function AdminRegisterPage({
         console.warn("Firebase Auth team member create note:", authErr?.message);
       }
 
-      // 3. Create Firestore user document with selected role and active status
+      // 3. Create Firestore user document with selected approved role and active status
       const firestoreUser: UserAccount = {
         id: firebaseUid,
         name: cleanName,
@@ -191,8 +228,9 @@ export default function AdminRegisterPage({
       setCreatedMember(firestoreUser);
       setRegisteredSuccess(true);
     } catch (err: any) {
-      console.error("Team registration error:", err);
-      setError(err?.message || "Registration failed. Please try again.");
+      console.error("Team registration submission error:", err);
+      // User-friendly message, no sensitive stack traces exposed
+      setError(err?.message || (isEn ? "Registration service is temporarily unavailable. Please try again." : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"));
     } finally {
       setLoading(false);
     }
@@ -394,39 +432,25 @@ export default function AdminRegisterPage({
                     id="team-role-select"
                     required
                     value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
+                    onChange={(e) => setRole(e.target.value as SelectableTeamRole)}
                     className="w-full pl-9 pr-8 py-2.5 bg-white border-2 border-slate-300 text-slate-900 font-bold focus:outline-none focus:border-editorial-accent focus:ring-1 focus:ring-editorial-accent cursor-pointer"
                   >
                     <option value="" disabled>
-                      {isEn ? "[ Select Role ]" : "[ রোল নির্বাচন করুন ]"}
-                    </option>
-                    <option value="super_admin">
-                      * SUPER ADMIN
+                      {isEn ? "[ Select Approved Role ]" : "[ অনুমোদিত রোল নির্বাচন করুন ]"}
                     </option>
                     <option value="admin">
-                      * ADMIN
-                    </option>
-                    <option value="staff">
-                      * STAFF
+                      * ADMIN (Academic & Operations Coordinator)
                     </option>
                     <option value="trainer">
-                      * TRAINER
+                      * TRAINER (Culinary Faculty / Instructor)
+                    </option>
+                    <option value="staff">
+                      * STAFF (Admissions & Operations Support)
                     </option>
                   </select>
                 </div>
 
                 {/* Role Description Banner */}
-                {role === "super_admin" && (
-                  <div className="p-2.5 bg-amber-50 border border-amber-300 text-[11px] text-amber-900 space-y-0.5 mt-1.5">
-                    <span className="font-bold flex items-center gap-1 text-amber-800">
-                      <Crown className="w-3.5 h-3.5" />
-                      SUPER ADMIN PRIVILEGES
-                    </span>
-                    <p className="text-[10px] text-amber-800 leading-tight">
-                      Full master authority: system settings, audit logs, financials, user roles & permissions.
-                    </p>
-                  </div>
-                )}
                 {role === "trainer" && (
                   <div className="p-2.5 bg-blue-50 border border-blue-300 text-[11px] text-blue-900 space-y-0.5 mt-1.5">
                     <span className="font-bold flex items-center gap-1 text-blue-800">

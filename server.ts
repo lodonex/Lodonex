@@ -776,42 +776,83 @@ app.post("/api/auth/register", (req, res) => {
   });
 });
 
-// POST Register Admin or Team Member with Role Selection
+// POST Register Authorized Team Member with Role Selection (Super Admin STRICTLY PROHIBITED)
 app.post(["/api/auth/admin-register", "/api/auth/team-register"], (req, res) => {
-  const { name, email, phone, password, role } = req.body;
+  res.setHeader("Content-Type", "application/json");
+  const { name, email, phone, password, role } = req.body || {};
 
   if (!email || !name || !phone || !password) {
-    return res.status(400).json({ success: false, error: "Full Name, email, phone number, and password are required." });
+    return res.status(400).json({
+      success: false,
+      message: "Full Name, email, phone number, and password are required.",
+      error: "Full Name, email, phone number, and password are required.",
+      code: "MISSING_REQUIRED_FIELDS"
+    });
   }
 
-  if (password.length < 6) {
-    return res.status(400).json({ success: false, error: "Password must be at least 6 characters long." });
+  if (typeof password !== "string" || password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long.",
+      error: "Password must be at least 6 characters long.",
+      code: "PASSWORD_TOO_SHORT"
+    });
   }
 
-  // Normalize role
+  // Normalize role and enforce security: SUPER ADMIN CANNOT BE SELECTED OR CREATED HERE!
+  const rawRole = String(role || "").toLowerCase().trim().replace(/[-\s]/g, "_");
+  if (rawRole === "super_admin" || rawRole === "superadmin") {
+    return res.status(403).json({
+      success: false,
+      message: "Super Administrator accounts cannot be created via public team registration.",
+      error: "Super Administrator accounts cannot be created via public team registration.",
+      code: "SUPER_ADMIN_REGISTRATION_FORBIDDEN"
+    });
+  }
+
   let chosenRole: UserRole = "admin";
-  if (role) {
-    const rawRole = String(role).toLowerCase().trim().replace(/[-\s]/g, "_");
-    if (rawRole === "super_admin" || rawRole === "superadmin") chosenRole = "super_admin";
-    else if (rawRole === "admin") chosenRole = "admin";
-    else if (rawRole === "staff") chosenRole = "staff";
-    else if (rawRole === "trainer") chosenRole = "trainer";
-    else if (rawRole === "student") chosenRole = "student";
+  if (rawRole === "admin") {
+    chosenRole = "admin";
+  } else if (rawRole === "trainer") {
+    chosenRole = "trainer";
+  } else if (rawRole === "staff") {
+    chosenRole = "staff";
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: "Please select an approved Role / Account Type (Admin, Trainer, or Staff).",
+      error: "Please select an approved Role / Account Type (Admin, Trainer, or Staff).",
+      code: "INVALID_ROLE"
+    });
   }
 
-  const cleanEmail = email.toLowerCase().trim();
+  const cleanEmail = String(email).toLowerCase().trim();
+  if (cleanEmail === "lodonexcookingacademy@gmail.com") {
+    return res.status(403).json({
+      success: false,
+      message: "This email is the permanent Academy Super Administrator. Please log in directly.",
+      error: "This email is the permanent Academy Super Administrator. Please log in directly.",
+      code: "RESERVED_SUPER_ADMIN_EMAIL"
+    });
+  }
+
   const existing = usersStore.find((u) => u.email.toLowerCase() === cleanEmail);
   if (existing) {
-    return res.status(400).json({ success: false, error: "An account with this email address already exists. Please log in." });
+    return res.status(409).json({
+      success: false,
+      message: "An account with this email address already exists. Please log in.",
+      error: "An account with this email address already exists. Please log in.",
+      code: "EMAIL_ALREADY_EXISTS"
+    });
   }
 
-  // Team signup creates account with selected role and active status
+  // Team signup creates account with selected approved role and active status
   const newTeamUser: UserAccount = {
     id: `${chosenRole}-${Date.now()}`,
-    name: name.trim(),
+    name: String(name).trim(),
     email: cleanEmail,
-    phone: phone.trim(),
-    password: password,
+    phone: String(phone).trim(),
+    password: String(password),
     role: chosenRole,
     status: "active",
     emailVerified: true,
@@ -833,7 +874,7 @@ app.post(["/api/auth/admin-register", "/api/auth/team-register"], (req, res) => 
     actorUid: newTeamUser.id,
     actorName: newTeamUser.name,
     actorRole: chosenRole,
-    action: chosenRole === "super_admin" ? "SUPER_ADMIN_CREATED" : "TEAM_MEMBER_CREATED",
+    action: "TEAM_MEMBER_CREATED",
     targetUid: newTeamUser.id,
     targetResource: "users",
     details: `Team account registered for ${newTeamUser.name} (${newTeamUser.email}) with role: ${chosenRole.toUpperCase()}.`,
@@ -842,9 +883,12 @@ app.post(["/api/auth/admin-register", "/api/auth/team-register"], (req, res) => 
 
   const { password: _, ...sanitized } = newTeamUser;
 
-  res.json({
+  res.status(201).json({
     success: true,
     message: `Team account with role ${chosenRole.toUpperCase()} created successfully. Please log in to continue.`,
+    data: {
+      user: sanitized
+    },
     user: sanitized
   });
 });
@@ -1969,6 +2013,36 @@ app.post("/api/email/certificate", async (req, res) => {
 
   const result = await sendCertificateReadyEmail({ email, name, courseName, certificateNumber });
   res.json(result);
+});
+
+// ==========================================
+// API GUARANTEE: JSON 404 & ERROR RESPONSES
+// (Prevents HTML error fallthrough to client)
+// ==========================================
+
+// Catch-all for undefined /api/* routes - guarantees JSON instead of HTML
+app.all("/api/*", (_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "The requested API endpoint was not found.",
+    error: "The requested API endpoint was not found.",
+    code: "API_ENDPOINT_NOT_FOUND"
+  });
+});
+
+// Centralized error handler for all /api/* requests
+app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  console.error("Centralized API Server Error:", err);
+  const status = typeof err.status === "number" ? err.status : 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || "An unexpected server error occurred. Please try again.",
+    error: err.message || "An unexpected server error occurred. Please try again.",
+    code: err.code || "INTERNAL_SERVER_ERROR"
+  });
 });
 
 // Start server with Vite middleware in Dev / Static in Prod

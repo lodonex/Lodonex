@@ -80,11 +80,22 @@ export default function StudentRegisterPage({
     try {
       const res = await fetch("/api/email/resend-verification", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ email: createdStudent.email, name: createdStudent.name }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          console.error("JSON parse error:", jsonErr);
+        }
+      }
+      if (res.ok && data && data.success) {
         setResendCooldown(60);
         setResendMsg(
           isEn
@@ -92,10 +103,10 @@ export default function StudentRegisterPage({
             : "ভেরিফিকেশন ইমেল পুনরায় পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম ফোল্ডার চেক করুন।"
         );
       } else {
-        if (data.remainingSeconds) {
+        if (data && data.remainingSeconds) {
           setResendCooldown(data.remainingSeconds);
         }
-        setResendMsg(data.error || (isEn ? "Could not resend right now." : "পুনরায় পাঠানো সম্ভব হয়নি।"));
+        setResendMsg((data && (data.message || data.error)) || (isEn ? "Could not resend right now." : "পুনরায় পাঠানো সম্ভব হয়নি।"));
       }
     } catch (err: any) {
       setResendMsg(isEn ? "Network error. Please try again later." : "পুনরায় চেষ্টা করুন।");

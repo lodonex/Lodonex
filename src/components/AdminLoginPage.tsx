@@ -160,21 +160,43 @@ export default function AdminLoginPage({
       }
 
       // 2. Call backend API for staff authentication
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          emailOrPhone: cleanInput,
-          password: cleanPassword,
-          isStaffPortal: true,
-          twoFactorCode: twoFactorCode.trim(),
-        }),
-      });
+      let res: Response;
+      try {
+        res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            emailOrPhone: cleanInput,
+            password: cleanPassword,
+            isStaffPortal: true,
+            twoFactorCode: twoFactorCode.trim(),
+          }),
+        });
+      } catch (netErr) {
+        console.error("Staff login network failure:", netErr);
+        throw new Error(
+          isEn
+            ? "Authentication service is temporarily unavailable. Please try again."
+            : "লগইন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        );
+      }
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          console.error("JSON parse error on staff login:", jsonErr);
+        }
+      }
 
-      if (res.ok && data.success && data.user) {
-        if (data.user.role === "student") {
+      if (res.ok && data && data.success && (data.data?.user || data.user)) {
+        const userObj = data.data?.user || data.user;
+        if (userObj.role === "student") {
           setError(
             isEn
               ? "Access Denied: Student accounts cannot access the administrative staff portal. Please use the Student Portal."

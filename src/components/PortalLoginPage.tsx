@@ -166,20 +166,42 @@ export default function PortalLoginPage({
       }
 
       // 2. Attempt backend API login
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          emailOrPhone: cleanInput,
-          password: cleanPassword,
-          isStaffPortal: activeTab === "admin",
-        }),
-      });
+      let res: Response;
+      try {
+        res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            emailOrPhone: cleanInput,
+            password: cleanPassword,
+            isStaffPortal: activeTab === "admin",
+          }),
+        });
+      } catch (netErr) {
+        console.error("Portal login network error:", netErr);
+        throw new Error(
+          isEn
+            ? "Authentication service is temporarily unavailable. Please try again."
+            : "লগইন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        );
+      }
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          console.error("JSON parse error in PortalLoginPage:", jsonErr);
+        }
+      }
 
-      if (res.ok && data.success && data.user) {
-        if (activeTab === "admin" && data.user.role === "student") {
+      const userObj = data?.data?.user || data?.user;
+      if (res.ok && data?.success && userObj) {
+        if (activeTab === "admin" && userObj.role === "student") {
           setError(
             isEn
               ? "Access Denied: Student accounts cannot access the administrative staff portal."

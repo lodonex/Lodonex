@@ -59,11 +59,11 @@ service cloud.firestore {
          request.resource.data.email != 'lodonexcookingacademy@gmail.com' &&
          request.resource.data.status in ['active', 'approved', 'pending'])
         ||
-        // Admin registration: strictly role = admin and status = pending
+        // Team registration: approved roles (admin, staff, trainer) with active or pending status
         (request.auth.uid == userId && 
-         request.resource.data.role == 'admin' &&
+         request.resource.data.role in ['admin', 'staff', 'trainer'] &&
          request.resource.data.email != 'lodonexcookingacademy@gmail.com' &&
-         request.resource.data.status == 'pending')
+         request.resource.data.status in ['active', 'pending'])
         ||
         // Super admin provisioning privileged accounts
         isSuperAdmin()
