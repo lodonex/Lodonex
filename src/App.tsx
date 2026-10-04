@@ -27,6 +27,8 @@ import VisitorLanding from "./components/VisitorLanding";
 import PendingApprovalView from "./components/PendingApprovalView";
 import StudentPortal from "./components/StudentPortal";
 import AdminPanel from "./components/AdminPanel";
+import StaffDashboard from "./components/StaffDashboard";
+import TrainerDashboard from "./components/TrainerDashboard";
 import CertificateVerification from "./components/CertificateVerification";
 import EnrollmentModal from "./components/EnrollmentModal";
 import { OurChefs } from "./components/OurChefs";
@@ -45,7 +47,7 @@ import SuperAdminSetupPage from "./components/SuperAdminSetupPage";
 import { Mail, Phone, MapPin, Instagram, Facebook, Linkedin, Music, Youtube, Lock, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Language, Course, Recipe, StudentProgress, Badge, UserAccount, EnrollmentApplication } from "./types";
 import { INITIAL_COURSES, INITIAL_RECIPES, INITIAL_LIVE_CLASSES, BADGES, MOCK_BLOGS } from "./data/mockData";
-import { INITIAL_LMS_USERS, MOCK_ENROLLMENT_APPLICATIONS } from "./data/lmsMockData";
+import { subscribeUsers, subscribeEnrollments } from "./services/dashboardService";
 import { TRANSLATIONS } from "./data/translations";
 import { db, auth, handleFirestoreError, OperationType } from "./utils/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -91,7 +93,7 @@ export default function App() {
   // Welcome Email Modal open state
   const [isWelcomeEmailOpen, setIsWelcomeEmailOpen] = useState<boolean>(false);
 
-  // Stored enrollment applications
+  // Stored enrollment applications (Strictly real data from Firestore)
   const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(() => {
     const saved = localStorage.getItem("lodonex_enrollments");
     if (saved) {
@@ -100,10 +102,10 @@ export default function App() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    return MOCK_ENROLLMENT_APPLICATIONS;
+    return [];
   });
 
-  // Database of Registered Users with Firestore + Local fallback (Seeded with INITIAL_LMS_USERS)
+  // Database of Registered Users with Firestore (Strictly zero mock data)
   const [users, setUsers] = useState<UserAccount[]>(() => {
     const saved = localStorage.getItem("lodonex_users");
     if (saved) {
@@ -112,8 +114,33 @@ export default function App() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    return INITIAL_LMS_USERS;
+    return [];
   });
+
+  // Global live Firestore listeners for users and enrollments
+  useEffect(() => {
+    const unsubUsers = subscribeUsers(
+      (liveUsers) => {
+        setUsers(liveUsers);
+        localStorage.setItem("lodonex_users", JSON.stringify(liveUsers));
+      },
+      (err) => console.error("Global live users sync error:", err)
+    );
+
+    const unsubEnrollments = subscribeEnrollments(
+      null,
+      (liveEnrollments) => {
+        setEnrollmentsList(liveEnrollments);
+        localStorage.setItem("lodonex_enrollments", JSON.stringify(liveEnrollments));
+      },
+      (err) => console.error("Global live enrollments sync error:", err)
+    );
+
+    return () => {
+      unsubUsers();
+      unsubEnrollments();
+    };
+  }, []);
 
   // Current logged in user
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {

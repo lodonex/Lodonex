@@ -29,7 +29,11 @@ import {
   X,
   GraduationCap,
   Terminal,
-  Mail
+  Mail,
+  Download,
+  BarChart3,
+  TrendingUp,
+  Activity
 } from "lucide-react";
 import {
   Language,
@@ -47,19 +51,19 @@ import {
   AuditLogEntry
 } from "../types";
 import { formatPrice } from "../utils/price";
+import { useRealtimeDashboard } from "../services/useRealtimeDashboard";
 import {
-  MOCK_BATCHES,
-  MOCK_CLASS_SCHEDULE,
-  MOCK_ATTENDANCE_RECORDS,
-  MOCK_ASSIGNMENTS,
-  MOCK_ASSIGNMENT_SUBMISSIONS,
-  MOCK_EXAMS,
-  MOCK_STUDENT_GRADE_RESULTS,
-  MOCK_DIGITAL_CERTIFICATES,
-  MOCK_PAYMENT_RECORDS,
-  MOCK_ENROLLMENT_APPLICATIONS,
-  INITIAL_LMS_USERS
-} from "../data/lmsMockData";
+  updateFirestoreEnrollmentStatus,
+  updateFirestoreUser,
+  createFirestoreBatch,
+  issueFirestoreCertificate,
+  recordFirestoreAttendance,
+  gradeFirestoreSubmission,
+  verifyFirestorePayment,
+  exportToCSV,
+  syncInitialCoursesIfEmpty,
+  calculateAttendanceMetrics
+} from "../services/dashboardService";
 
 interface AdminPanelProps {
   lang: Language;
@@ -87,6 +91,44 @@ export default function AdminPanel({
   const isSuperAdmin = userRole === "superadmin" || userRole === "super_admin";
   const isTrainer = userRole === "trainer";
 
+  // Real-time Firestore Dashboard Stream (Super Admin / Admin)
+  const {
+    users: realtimeUsers,
+    filteredUsers,
+    courses: realtimeCourses,
+    batches: realtimeBatches,
+    enrollments: realtimeEnrollments,
+    filteredEnrollments,
+    payments: realtimePayments,
+    filteredPayments,
+    attendance: realtimeAttendance,
+    filteredAttendance,
+    assignments: realtimeAssignments,
+    submissions: realtimeSubmissions,
+    exams: realtimeExams,
+    results: realtimeResults,
+    certificates: realtimeCertificates,
+    filteredCertificates,
+    notifications: realtimeNotifications,
+    auditLogs: realtimeAuditLogs,
+    isLoading,
+    error,
+    isLive,
+    lastUpdated,
+    retry,
+    dateFilter,
+    setDateFilter,
+    selectedCourseFilter,
+    setSelectedCourseFilter,
+    selectedBatchFilter,
+    setSelectedBatchFilter
+  } = useRealtimeDashboard({
+    isSuperAdmin,
+    isAdmin: !isSuperAdmin && userRole === "admin",
+    role: userRole,
+    userId: currentUser.id
+  });
+
   // Tab State
   const [adminTab, setAdminTab] = useState<
     | "overview"
@@ -106,24 +148,69 @@ export default function AdminPanel({
     | "settings"
   >("overview");
 
-  // Stores
-  const [usersList, setUsersList] = useState<UserAccount[]>(initialUsers || INITIAL_LMS_USERS);
-  const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>(initialEnrollments || MOCK_ENROLLMENT_APPLICATIONS);
+  // Stores (strictly zero mock data, updated continuously via useRealtimeDashboard)
+  const [usersList, setUsersList] = useState<UserAccount[]>([]);
+  const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>([]);
   const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
   const [emailLogsList, setEmailLogsList] = useState<any[]>([]);
   const [emailConfig, setEmailConfig] = useState<{ configured: boolean; senderEmail: string } | null>(null);
+  const [batchesList, setBatchesList] = useState<Batch[]>([]);
+  const [certificatesList, setCertificatesList] = useState<DigitalCertificate[]>([]);
+  const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>([]);
+  const [assignmentsList, setAssignmentsList] = useState<Assignment[]>([]);
+  const [submissionsList, setSubmissionsList] = useState<AssignmentSubmission[]>([]);
+  const [resultsList, setResultsList] = useState<StudentGradeResult[]>([]);
+  const [paymentsList, setPaymentsList] = useState<PaymentRecord[]>([]);
+
+  // Synchronize realtime state
+  React.useEffect(() => {
+    if (realtimeUsers && realtimeUsers.length > 0) setUsersList(realtimeUsers);
+  }, [realtimeUsers]);
 
   React.useEffect(() => {
-    if (initialUsers && initialUsers.length > 0) {
-      setUsersList(initialUsers);
-    }
-  }, [initialUsers]);
+    if (realtimeEnrollments) setEnrollmentsList(realtimeEnrollments);
+  }, [realtimeEnrollments]);
 
   React.useEffect(() => {
-    if (initialEnrollments && initialEnrollments.length > 0) {
-      setEnrollmentsList(initialEnrollments);
+    if (realtimeBatches) setBatchesList(realtimeBatches);
+  }, [realtimeBatches]);
+
+  React.useEffect(() => {
+    if (realtimeCertificates) setCertificatesList(realtimeCertificates);
+  }, [realtimeCertificates]);
+
+  React.useEffect(() => {
+    if (realtimeAttendance) setAttendanceList(realtimeAttendance);
+  }, [realtimeAttendance]);
+
+  React.useEffect(() => {
+    if (realtimeAssignments) setAssignmentsList(realtimeAssignments);
+  }, [realtimeAssignments]);
+
+  React.useEffect(() => {
+    if (realtimeSubmissions) setSubmissionsList(realtimeSubmissions);
+  }, [realtimeSubmissions]);
+
+  React.useEffect(() => {
+    if (realtimeResults) setResultsList(realtimeResults);
+  }, [realtimeResults]);
+
+  React.useEffect(() => {
+    if (realtimePayments) setPaymentsList(realtimePayments);
+  }, [realtimePayments]);
+
+  React.useEffect(() => {
+    if (realtimeAuditLogs && realtimeAuditLogs.length > 0) {
+      setAuditLogsList(realtimeAuditLogs);
     }
-  }, [initialEnrollments]);
+  }, [realtimeAuditLogs]);
+
+  React.useEffect(() => {
+    // Seed initial accredited courses if courses collection is empty in Firestore
+    if (isSuperAdmin && courses && courses.length > 0) {
+      syncInitialCoursesIfEmpty(courses);
+    }
+  }, [isSuperAdmin, courses]);
 
   React.useEffect(() => {
     async function loadAuditLogs() {
@@ -136,8 +223,8 @@ export default function AdminPanel({
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.logs) {
-            setAuditLogsList(data.logs);
+          if (data.logs && data.logs.length > 0) {
+            setAuditLogsList((prev) => (prev.length > 0 ? prev : data.logs));
           }
         }
       } catch (err) {}
@@ -172,25 +259,6 @@ export default function AdminPanel({
       loadEmailData();
     }
   }, [isSuperAdmin, userRole, currentUser.id]);
-
-  React.useEffect(() => {
-    if (initialEnrollments) {
-      setEnrollmentsList(initialEnrollments);
-    }
-  }, [initialEnrollments]);
-
-  React.useEffect(() => {
-    if (initialUsers) {
-      setUsersList(initialUsers);
-    }
-  }, [initialUsers]);
-  const [batchesList, setBatchesList] = useState<Batch[]>(MOCK_BATCHES);
-  const [certificatesList, setCertificatesList] = useState<DigitalCertificate[]>(MOCK_DIGITAL_CERTIFICATES);
-  const [attendanceList, setAttendanceList] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE_RECORDS);
-  const [assignmentsList, setAssignmentsList] = useState<Assignment[]>(MOCK_ASSIGNMENTS);
-  const [submissionsList, setSubmissionsList] = useState<AssignmentSubmission[]>(MOCK_ASSIGNMENT_SUBMISSIONS);
-  const [resultsList, setResultsList] = useState<StudentGradeResult[]>(MOCK_STUDENT_GRADE_RESULTS);
-  const [paymentsList, setPaymentsList] = useState<PaymentRecord[]>(MOCK_PAYMENT_RECORDS);
 
   // Search & Filter States
   const [studentSearch, setStudentSearch] = useState("");
@@ -249,66 +317,40 @@ export default function AdminPanel({
   const [merchantBank, setMerchantBank] = useState("Eastern Bank PLC (EBL)");
   const [merchantAccNum, setMerchantAccNum] = useState("101234567890");
 
-  // Quick Approve Enrollment Application
-  const handleApproveEnrollment = (appId: string) => {
+  // Quick Approve Enrollment Application (Live Firestore)
+  const handleApproveEnrollment = async (appId: string) => {
+    try {
+      await updateFirestoreEnrollmentStatus(appId, "active", currentUser.name);
+    } catch (e) {
+      console.warn("Firestore updateEnrollment note:", e);
+    }
     if (onApproveEnrollmentGlobal) {
       onApproveEnrollmentGlobal(appId);
     }
-    const updated = enrollmentsList.map((app) => {
-      if (app.id === appId) {
-        return {
-          ...app,
-          status: "active" as const,
-          reviewedAt: new Date().toISOString(),
-          reviewedBy: currentUser.name
-        };
-      }
-      return app;
-    });
-
-    setEnrollmentsList(updated);
-
-    // Call backend API in parallel
-    fetch(`/api/enrollments/${appId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-user-role": userRole },
-      body: JSON.stringify({ status: "active" })
-    }).catch(() => {});
 
     // Ensure student user account status is approved as well
     const targetApp = enrollmentsList.find((a) => a.id === appId);
-    if (targetApp) {
-      setUsersList((prev) =>
-        prev.map((u) => {
-          if (u.id === targetApp.studentId || u.email === targetApp.studentEmail) {
-            return {
-              ...u,
-              status: "approved",
-              assignedBatchId: targetApp.batchId || u.assignedBatchId,
-              assignedCourseIds: [...(u.assignedCourseIds || []), targetApp.courseId]
-            };
-          }
-          return u;
-        })
-      );
+    if (targetApp && targetApp.studentId) {
+      try {
+        await updateFirestoreUser(targetApp.studentId, {
+          status: "approved",
+          assignedBatchId: targetApp.batchId || undefined
+        });
+      } catch (e) {}
     }
   };
 
-  // Change User Status (Approve, Suspend, Block, Activate)
-  const handleUpdateStudentStatus = (userId: string, newStatus: "active" | "approved" | "suspended" | "blocked") => {
-    setUsersList((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
-    );
-
-    fetch(`/api/users/${userId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-user-role": userRole },
-      body: JSON.stringify({ status: newStatus })
-    }).catch(() => {});
+  // Change User Status (Live Firestore)
+  const handleUpdateStudentStatus = async (userId: string, newStatus: "active" | "approved" | "suspended" | "blocked") => {
+    try {
+      await updateFirestoreUser(userId, { status: newStatus });
+    } catch (e) {
+      console.warn("Firestore updateStatus note:", e);
+    }
   };
 
-  // Handle Create Batch
-  const handleCreateBatch = (e: React.FormEvent) => {
+  // Handle Create Batch (Live Firestore)
+  const handleCreateBatch = async (e: React.FormEvent) => {
     e.preventDefault();
     const selCourse = courses.find((c) => c.id === newBatchCourseId);
 
@@ -329,15 +371,13 @@ export default function AdminPanel({
       status: "upcoming"
     };
 
-    setBatchesList([newBatch, ...batchesList]);
+    try {
+      await createFirestoreBatch(newBatch);
+    } catch (e) {
+      console.warn("Firestore createBatch note:", e);
+    }
     setIsAddBatchOpen(false);
     setNewBatchName("");
-
-    fetch("/api/batches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-role": userRole },
-      body: JSON.stringify(newBatch)
-    }).catch(() => {});
   };
 
   // Handle Create Staff / Trainer (Super Admin Only)
@@ -406,8 +446,8 @@ export default function AdminPanel({
     setNewStaffPassword("StaffPass@2026");
   };
 
-  // Handle Issue Digital Certificate
-  const handleIssueCertificate = (e: React.FormEvent) => {
+  // Handle Issue Digital Certificate (Live Firestore)
+  const handleIssueCertificate = async (e: React.FormEvent) => {
     e.preventDefault();
     const selCourse = courses.find((c) => c.id === certCourseId);
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -432,25 +472,23 @@ export default function AdminPanel({
       isValid: true
     };
 
-    setCertificatesList([newCert, ...certificatesList]);
+    try {
+      await issueFirestoreCertificate(newCert);
+    } catch (e) {
+      console.warn("Firestore issueCertificate note:", e);
+    }
     setIsIssueCertOpen(false);
     setCertStudentName("");
     setCertStudentEmail("");
-
-    fetch("/api/certificates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-role": userRole },
-      body: JSON.stringify(newCert)
-    }).catch(() => {});
   };
 
-  // Handle Mark Attendance
-  const handleToggleAttendance = (studentId: string, status: "present" | "absent" | "late" | "excused") => {
+  // Handle Mark Attendance (Live Firestore)
+  const handleToggleAttendance = async (studentId: string, status: "present" | "absent" | "late" | "excused") => {
     const student = usersList.find((u) => u.id === studentId);
     const newRecord: AttendanceRecord = {
-      id: `att-${Date.now()}`,
-      batchId: "batch-101",
-      courseId: "course-1",
+      id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      batchId: batchesList[0]?.id || "batch-101",
+      courseId: courses[0]?.id || "course-1",
       date: new Date().toISOString().split("T")[0],
       studentId,
       studentName: student ? student.name : "Apprentice",
@@ -458,32 +496,20 @@ export default function AdminPanel({
       markedBy: currentUser.name
     };
 
-    setAttendanceList([newRecord, ...attendanceList]);
-
-    fetch("/api/attendance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-role": userRole },
-      body: JSON.stringify(newRecord)
-    }).catch(() => {});
+    try {
+      await recordFirestoreAttendance([newRecord]);
+    } catch (e) {
+      console.warn("Firestore toggleAttendance note:", e);
+    }
   };
 
-  // Handle Grade Submission
-  const handleSaveGrade = (subId: string) => {
-    setSubmissionsList((prev) =>
-      prev.map((s) => {
-        if (s.id === subId) {
-          return {
-            ...s,
-            status: "graded",
-            marksObtained: Number(givenMarks),
-            feedback: givenFeedback,
-            gradedBy: currentUser.name,
-            gradedAt: new Date().toISOString()
-          };
-        }
-        return s;
-      })
-    );
+  // Handle Grade Submission (Live Firestore)
+  const handleSaveGrade = async (subId: string) => {
+    try {
+      await gradeFirestoreSubmission(subId, Number(givenMarks), givenFeedback, currentUser.name);
+    } catch (e) {
+      console.warn("Firestore saveGrade note:", e);
+    }
     setGradingSubId(null);
   };
 
@@ -497,6 +523,12 @@ export default function AdminPanel({
     const matchesStatus = statusFilter === "all" || u.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const hasPermission = (perm: string) => {
+    if (isSuperAdmin) return true;
+    if (!currentUser.permissions || currentUser.permissions.length === 0) return true;
+    return currentUser.permissions.includes(perm);
+  };
 
   return (
     <div id="lodonex-admin-panel" className="font-sans text-slate-900 pb-16">
@@ -545,20 +577,20 @@ export default function AdminPanel({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        {/* Admin Navigation Tabs */}
+        {/* Admin Navigation Tabs with Permission Filtering */}
         <div className="flex items-center gap-1 overflow-x-auto border-b border-editorial-border pb-px text-xs font-bold uppercase tracking-wider">
           {[
             { id: "overview", label: isEn ? "KPI Dashboard" : "ড্যাশবোর্ড", icon: ShieldCheck, show: true },
-            { id: "enrollments", label: isEn ? "Enrollments" : "ভর্তি আবেদন", icon: UserCheck, show: true },
-            { id: "students", label: isEn ? "Student Roster" : "শিক্ষার্থী তালিকা", icon: Users, show: true },
-            { id: "batches", label: isEn ? "Batches" : "ব্যাচসমূহ", icon: Calendar, show: true },
-            { id: "courses", label: isEn ? "Courses" : "কোর্সসমূহ", icon: BookOpen, show: true },
-            { id: "attendance", label: isEn ? "Attendance" : "হাজিরা খাতা", icon: CheckCircle, show: true },
-            { id: "schedule", label: isEn ? "Class Schedule" : "ক্লাস সিডিউল", icon: Clock, show: true },
-            { id: "assignments", label: isEn ? "Assignments & Work" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: true },
-            { id: "results", label: isEn ? "Gradebook & Marks" : "গ্রেড ও নম্বর", icon: Award, show: true },
-            { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: true },
-            { id: "payments", label: isEn ? "Payments & Trx" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer },
+            { id: "enrollments", label: isEn ? "Enrollments" : "ভর্তি আবেদন", icon: UserCheck, show: hasPermission("enrollments.view") },
+            { id: "students", label: isEn ? "Student Roster" : "শিক্ষার্থী তালিকা", icon: Users, show: hasPermission("students.view") },
+            { id: "batches", label: isEn ? "Batches" : "ব্যাচসমূহ", icon: Calendar, show: hasPermission("courses.view") },
+            { id: "courses", label: isEn ? "Courses" : "কোর্সসমূহ", icon: BookOpen, show: hasPermission("courses.view") },
+            { id: "attendance", label: isEn ? "Attendance" : "হাজিরা খাতা", icon: CheckCircle, show: hasPermission("attendance.view") },
+            { id: "schedule", label: isEn ? "Class Schedule" : "ক্লাস সিডিউল", icon: Clock, show: hasPermission("courses.view") },
+            { id: "assignments", label: isEn ? "Assignments & Work" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view") },
+            { id: "results", label: isEn ? "Gradebook & Marks" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
+            { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view") },
+            { id: "payments", label: isEn ? "Payments & Trx" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view") },
             { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
             { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
             { id: "email_logs", label: isEn ? "Email Logs" : "ইমেল লগ", icon: Mail, show: isSuperAdmin },
@@ -586,122 +618,564 @@ export default function AdminPanel({
         </div>
 
         {/* ========================================================
-            TAB 1: OVERVIEW DASHBOARD (STEP 7: 10 Core Statistics)
+            TAB 1: REAL-TIME OVERVIEW DASHBOARD
            ======================================================== */}
         {adminTab === "overview" && (
           <div className="space-y-8 mt-6">
-            {/* KPI Metrics Grid: All 10 Required Super Admin Statistics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-              {/* 1. Total Students */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Students" : "মোট শিক্ষার্থী"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-editorial-dark">
-                  {usersList.filter((u) => u.role === "student").length}
+            {/* Live Status & Filter Toolbar */}
+            <div className="bg-white border border-editorial-border p-4 shadow-2xs space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-editorial-border pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                  </span>
+                  <div>
+                    <span className="font-mono text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                      <span>● Live Real-Time Firestore</span>
+                      <span className="text-slate-400 font-normal">|</span>
+                      <span className="text-slate-600 font-sans font-medium">
+                        {isEn ? "Source: Firebase Database" : "উৎস: ফায়ারবেস ডেটাবেস"}
+                      </span>
+                    </span>
+                    <p className="text-[11px] text-slate-500 font-mono">
+                      {isEn ? "Last updated:" : "সর্বশেষ আপডেট:"}{" "}
+                      {lastUpdated ? lastUpdated.toLocaleTimeString() : (isEn ? "Live" : "সক্রিয়")}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[10px] text-slate-500">{isEn ? "All Registered" : "সর্বমোট নিবন্ধিত"}</p>
+
+                {/* CSV Export & Actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => {
+                      exportToCSV(
+                        `lodonex-students-${Date.now()}`,
+                        ["ID", "Name", "Email", "Phone", "Role", "Status", "Created At"],
+                        filteredUsers
+                          .filter((u) => u.role === "student")
+                          .map((u) => [u.id, u.name, u.email, u.phone || "", u.role || "student", u.status, u.createdAt || ""])
+                      );
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    title="Export Student Roster to CSV"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>{isEn ? "Export Students" : "শিক্ষার্থী এক্সপোর্ট"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      exportToCSV(
+                        `lodonex-enrollments-${Date.now()}`,
+                        ["ID", "Student Name", "Email", "Course", "Batch", "TrxID", "Status", "Applied At"],
+                        filteredEnrollments.map((e) => [
+                          e.id,
+                          e.studentName,
+                          e.studentEmail,
+                          e.courseTitle,
+                          e.batchName || "",
+                          e.transactionId || "",
+                          e.status,
+                          e.appliedAt
+                        ])
+                      );
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    title="Export Enrollments to CSV"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>{isEn ? "Export Enrollments" : "এনরোলমেন্ট এক্সপোর্ট"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      exportToCSV(
+                        `lodonex-payments-${Date.now()}`,
+                        ["Invoice", "Student Email", "Gateway", "TrxID", "Amount", "Status", "Timestamp"],
+                        filteredPayments.map((p) => [
+                          p.invoiceNumber,
+                          p.studentEmail,
+                          p.gateway,
+                          p.trxId,
+                          p.amount,
+                          p.status,
+                          p.timestamp
+                        ])
+                      );
+                    }}
+                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    title="Export Payments to CSV"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>{isEn ? "Export Payments" : "পেমেন্ট এক্সপোর্ট"}</span>
+                  </button>
+
+                  <button
+                    onClick={retry}
+                    className="p-1.5 text-slate-600 hover:text-editorial-accent border border-slate-300 hover:border-editorial-accent transition cursor-pointer"
+                    title="Refresh Live Data"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
-              {/* 2. Active Students */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Active Students" : "সক্রিয় শিক্ষার্থী"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-emerald-700">
-                  {usersList.filter((u) => u.role === "student" && (u.status === "active" || u.status === "approved")).length}
+              {/* Dynamic Filter Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                {/* Date Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex items-center gap-1">
+                    <Filter className="h-3 w-3" /> {isEn ? "Date Range:" : "তারিখ:"}
+                  </span>
+                  {[
+                    { id: "all", labelEn: "All Time", labelBn: "সর্বকাল" },
+                    { id: "today", labelEn: "Today", labelBn: "আজ" },
+                    { id: "week", labelEn: "This Week", labelBn: "চলতি সপ্তাহ" },
+                    { id: "month", labelEn: "This Month", labelBn: "চলতি মাস" },
+                    { id: "last_month", labelEn: "Last Month", labelBn: "গত মাস" },
+                    { id: "year", labelEn: "This Year", labelBn: "চলতি বছর" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setDateFilter(f.id as any)}
+                      className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition cursor-pointer ${
+                        dateFilter === f.id
+                          ? "bg-editorial-accent text-white"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {isEn ? f.labelEn : f.labelBn}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-[10px] text-emerald-600 font-semibold">{isEn ? "Enrolled & Attending" : "কোর্সে যুক্ত"}</p>
-              </div>
 
-              {/* 3. Pending Enrollments */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Pending Enrollments" : "অপেক্ষমাণ আবেদন"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-amber-700">
-                  {enrollmentsList.filter((e) => ["applied", "under_review", "payment_submitted"].includes(e.status)).length}
-                </div>
-                <p className="text-[10px] text-amber-600">{isEn ? "Needs Approval" : "অনুমোদন প্রয়োজন"}</p>
-              </div>
+                {/* Course & Batch Selectors */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={selectedCourseFilter}
+                    onChange={(e) => setSelectedCourseFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-300 text-xs px-2.5 py-1 text-slate-700 focus:outline-hidden font-medium"
+                  >
+                    <option value="all">{isEn ? "All Courses" : "সকল কোর্স"}</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {isEn ? c.titleEn : c.titleBn}
+                      </option>
+                    ))}
+                  </select>
 
-              {/* 4. Active Courses */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Active Courses" : "চলমান কোর্স"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-editorial-accent">
-                  {courses.length}
+                  <select
+                    value={selectedBatchFilter}
+                    onChange={(e) => setSelectedBatchFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-300 text-xs px-2.5 py-1 text-slate-700 focus:outline-hidden font-medium"
+                  >
+                    <option value="all">{isEn ? "All Batches" : "সকল ব্যাচ"}</option>
+                    {batchesList.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p className="text-[10px] text-slate-500">{isEn ? "Culinary Curricula" : "কারিকুলাম"}</p>
-              </div>
-
-              {/* 5. Active Batches */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Active Batches" : "চলমান ব্যাচ"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-blue-700">
-                  {batchesList.filter((b) => b.status === "active").length}
-                </div>
-                <p className="text-[10px] text-slate-500">{batchesList.length} {isEn ? "Total Batches" : "মোট ব্যাচ"}</p>
-              </div>
-
-              {/* 6. Total Payments */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Payments" : "মোট সংগৃহীত ফি"}
-                </span>
-                <div className="font-serif text-xl font-extrabold text-slate-900 truncate">
-                  {formatPrice(paymentsList.filter((p) => p.status === "verified").reduce((a, b) => a + b.amount, 0))}
-                </div>
-                <p className="text-[10px] text-emerald-700 font-semibold">{isEn ? "Verified Receipts" : "যাচাইকৃত রসিদ"}</p>
-              </div>
-
-              {/* 7. Pending Payments */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Pending Payments" : "অমীমাংসিত ফি"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-amber-800">
-                  {paymentsList.filter((p) => p.status === "pending" || p.status === "submitted").length}
-                </div>
-                <p className="text-[10px] text-slate-500">{isEn ? "Unverified TrxIDs" : "যাচাই বাকি"}</p>
-              </div>
-
-              {/* 8. Certificates Issued */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Certificates Issued" : "ইস্যুকৃত সনদ"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-purple-700">
-                  {certificatesList.length}
-                </div>
-                <p className="text-[10px] text-purple-600">{isEn ? "Digital Credentials" : "ডিজিটাল সনদ"}</p>
-              </div>
-
-              {/* 9. Total Admins */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Admins" : "প্রশাসনিক কর্মী"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-indigo-700">
-                  {usersList.filter((u) => ["super_admin", "superadmin", "admin", "staff"].includes(u.role || "")).length}
-                </div>
-                <p className="text-[10px] text-slate-500">{isEn ? "Super Admin & Staff" : "অ্যাডমিন ও স্টাফ"}</p>
-              </div>
-
-              {/* 10. Total Trainers */}
-              <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  {isEn ? "Total Trainers" : "মোট ট্রেইনার"}
-                </span>
-                <div className="font-serif text-2xl font-extrabold text-teal-700">
-                  {usersList.filter((u) => u.role === "trainer").length}
-                </div>
-                <p className="text-[10px] text-teal-600">{isEn ? "Executive Chefs" : "শেফ ট্রেইনার"}</p>
               </div>
             </div>
+
+            {/* Loading Skeleton */}
+            {isLoading && (
+              <div className="p-8 bg-white border border-editorial-border text-center space-y-3">
+                <RefreshCw className="h-6 w-6 animate-spin text-editorial-accent mx-auto" />
+                <p className="font-serif font-bold text-slate-700 text-base">
+                  {isEn ? "Loading real-time data from Firebase..." : "ফায়ারবেস থেকে রিয়েল-টাইম তথ্য লোড হচ্ছে..."}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {isEn ? "Establishing live document listeners..." : "লাইভ ডেটা স্ট্রীম যুক্ত হচ্ছে..."}
+                </p>
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {error && (
+              <div className="p-4 bg-red-50 border-2 border-red-300 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                  <p className="text-xs text-red-800 font-medium">
+                    {isEn ? "Unable to load real-time data." : "রিয়েল-টাইম তথ্য লোড করা সম্ভব হয়নি।"} {error}
+                  </p>
+                </div>
+                <button
+                  onClick={retry}
+                  className="px-3 py-1 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase cursor-pointer shrink-0"
+                >
+                  {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
+                </button>
+              </div>
+            )}
+
+            {/* Super Admin & Admin Complete Metrics Grid */}
+            {!isLoading && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                {/* 1. Students Metric */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Total Students" : "মোট শিক্ষার্থী"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-editorial-dark">
+                    {filteredUsers.filter((u) => u.role === "student").length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
+                    <span className="text-emerald-700 font-bold">
+                      {filteredUsers.filter((u) => u.role === "student" && (u.status === "active" || u.status === "approved")).length} active
+                    </span>
+                    <span>•</span>
+                    <span className="text-amber-700">
+                      {filteredUsers.filter((u) => u.role === "student" && u.status === "pending").length} pending
+                    </span>
+                    <span>•</span>
+                    <span className="text-red-700">
+                      {filteredUsers.filter((u) => u.role === "student" && (u.status === "suspended" || u.status === "blocked")).length} susp
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. Admin & Staff Team */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Administrative Staff" : "প্রশাসনিক কর্মী"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-indigo-700">
+                    {filteredUsers.filter((u) => ["super_admin", "superadmin", "admin", "staff"].includes(u.role || "")).length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
+                    <span>
+                      {filteredUsers.filter((u) => u.role === "admin" || u.role === "super_admin" || u.role === "superadmin").length} admins
+                    </span>
+                    <span>•</span>
+                    <span>{filteredUsers.filter((u) => u.role === "staff").length} staff</span>
+                  </div>
+                </div>
+
+                {/* 3. Trainers / Chefs */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Total Trainers" : "মোট ট্রেইনার"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-teal-700">
+                    {filteredUsers.filter((u) => u.role === "trainer").length}
+                  </div>
+                  <p className="text-[10px] text-teal-600 font-medium">
+                    {isEn ? "Executive Culinary Faculty" : "অনুষদ ও শেফ প্রশিক্ষক"}
+                  </p>
+                </div>
+
+                {/* 4. Active Courses */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Courses & Batches" : "কোর্স ও ব্যাচ"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-editorial-accent">
+                    {courses.length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-blue-700 font-bold">{batchesList.filter((b) => b.status === "active").length} active</span>
+                    <span> / {batchesList.length} batches</span>
+                  </div>
+                </div>
+
+                {/* 5. Enrollments */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Total Enrollments" : "মোট ভর্তি আবেদন"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-slate-900">
+                    {filteredEnrollments.length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
+                    <span className="text-amber-700 font-bold">
+                      {filteredEnrollments.filter((e) => ["applied", "under_review", "pending_payment", "payment_submitted"].includes(e.status)).length} pending
+                    </span>
+                    <span>•</span>
+                    <span className="text-emerald-700">
+                      {filteredEnrollments.filter((e) => e.status === "active" || e.status === "approved").length} active
+                    </span>
+                  </div>
+                </div>
+
+                {/* 6. Total Revenue */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Total Revenue" : "মোট সংগৃহীত ফি"}
+                  </span>
+                  <div className="font-serif text-xl font-extrabold text-slate-900 truncate">
+                    {formatPrice(filteredPayments.filter((p) => p.status === "verified").reduce((a, b) => a + b.amount, 0))}
+                  </div>
+                  <p className="text-[10px] text-emerald-700 font-semibold">
+                    {filteredPayments.filter((p) => p.status === "verified").length} {isEn ? "Verified Receipts" : "যাচাইকৃত রসিদ"}
+                  </p>
+                </div>
+
+                {/* 7. Pending Payments */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Pending Payments" : "অমীমাংসিত ফি"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-amber-800">
+                    {filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length}
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    {filteredPayments.filter((p) => p.status === "rejected").length} rejected
+                  </p>
+                </div>
+
+                {/* 8. Digital Certificates */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Certificates Issued" : "ইস্যুকৃত সনদ"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-purple-700">
+                    {filteredCertificates.length}
+                  </div>
+                  <p className="text-[10px] text-purple-600 font-medium">
+                    {filteredCertificates.filter((c) => c.isValid).length} {isEn ? "Verifiable Online" : "যাচাইযোগ্য সনদ"}
+                  </p>
+                </div>
+
+                {/* 9. Attendance Metrics */}
+                {(() => {
+                  const attM = calculateAttendanceMetrics(filteredAttendance);
+                  return (
+                    <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {isEn ? "Attendance Health" : "হাজিরা পরিসংখ্যান"}
+                      </span>
+                      <div className="font-serif text-2xl font-extrabold text-emerald-700">
+                        {attM.total > 0 ? `${attM.rate}%` : "0%"}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        {attM.total > 0 ? `${attM.present}P • ${attM.absent}A • ${attM.late}L` : (isEn ? "No records yet" : "রেকর্ড নেই")}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 10. Academic Work & Exams */}
+                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    {isEn ? "Assignments & Work" : "অ্যাসাইনমেন্ট ও পরীক্ষা"}
+                  </span>
+                  <div className="font-serif text-2xl font-extrabold text-slate-800">
+                    {assignmentsList.length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    <span>{submissionsList.length} subs</span>
+                    <span> • </span>
+                    <span className="text-emerald-700 font-bold">{resultsList.length} grades</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* REAL-TIME DYNAMIC CHARTS & VISUAL REPORTS (Calculated strictly from Firebase) */}
+            {!isLoading && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Chart 1: Enrollment Distribution by Course */}
+                <div className="bg-white border border-editorial-border p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-editorial-accent" />
+                      <span>{isEn ? "Course Popularity & Enrollments" : "কোর্স অনুযায়ী আবেদন বন্টন"}</span>
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      {isEn ? "Real-time" : "লাইভ"}
+                    </span>
+                  </div>
+
+                  {filteredEnrollments.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                      {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 pt-2">
+                      {courses.map((course) => {
+                        const count = filteredEnrollments.filter((e) => e.courseId === course.id).length;
+                        const pct = filteredEnrollments.length > 0 ? Math.round((count / filteredEnrollments.length) * 100) : 0;
+                        return (
+                          <div key={course.id} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-medium text-slate-800 truncate max-w-[220px]">
+                                {isEn ? course.titleEn : course.titleBn}
+                              </span>
+                              <span className="font-mono text-slate-600 font-bold">
+                                {count} ({pct}%)
+                              </span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full bg-editorial-accent transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chart 2: Revenue Trend & Payment Verification Health */}
+                <div className="bg-white border border-editorial-border p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-emerald-700" />
+                      <span>{isEn ? "Payment Breakdown & Financial Health" : "পেমেন্ট অবস্থা ও রসিদ যাচাই"}</span>
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      {isEn ? "Real-time" : "লাইভ"}
+                    </span>
+                  </div>
+
+                  {filteredPayments.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                      {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pt-2">
+                      {(() => {
+                        const verifiedCount = filteredPayments.filter((p) => p.status === "verified").length;
+                        const pendingCount = filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length;
+                        const rejectedCount = filteredPayments.filter((p) => p.status === "rejected").length;
+                        const totalCount = filteredPayments.length;
+
+                        const verifiedPct = Math.round((verifiedCount / totalCount) * 100);
+                        const pendingPct = Math.round((pendingCount / totalCount) * 100);
+                        const rejectedPct = Math.round((rejectedCount / totalCount) * 100);
+
+                        return (
+                          <>
+                            <div className="flex h-4 w-full overflow-hidden bg-slate-100">
+                              <div style={{ width: `${verifiedPct}%` }} className="bg-emerald-600" title={`Verified: ${verifiedCount}`} />
+                              <div style={{ width: `${pendingPct}%` }} className="bg-amber-500" title={`Pending: ${pendingCount}`} />
+                              <div style={{ width: `${rejectedPct}%` }} className="bg-red-500" title={`Rejected: ${rejectedCount}`} />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-2">
+                              <div className="p-2 bg-emerald-50 border border-emerald-200">
+                                <span className="text-[10px] text-emerald-800 uppercase font-bold block">{isEn ? "Verified" : "যাচাইকৃত"}</span>
+                                <span className="font-extrabold text-emerald-900 text-sm">{verifiedCount} ({verifiedPct}%)</span>
+                              </div>
+                              <div className="p-2 bg-amber-50 border border-amber-200">
+                                <span className="text-[10px] text-amber-800 uppercase font-bold block">{isEn ? "Pending" : "অমীমাংসিত"}</span>
+                                <span className="font-extrabold text-amber-900 text-sm">{pendingCount} ({pendingPct}%)</span>
+                              </div>
+                              <div className="p-2 bg-red-50 border border-red-200">
+                                <span className="text-[10px] text-red-800 uppercase font-bold block">{isEn ? "Rejected" : "বাতিল"}</span>
+                                <span className="font-extrabold text-red-900 text-sm">{rejectedCount} ({rejectedPct}%)</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chart 3: Grade Distribution from Real Assessments */}
+                <div className="bg-white border border-editorial-border p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                      <Award className="h-4 w-4 text-purple-700" />
+                      <span>{isEn ? "Academic Performance & Grade Distribution" : "শিক্ষার্থীদের ফলাফল ও গ্রেড বিন্যাস"}</span>
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      {isEn ? "Real-time" : "লাইভ"}
+                    </span>
+                  </div>
+
+                  {resultsList.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                      {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 pt-2">
+                      {[
+                        { grade: "Grade A+ (Distinction)", label: "A+ Distinction", color: "bg-purple-600" },
+                        { grade: "Grade A (Excellent)", label: "A Excellent", color: "bg-emerald-600" },
+                        { grade: "Grade B (Good)", label: "B Good", color: "bg-blue-600" },
+                        { grade: "Grade C (Pass)", label: "C Pass", color: "bg-amber-600" },
+                      ].map((g) => {
+                        const count = resultsList.filter((r) => r.grade?.includes(g.grade.split(" ")[0])).length;
+                        const pct = resultsList.length > 0 ? Math.round((count / resultsList.length) * 100) : 0;
+                        return (
+                          <div key={g.grade} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-medium text-slate-800">{g.label}</span>
+                              <span className="font-mono text-slate-600 font-bold">{count} ({pct}%)</span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
+                              <div className={`h-full ${g.color}`} style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chart 4: Attendance Health Breakdown */}
+                <div className="bg-white border border-editorial-border p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-editorial-accent" />
+                      <span>{isEn ? "Attendance Health Log" : "হাজিরা পরিস্থিতি"}</span>
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                      {isEn ? "Real-time" : "লাইভ"}
+                    </span>
+                  </div>
+
+                  {filteredAttendance.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                      {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
+                    </div>
+                  ) : (
+                    <div className="space-y-3 pt-2">
+                      {(() => {
+                        const total = filteredAttendance.length;
+                        const present = filteredAttendance.filter((a) => a.status === "present").length;
+                        const absent = filteredAttendance.filter((a) => a.status === "absent").length;
+                        const late = filteredAttendance.filter((a) => a.status === "late").length;
+                        const excused = filteredAttendance.filter((a) => a.status === "excused").length;
+
+                        return (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-mono">
+                            <div className="p-3 bg-emerald-50 border border-emerald-200">
+                              <span className="text-[10px] text-emerald-800 uppercase font-bold block">{isEn ? "Present" : "উপস্থিত"}</span>
+                              <span className="font-extrabold text-emerald-900 text-lg">{present}</span>
+                              <span className="text-[10px] text-emerald-700 block">{Math.round((present / total) * 100)}%</span>
+                            </div>
+                            <div className="p-3 bg-red-50 border border-red-200">
+                              <span className="text-[10px] text-red-800 uppercase font-bold block">{isEn ? "Absent" : "অনুপস্থিত"}</span>
+                              <span className="font-extrabold text-red-900 text-lg">{absent}</span>
+                              <span className="text-[10px] text-red-700 block">{Math.round((absent / total) * 100)}%</span>
+                            </div>
+                            <div className="p-3 bg-amber-50 border border-amber-200">
+                              <span className="text-[10px] text-amber-800 uppercase font-bold block">{isEn ? "Late" : "দেরি"}</span>
+                              <span className="font-extrabold text-amber-900 text-lg">{late}</span>
+                              <span className="text-[10px] text-amber-700 block">{Math.round((late / total) * 100)}%</span>
+                            </div>
+                            <div className="p-3 bg-blue-50 border border-blue-200">
+                              <span className="text-[10px] text-blue-800 uppercase font-bold block">{isEn ? "Excused" : "ছুটি"}</span>
+                              <span className="font-extrabold text-blue-900 text-lg">{excused}</span>
+                              <span className="text-[10px] text-blue-700 block">{Math.round((excused / total) * 100)}%</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Quick Review Applications Queue */}
             <div className="bg-white border border-editorial-border p-6 space-y-4">
@@ -724,63 +1198,131 @@ export default function AdminPanel({
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
-                      <th className="p-3">Applicant Name</th>
-                      <th className="p-3">Course / Level</th>
-                      <th className="p-3">Payment TrxID</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Quick Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {enrollmentsList.slice(0, 5).map((app) => (
-                      <tr key={app.id} className="hover:bg-slate-50">
-                        <td className="p-3">
-                          <span className="font-bold text-slate-900 block">{app.studentName}</span>
-                          <span className="text-[11px] text-slate-500">{app.studentEmail} • {app.studentPhone}</span>
-                        </td>
-                        <td className="p-3 font-medium text-slate-700">{app.courseTitle}</td>
-                        <td className="p-3">
-                          {app.transactionId ? (
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-bold">
-                              {app.paymentMethod}: {app.transactionId}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 italic">No TrxID submitted</span>
-                          )}
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
-                            app.status === "active" || app.status === "approved"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}>
-                            {app.status}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right">
-                          {app.status !== "active" && app.status !== "approved" ? (
-                            <button
-                              onClick={() => handleApproveEnrollment(app.id)}
-                              className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase tracking-wider transition cursor-pointer"
-                            >
-                              {isEn ? "Approve & Unlock" : "অনুমোদন করুন"}
-                            </button>
-                          ) : (
-                            <span className="text-emerald-700 font-bold text-[11px] flex items-center justify-end gap-1">
-                              <CheckCircle className="h-3.5 w-3.5" />
-                              <span>{isEn ? "Enrolled & Active" : "সক্রিয়"}</span>
-                            </span>
-                          )}
-                        </td>
+              {filteredEnrollments.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 italic">
+                  {isEn ? "No data available yet. No pending enrollment applications." : "এখনও কোনো আবেদন জমা পড়েনি।"}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                        <th className="p-3">Applicant Name</th>
+                        <th className="p-3">Course / Level</th>
+                        <th className="p-3">Payment TrxID</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Quick Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredEnrollments.slice(0, 5).map((app) => (
+                        <tr key={app.id} className="hover:bg-slate-50">
+                          <td className="p-3">
+                            <span className="font-bold text-slate-900 block">{app.studentName}</span>
+                            <span className="text-[11px] text-slate-500">{app.studentEmail} • {app.studentPhone}</span>
+                          </td>
+                          <td className="p-3 font-medium text-slate-700">{app.courseTitle}</td>
+                          <td className="p-3">
+                            {app.transactionId ? (
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-bold">
+                                {app.paymentMethod}: {app.transactionId}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic">No TrxID submitted</span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              app.status === "active" || app.status === "approved"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right">
+                            {app.status !== "active" && app.status !== "approved" ? (
+                              <button
+                                onClick={() => handleApproveEnrollment(app.id)}
+                                className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase tracking-wider transition cursor-pointer"
+                              >
+                                {isEn ? "Approve & Unlock" : "অনুমোদন করুন"}
+                              </button>
+                            ) : (
+                              <span className="text-emerald-700 font-bold text-[11px] flex items-center justify-end gap-1">
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                <span>{isEn ? "Enrolled & Active" : "সক্রিয়"}</span>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* REAL RECENT FIREBASE AUDIT TRAIL & ACTIVITIES */}
+            <div className="bg-white border border-editorial-border p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-editorial-dark flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-editorial-accent" />
+                    <span>{isEn ? "Recent Firebase Activities & Audit Trail" : "সাম্প্রতিক ফায়ারবেস অ্যাক্টিভিটি লগ"}</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {isEn ? "Immutable chronological record of live operations across the academy." : "একাডেমির সকল রিয়েল-টাইম অপারেশন ও পরিবর্তন লগ।"}
+                  </p>
+                </div>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => setAdminTab("audit_logs")}
+                    className="text-xs font-bold text-editorial-accent hover:underline uppercase"
+                  >
+                    {isEn ? "View Complete Log" : "সম্পূর্ণ লগ দেখুন"} →
+                  </button>
+                )}
               </div>
+
+              {auditLogsList.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 italic">
+                  {isEn ? "No recent activities recorded yet." : "এখনও কোনো অ্যাক্টিভিটি রেকর্ড নেই।"}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                        <th className="p-3">Timestamp</th>
+                        <th className="p-3">Action</th>
+                        <th className="p-3">Actor</th>
+                        <th className="p-3">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {auditLogsList.slice(0, 6).map((log) => (
+                        <tr key={log.id} className="hover:bg-slate-50 font-mono text-[11px]">
+                          <td className="p-3 text-slate-500 whitespace-nowrap">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 bg-slate-100 text-slate-800 font-bold border border-slate-200 text-[10px]">
+                              {log.action}
+                            </span>
+                          </td>
+                          <td className="p-3 font-semibold text-slate-700">
+                            {log.actorName} ({log.actorRole})
+                          </td>
+                          <td className="p-3 text-slate-600 max-w-md truncate">
+                            {log.details}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -846,11 +1388,12 @@ export default function AdminPanel({
                           </button>
                         )}
                         <button
-                          onClick={() => {
-                            const updated = enrollmentsList.map((e) =>
-                              e.id === app.id ? { ...e, status: "rejected" as const } : e
-                            );
-                            setEnrollmentsList(updated);
+                          onClick={async () => {
+                            try {
+                              await updateFirestoreEnrollmentStatus(app.id, "rejected", currentUser.name);
+                            } catch (e) {
+                              console.warn("Firestore rejectEnrollment note:", e);
+                            }
                           }}
                           className="px-2.5 py-1 border border-slate-300 hover:border-red-600 text-slate-700 hover:text-red-600 font-bold text-[10px] uppercase tracking-wider cursor-pointer"
                         >
@@ -1368,11 +1911,12 @@ export default function AdminPanel({
                       <td className="p-3 text-right">
                         {pay.status !== "verified" ? (
                           <button
-                            onClick={() => {
-                              const updated = paymentsList.map((p) =>
-                                p.id === pay.id ? { ...p, status: "verified" as const } : p
-                              );
-                              setPaymentsList(updated);
+                            onClick={async () => {
+                              try {
+                                await verifyFirestorePayment(pay.id, "verified", currentUser.name);
+                              } catch (err) {
+                                console.warn("verifyFirestorePayment error:", err);
+                              }
                             }}
                             className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase cursor-pointer"
                           >

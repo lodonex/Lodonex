@@ -42,6 +42,14 @@ service cloud.firestore {
       );
     }
 
+    function isStaff() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).role == 'staff')
+      );
+    }
+
     // ==========================================
     // 1. USERS COLLECTION (STEP 5 & TEST 6)
     // ==========================================
@@ -113,7 +121,7 @@ service cloud.firestore {
 
     match /batches/{batchId} {
       allow read: if true;
-      allow write: if isAdmin() || isTrainer();
+      allow write: if isAdmin() || isTrainer() || isStaff();
     }
 
     // ==========================================
@@ -122,7 +130,7 @@ service cloud.firestore {
     match /enrollments/{enrollmentId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isStaff();
       allow delete: if isSuperAdmin();
     }
 
@@ -140,7 +148,7 @@ service cloud.firestore {
     match /payments/{paymentId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isStaff();
       allow delete: if isSuperAdmin();
     }
 
@@ -149,7 +157,7 @@ service cloud.firestore {
     // ==========================================
     match /attendance/{attendanceId} {
       allow read: if isSignedIn();
-      allow write: if isTrainer() || isAdmin();
+      allow write: if isTrainer() || isAdmin() || isStaff();
     }
 
     match /assignments/{assignmentId} {
@@ -175,7 +183,17 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // 8. SETTINGS & DEFAULT SAFETY NET
+    // 8. NOTIFICATIONS & ALERTS
+    // ==========================================
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin() || isStaff();
+    }
+
+    // ==========================================
+    // 9. SETTINGS & DEFAULT SAFETY NET
     // ==========================================
     match /settings/{settingId} {
       allow read: if isSuperAdmin();

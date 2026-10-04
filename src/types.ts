@@ -175,6 +175,7 @@ export interface UserAccount {
   createdAt?: string;
   updatedAt?: string;
   progress?: StudentProgress;
+  permissions?: string[];
 }
 
 export interface CourseReview {
@@ -393,6 +394,7 @@ export interface StudentGradeResult {
   remarks?: string;
   published: boolean;
   publishedDate?: string;
+  gradedAt?: string;
 }
 
 export interface DigitalCertificate {
