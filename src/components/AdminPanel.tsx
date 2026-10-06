@@ -27,6 +27,7 @@ import {
   Settings,
   RefreshCw,
   X,
+  Check,
   GraduationCap,
   Terminal,
   Mail,
@@ -1010,6 +1011,74 @@ export default function AdminPanel({
                 >
                   {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
                 </button>
+              </div>
+            )}
+
+            {/* Super Admin: Pending Team Registrations Review Banner */}
+            {isSuperAdmin && usersList.filter((u) => ["admin", "staff", "trainer"].includes(u.role || "") && u.status === "pending").length > 0 && (
+              <div className="bg-amber-50 border-2 border-amber-400 p-5 shadow-sm space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-1.5 bg-amber-200 text-amber-900 rounded-full">
+                      <Clock className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-amber-950">
+                        {isEn ? "Pending Team Member Registrations (Awaiting Super Admin Approval)" : "অনুমোদনের অপেক্ষায় থাকা টিম মেম্বারদের তালিকা"}
+                      </h3>
+                      <p className="text-xs text-amber-800">
+                        {isEn ? "The following applicants registered as faculty/administrators and require your review before dashboard access is unlocked:" : "নতুন আবেদনকারীদের অ্যাক্সেস অনুমোদনের জন্য রিভিউ করুন:"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setAdminTab("staff")}
+                    className="text-xs font-bold text-amber-900 hover:text-black uppercase tracking-wider flex items-center gap-1 shrink-0 cursor-pointer"
+                  >
+                    <span>{isEn ? "Manage in Staff Table" : "স্টাফ টেবিলে দেখুন"}</span>
+                    <span>→</span>
+                  </button>
+                </div>
+
+                <div className="divide-y divide-amber-200/80 bg-white border border-amber-200">
+                  {usersList
+                    .filter((u) => ["admin", "staff", "trainer"].includes(u.role || "") && u.status === "pending")
+                    .map((pendingStaff) => (
+                      <div key={pendingStaff.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-stone-900 text-sm">{pendingStaff.name}</div>
+                          <div className="font-mono text-stone-600 text-[11px]">{pendingStaff.email} • {pendingStaff.phone || "—"}</div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-bold font-mono uppercase">
+                              ROLE: {pendingStaff.role?.toUpperCase()}
+                            </span>
+                            <span className="px-2 py-0.5 bg-stone-100 text-stone-700 text-[9px] font-bold font-mono uppercase">
+                              STATUS: PENDING
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => handleUpdateStudentStatus(pendingStaff.id, "active")}
+                            className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
+                            title="Approve Team Member"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            <span>{isEn ? "Approve" : "অনুমোদন"}</span>
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStudentStatus(pendingStaff.id, "blocked")}
+                            className="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
+                            title="Reject Team Member"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            <span>{isEn ? "Reject" : "বাতিল"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
 
@@ -2231,10 +2300,12 @@ export default function AdminPanel({
                             className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
                               staff.status === "active" || staff.status === "approved"
                                 ? "bg-emerald-100 text-emerald-800"
+                                : staff.status === "pending"
+                                ? "bg-amber-100 text-amber-900 border border-amber-300"
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {staff.status}
+                            {staff.status === "pending" ? "PENDING" : staff.status}
                           </span>
                         </td>
                         <td className="p-3 font-mono text-[11px] text-slate-500">
@@ -2243,19 +2314,38 @@ export default function AdminPanel({
                         <td className="p-3 text-right">
                           {staff.role !== "superadmin" && staff.role !== "super_admin" && (
                             <div className="flex items-center justify-end gap-1.5">
-                              {staff.status === "active" ? (
+                              {staff.status === "pending" ? (
+                                <>
+                                  <button
+                                    onClick={() => handleUpdateStudentStatus(staff.id, "active")}
+                                    className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
+                                    title="Approve Team Member"
+                                  >
+                                    <Check className="h-3 w-3" />
+                                    <span>{isEn ? "Approve" : "অনুমোদন"}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateStudentStatus(staff.id, "blocked")}
+                                    className="px-2.5 py-1 bg-rose-700 hover:bg-rose-800 text-white font-bold text-[10px] uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
+                                    title="Reject Team Member"
+                                  >
+                                    <X className="h-3 w-3" />
+                                    <span>{isEn ? "Reject" : "বাতিল"}</span>
+                                  </button>
+                                </>
+                              ) : staff.status === "active" ? (
                                 <button
                                   onClick={() => handleUpdateStudentStatus(staff.id, "suspended")}
                                   className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[10px] uppercase cursor-pointer"
                                 >
-                                  Suspend
+                                  {isEn ? "Suspend" : "স্থগিত"}
                                 </button>
                               ) : (
                                 <button
                                   onClick={() => handleUpdateStudentStatus(staff.id, "active")}
                                   className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase cursor-pointer"
                                 >
-                                  Activate
+                                  {isEn ? "Activate" : "সক্রিয়"}
                                 </button>
                               )}
                             </div>

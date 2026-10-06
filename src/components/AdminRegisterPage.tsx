@@ -18,7 +18,7 @@ import {
 import { Language, UserAccount, UserRole } from "../types";
 import { auth, db } from "../utils/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
 import lodonexLogo from "../assets/images/lodonex_logo_new_1783662734826.jpg";
 
 // Approved Team Roles for Public Team Registration
@@ -112,10 +112,18 @@ export default function AdminRegisterPage({
     // Check if email already registered locally
     const existing = existingUsers.find((u) => u.email.toLowerCase() === cleanEmail);
     if (existing) {
+      if (existing.status === "pending") {
+        setError(
+          isEn
+            ? "Your team account is already registered and is awaiting Super Admin approval."
+            : "আপনার টিম অ্যাকাউন্টটি ইতোমধ্যে নিবন্ধিত এবং সুপার অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে।"
+        );
+        return;
+      }
       setError(
         isEn
-          ? "An account with this email address already exists. Please log in."
-          : "এই ইমেল ঠিকানায় ইতোমধ্যে একটি অ্যাকাউন্ট নিবন্ধিত আছে। দয়া করে লগইন করুন।"
+          ? "This email is already registered. Please use Team Member Login or contact the Super Admin."
+          : "এই ইমেল ঠিকানায় ইতোমধ্যে একটি অ্যাকাউন্ট নিবন্ধিত আছে। দয়া করে টিম মেম্বার লগইন করুন।"
       );
       return;
     }
@@ -123,80 +131,114 @@ export default function AdminRegisterPage({
     setLoading(true);
 
     try {
-      // 1. Register with backend API using robust, safe JSON error handling
-      let res: Response;
+      // 1. Create account in Firebase Authentication
+      let userCredential;
       try {
-        res = await fetch("/api/auth/team-register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({
-            name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            password: password,
-            role: role
-          }),
-        });
-      } catch (fetchErr) {
-        console.error("Team registration network failure:", fetchErr);
-        throw new Error(
-          isEn
-            ? "Registration service is temporarily unavailable. Please try again."
-            : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
-        );
-      }
-
-      // Safe JSON response checking: Never blindly call response.json()
-      let data: any = null;
-      const contentType = res.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
-        try {
-          data = await res.json();
-        } catch (jsonErr) {
-          console.error("JSON parsing error on team register response:", jsonErr);
-        }
-      }
-
-      if (!res.ok || !data || !data.success) {
-        if (!data) {
-          console.error("Unexpected non-JSON response from registration service:", res.status, res.statusText);
-          throw new Error(
-            isEn
-              ? "Registration service is temporarily unavailable. Please try again."
-              : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"
-          );
-        }
-        throw new Error(
-          data.message ||
-          data.error ||
-          (isEn ? "Failed to create team member account." : "টিম মেম্বার অ্যাকাউন্ট তৈরি সম্ভব হয়নি।")
-        );
-      }
-
-      // 2. Create in Firebase Authentication
-      let firebaseUid = data.data?.user?.id || data.user?.id || `${role}-${Date.now()}`;
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-        if (userCredential.user) {
-          firebaseUid = userCredential.user.uid;
-        }
+        userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
       } catch (authErr: any) {
-        console.warn("Firebase Auth team member create note:", authErr?.message);
+        console.error("Firebase Auth team member creation error:", authErr);
+        const code = authErr?.code || "";
+
+        if (code === "auth/email-already-in-use") {
+          // Check Firestore to see if this existing user is currently pending
+          try {
+            const q = query(collection(db, "users"), where("email", "==", cleanEmail));
+            const snap = await getDocs(q);
+            if (!snap.empty && snap.docs[0].data()?.status === "pending") {
+              setError(
+                isEn
+                  ? "Your team account is already registered and is awaiting Super Admin approval."
+                  : "আপনার টিম অ্যাকাউন্টটি ইতোমধ্যে নিবন্ধিত এবং সুপার অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে।"
+              );
+              setLoading(false);
+              return;
+            }
+          } catch (_) {}
+
+          setError(
+            isEn
+              ? "This email is already registered. Please use Team Member Login or contact the Super Admin."
+              : "এই ইমেল ঠিকানায় ইতোমধ্যে একটি অ্যাকাউন্ট নিবন্ধিত আছে। দয়া করে টিম মেম্বার লগইন করুন অথবা সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (code === "auth/invalid-email") {
+          setError(
+            isEn
+              ? "Please provide a valid official email address."
+              : "অনুগ্রহ করে একটি সঠিক প্রাতিষ্ঠানিক ইমেল ঠিকানা দিন।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (code === "auth/weak-password") {
+          setError(
+            isEn
+              ? "Password must meet the required security requirements (at least 6 characters)."
+              : "পাসওয়ার্ড অবশ্যই ন্যূনতম ৬ অক্ষরের হতে হবে।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (code === "auth/operation-not-allowed") {
+          setError(
+            isEn
+              ? "Email/Password registration is currently disabled in Firebase Auth settings. Please contact the administrator."
+              : "ইমেল নিবন্ধন সুবিধা বর্তমানে বন্ধ রয়েছে। অনুগ্রহ করে প্রশাসকের সাথে যোগাযোগ করুন।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (code === "auth/network-request-failed") {
+          setError(
+            isEn
+              ? "Network connection failed. Please check your internet connection and try again."
+              : "নেটওয়ার্ক সমস্যা। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (code === "auth/too-many-requests") {
+          setError(
+            isEn
+              ? "Too many registration attempts. Please wait a few moments and try again."
+              : "অতিরিক্ত চেষ্টার কারণে সাময়িকভাবে বন্ধ। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
+          );
+          setLoading(false);
+          return;
+        }
+
+        setError(
+          authErr?.message ||
+            (isEn
+              ? "Registration could not be completed. Please try again later."
+              : "নিবন্ধন সম্পন্ন করা সম্ভব হয়নি। অনুগ্রহ করে পরে আবার চেষ্টা করুন।")
+        );
+        setLoading(false);
+        return;
       }
 
-      // 3. Create Firestore user document with selected approved role and active status
+      const firebaseUid = userCredential.user.uid;
+
+      // 2. Create Firestore user document with selected approved role and PENDING status
+      // (Security Rule #11: Normal public team applicants are ALWAYS pending Super Admin approval)
       const firestoreUser: UserAccount = {
         id: firebaseUid,
+        uid: firebaseUid,
         name: cleanName,
         email: cleanEmail,
         phone: cleanPhone,
-        role: role as UserRole,
-        status: "active",
+        role: role as UserRole, // "admin" | "trainer" | "staff"
+        status: "pending", // STRICT: Awaiting Super Admin review and approval
         emailVerified: true,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         progress: {
           enrolledCourses: [],
           completedLessons: [],
@@ -212,16 +254,52 @@ export default function AdminRegisterPage({
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
-      } catch (dbErr) {
-        console.warn("Firestore team member profile write note:", dbErr);
+      } catch (dbErr: any) {
+        console.error("Firestore team member profile write error:", dbErr);
+        // Transaction safety: retry write once
+        try {
+          await setDoc(doc(db, "users", firebaseUid), firestoreUser);
+        } catch (retryErr) {
+          console.error("Firestore retry write failed:", retryErr);
+          // Rollback auth user so no orphaned account is left without a profile
+          try {
+            await userCredential.user.delete();
+          } catch (delErr) {
+            console.warn("Auth rollback note:", delErr);
+          }
+          throw new Error(
+            isEn
+              ? "Failed to save team profile in database. Please check your connection and try again."
+              : "ডেটাবেসে টিম প্রোফাইল সংরক্ষণ করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
+          );
+        }
       }
+
+      // 3. Optional Non-blocking backend notification & email trigger (if server is reachable)
+      fetch("/api/auth/team-register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          uid: firebaseUid,
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          role: role,
+          status: "pending"
+        })
+      }).catch((apiErr) => {
+        console.warn("Optional backend notification note:", apiErr);
+      });
 
       // 4. IMPORTANT MANDATORY RULE: NO AUTOMATIC LOGIN!
       // Immediately sign out from Firebase client SDK to ensure NO session is kept!
       try {
         await auth.signOut();
       } catch (signOutErr) {
-        console.warn("Sign out err:", signOutErr);
+        console.warn("Sign out note:", signOutErr);
       }
       localStorage.removeItem("lodonex_current_user");
 
@@ -229,8 +307,12 @@ export default function AdminRegisterPage({
       setRegisteredSuccess(true);
     } catch (err: any) {
       console.error("Team registration submission error:", err);
-      // User-friendly message, no sensitive stack traces exposed
-      setError(err?.message || (isEn ? "Registration service is temporarily unavailable. Please try again." : "নিবন্ধন পরিষেবা সাময়িকভাবে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।"));
+      setError(
+        err?.message ||
+          (isEn
+            ? "Registration could not be completed. Please try again later."
+            : "নিবন্ধন সম্পন্ন করা সম্ভব হয়নি। অনুগ্রহ করে পরে আবার চেষ্টা করুন।")
+      );
     } finally {
       setLoading(false);
     }
@@ -242,11 +324,11 @@ export default function AdminRegisterPage({
       case "superadmin":
         return "SUPER ADMIN";
       case "admin":
-        return "ADMIN";
+        return "ADMIN (Academic & Operations Coordinator)";
       case "staff":
-        return "STAFF";
+        return "STAFF (Admissions & Operations Support)";
       case "trainer":
-        return "TRAINER";
+        return "TRAINER (Culinary Faculty / Instructor)";
       default:
         return r.toUpperCase();
     }
@@ -255,24 +337,24 @@ export default function AdminRegisterPage({
   return (
     <div id="team-register-page" className="min-h-[85vh] flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-md w-full space-y-6">
-        {/* Success / Created Notice Card */}
+        {/* Success / Pending Super Admin Review Card */}
         {registeredSuccess && createdMember ? (
-          <div className="bg-[#FDFCF9] border-2 border-emerald-600 shadow-2xl p-6 sm:p-8 space-y-6 text-center text-slate-900">
-            <div className="h-16 w-16 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle className="h-8 w-8" />
+          <div className="bg-[#FDFCF9] border-2 border-amber-600 shadow-2xl p-6 sm:p-8 space-y-6 text-center text-slate-900">
+            <div className="h-16 w-16 bg-amber-100 border border-amber-300 text-amber-800 rounded-full flex items-center justify-center mx-auto">
+              <Clock className="h-8 w-8 text-amber-700" />
             </div>
 
             <div className="space-y-2">
-              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-700 font-mono block">
-                {isEn ? "STATUS = ACTIVE" : "স্ট্যাটাস = সক্রিয়"}
+              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-amber-800 font-mono block px-2.5 py-1 bg-amber-100/80 border border-amber-300 w-fit mx-auto">
+                {isEn ? "STATUS = PENDING APPROVAL" : "স্ট্যাটাস = অনুমোদনের অপেক্ষায়"}
               </span>
               <h2 className="font-serif font-extrabold text-2xl text-slate-900">
-                {isEn ? "Team Account Created" : "টিম অ্যাকাউন্ট তৈরি সম্পন্ন"}
+                {isEn ? "Registration Submitted Successfully" : "নিবন্ধন সফলভাবে সম্পন্ন হয়েছে"}
               </h2>
               <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
                 {isEn
-                  ? "Your Lodonex Team Account has been created successfully. Please log in with your credentials to access your role-based dashboard."
-                  : "আপনার টিম অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। আপনার ড্যাশবোর্ডে প্রবেশ করতে লগইন করুন।"}
+                  ? "Registration submitted successfully. Your account is pending Super Admin approval. Once reviewed by the Academy Director, you will be able to log in to your dashboard."
+                  : "আপনার টিম অ্যাকাউন্ট সফলভাবে নিবন্ধিত হয়েছে এবং এটি সুপার অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে। একাডেমি পরিচালক অনুমোদন করার পর আপনি ড্যাশবোর্ডে লগইন করতে পারবেন।"}
               </p>
             </div>
 
@@ -292,27 +374,27 @@ export default function AdminRegisterPage({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Dashboard:</span>
-                <span className="font-bold text-slate-700">
-                  {createdMember.role === "trainer" ? "/trainer/dashboard" : "/admin/dashboard"}
-                </span>
+                <span className="text-slate-500">Account Status:</span>
+                <span className="font-bold text-amber-700 uppercase">PENDING APPROVAL</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status:</span>
-                <span className="font-bold text-emerald-700 uppercase">ACTIVE</span>
+                <span className="text-slate-500">Target Dashboard:</span>
+                <span className="font-bold text-slate-700">
+                  {createdMember.role === "trainer" ? "/trainer/dashboard" : createdMember.role === "staff" ? "/staff/dashboard" : "/admin/dashboard"}
+                </span>
               </div>
             </div>
 
-            {/* Email Notification Notice */}
-            <div className="p-3.5 bg-amber-50 border border-amber-200 text-left text-xs text-amber-900 space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-[11px] text-amber-950 uppercase tracking-wider">
-                <Mail className="h-3.5 w-3.5 text-amber-700" />
-                {isEn ? "Email Notification Dispatched" : "ইমেল বিজ্ঞপ্তি পাঠানো হয়েছে"}
+            {/* Notification Notice */}
+            <div className="p-3.5 bg-stone-100 border border-stone-200 text-left text-xs text-stone-800 space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-[11px] text-stone-900 uppercase tracking-wider">
+                <Shield className="h-3.5 w-3.5 text-amber-700" />
+                {isEn ? "Super Admin Verification Queue" : "সুপার অ্যাডমিন অনুমোদন প্রক্রিয়া"}
               </span>
-              <p className="text-[11px] text-amber-800 leading-relaxed">
+              <p className="text-[11px] text-stone-600 leading-relaxed">
                 {isEn
-                  ? `An official registration confirmation email was sent to ${createdMember.email} from lodonexcookingacademy@gmail.com.`
-                  : `আপনার ইমেলে একটি কনফার্মেশন পাঠানো হয়েছে।`}
+                  ? "Security Policy Rule: Privileged team accounts require manual verification by the Academy Super Administrator before dashboard permissions are unlocked."
+                  : "নিরাপত্তা নীতি: একাডেমি সুপার অ্যাডমিন যাচাই করে চূড়ান্ত অনুমোদন দিলেই ড্যাশবোর্ডের অ্যাক্সেস উন্মুক্ত হবে।"}
               </p>
             </div>
 
@@ -321,7 +403,7 @@ export default function AdminRegisterPage({
               onClick={() => onNavigate("/team/login")}
               className="w-full py-3 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2"
             >
-              <span>{isEn ? "Proceed to Team Login →" : "টিম লগইনে এগিয়ে যান →"}</span>
+              <span>{isEn ? "Proceed to Team Login →" : "টিম লগইনে এগিয়ে যান →"}</span>
             </button>
           </div>
         ) : (
