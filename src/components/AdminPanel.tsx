@@ -147,6 +147,7 @@ export default function AdminPanel({
     | "email_logs"
     | "settings"
   >("overview");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Stores (strictly zero mock data, updated continuously via useRealtimeDashboard)
   const [usersList, setUsersList] = useState<UserAccount[]>([]);
@@ -532,90 +533,246 @@ export default function AdminPanel({
 
   return (
     <div id="lodonex-admin-panel" className="font-sans text-slate-900 pb-16">
-      {/* Admin Panel Top Banner */}
-      <div className="bg-[#111] text-white border-b-2 border-editorial-accent py-6 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-editorial-accent/20 border border-editorial-accent text-editorial-accent flex items-center justify-center font-bold">
-              <Shield className="h-6 w-6" />
+      {/* Admin Panel Top Section */}
+      <div className="bg-[#0E0E10] text-white border-b border-amber-500/20 py-6 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">
+        {/* Subtle Luxury Gradient Accent */}
+        <div className="absolute top-0 right-1/4 w-96 h-32 bg-amber-500/5 blur-3xl pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 bg-stone-900 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-inner shrink-0">
+              <Shield className="h-7 w-7 text-amber-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-widest border ${
-                  isSuperAdmin
-                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
-                    : "bg-editorial-accent text-white border-transparent"
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className={`tracking-widest uppercase font-bold flex items-center gap-1 ${
+                  isSuperAdmin ? "text-amber-400" : "text-stone-300"
                 }`}>
-                  {userRole === "super_admin" || userRole === "superadmin" ? "SUPER ADMIN" : userRole.toUpperCase()} ACCESS
+                  {userRole === "super_admin" || userRole === "superadmin" ? "★ SUPER ADMIN COMMAND CENTER" : `${userRole.toUpperCase()} OPERATIONS`}
                 </span>
-                <span className="text-white/40 text-xs">•</span>
-                <span className="text-xs text-white/90 font-mono font-bold">Operator: {currentUser.name}</span>
+                <span className="text-stone-600" aria-hidden="true">·</span>
+                <span className="text-stone-400 font-sans">
+                  {currentUser.name}
+                </span>
               </div>
-              <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
-                {isEn ? "Lodonex Academy Administration Portal" : "লোডোনেক্স একাডেমি প্রশাসনিক প্যানেল"}
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-50 mt-0.5">
+                {(() => {
+                  const hour = new Date().getHours();
+                  const greeting = hour < 12 ? (isEn ? "Good Morning" : "শুভ সকাল") : hour < 18 ? (isEn ? "Good Afternoon" : "শুভ অপরাহ্ন") : (isEn ? "Good Evening" : "শুভ সন্ধ্যা");
+                  return `${greeting}, Lodonex`;
+                })()}
               </h1>
+              <p className="text-xs text-stone-400 font-sans mt-0.5">
+                {isEn ? "Here's your academy overview for today." : "আজকের একাডেমি কার্যক্রমের সংক্ষিপ্ত বিবরণ।"}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsAddBatchOpen(true)}
-              className="px-3 py-1.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>{isEn ? "Create Batch" : "নতুন ব্যাচ"}</span>
-            </button>
-            <button
-              onClick={() => setIsIssueCertOpen(true)}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
-            >
-              <Award className="h-3.5 w-3.5" />
-              <span>{isEn ? "Issue Certificate" : "সার্টিফিকেট ইস্যু"}</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Real-time Date and Live indicator */}
+            <div className="hidden sm:flex flex-col items-end text-right">
+              <div className="text-[11px] font-mono text-stone-300">
+                {new Date().toLocaleDateString(isEn ? "en-US" : "bn-BD", {
+                  weekday: "short",
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric"
+                })}
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono mt-0.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-emerald-400 font-bold uppercase tracking-wider">● LIVE</span>
+                {lastUpdated && (
+                  <span className="text-stone-400">{lastUpdated.toLocaleTimeString()}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsAddBatchOpen(true)}
+                className="px-3.5 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-md border border-red-500/30"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>{isEn ? "Create Batch" : "নতুন ব্যাচ"}</span>
+              </button>
+              <button
+                onClick={() => setIsIssueCertOpen(true)}
+                className="px-3.5 py-2 bg-stone-900 hover:bg-stone-800 text-amber-300 hover:text-white border border-amber-500/30 font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <Award className="h-3.5 w-3.5 text-amber-400" />
+                <span>{isEn ? "Issue Cert" : "সনদ"}</span>
+              </button>
+              {/* Mobile Drawer Button */}
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold uppercase tracking-wider border border-stone-700 cursor-pointer"
+              >
+                {isEn ? "Menu" : "মেনু"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        {/* Admin Navigation Tabs with Permission Filtering */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-editorial-border pb-px text-xs font-bold uppercase tracking-wider">
-          {[
-            { id: "overview", label: isEn ? "KPI Dashboard" : "ড্যাশবোর্ড", icon: ShieldCheck, show: true },
-            { id: "enrollments", label: isEn ? "Enrollments" : "ভর্তি আবেদন", icon: UserCheck, show: hasPermission("enrollments.view") },
-            { id: "students", label: isEn ? "Student Roster" : "শিক্ষার্থী তালিকা", icon: Users, show: hasPermission("students.view") },
-            { id: "batches", label: isEn ? "Batches" : "ব্যাচসমূহ", icon: Calendar, show: hasPermission("courses.view") },
-            { id: "courses", label: isEn ? "Courses" : "কোর্সসমূহ", icon: BookOpen, show: hasPermission("courses.view") },
-            { id: "attendance", label: isEn ? "Attendance" : "হাজিরা খাতা", icon: CheckCircle, show: hasPermission("attendance.view") },
-            { id: "schedule", label: isEn ? "Class Schedule" : "ক্লাস সিডিউল", icon: Clock, show: hasPermission("courses.view") },
-            { id: "assignments", label: isEn ? "Assignments & Work" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view") },
-            { id: "results", label: isEn ? "Gradebook & Marks" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
-            { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view") },
-            { id: "payments", label: isEn ? "Payments & Trx" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view") },
-            { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
-            { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
-            { id: "email_logs", label: isEn ? "Email Logs" : "ইমেল লগ", icon: Mail, show: isSuperAdmin },
-            { id: "settings", label: isEn ? "Gateways / Settings" : "পেমেন্ট গেটওয়ে", icon: Settings, show: isSuperAdmin },
-          ]
-            .filter((t) => t.show)
-            .map((tab) => {
-              const Icon = tab.icon;
-              const isActive = adminTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setAdminTab(tab.id as any)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap border-b-2 transition cursor-pointer ${
-                    isActive
-                      ? "border-editorial-accent text-editorial-accent font-extrabold bg-red-50/50"
-                      : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-        </div>
+        {/* Mobile Modern Drawer Modal */}
+        {isMobileSidebarOpen && (
+          <div className="fixed inset-0 z-50 flex lg:hidden bg-stone-950/80 backdrop-blur-xs font-sans">
+            <div className="w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col justify-between p-4 overflow-y-auto">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase text-amber-600">LODONEX</span>
+                    <h3 className="font-serif font-bold text-base text-stone-900">
+                      {isEn ? "Academy Navigation" : "একাডেমি মেনু"}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className="p-1 text-stone-400 hover:text-stone-800"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  {[
+                    { id: "overview", label: isEn ? "Dashboard" : "ড্যাশবোর্ড", icon: ShieldCheck, show: true },
+                    { id: "students", label: isEn ? "Students" : "শিক্ষার্থী", icon: Users, show: hasPermission("students.view") },
+                    { id: "courses", label: isEn ? "Courses" : "কোর্সসমূহ", icon: BookOpen, show: hasPermission("courses.view") },
+                    { id: "enrollments", label: isEn ? "Enrollments" : "ভর্তি আবেদন", icon: UserCheck, show: hasPermission("enrollments.view") },
+                    { id: "schedule", label: isEn ? "Schedule" : "ক্লাস সিডিউল", icon: Clock, show: hasPermission("courses.view") },
+                    { id: "batches", label: isEn ? "Batches" : "ব্যাচসমূহ", icon: Calendar, show: hasPermission("courses.view") },
+                    { id: "attendance", label: isEn ? "Attendance" : "হাজিরা খাতা", icon: CheckCircle, show: hasPermission("attendance.view") },
+                    { id: "assignments", label: isEn ? "Assignments" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view") },
+                    { id: "results", label: isEn ? "Results" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
+                    { id: "payments", label: isEn ? "Payments" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view") },
+                    { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view") },
+                    { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
+                    { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
+                    { id: "email_logs", label: isEn ? "Email Logs" : "ইমেল লগ", icon: Mail, show: isSuperAdmin },
+                    { id: "settings", label: isEn ? "Settings" : "সেটিংস", icon: Settings, show: isSuperAdmin },
+                  ]
+                    .filter((t) => t.show)
+                    .map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = adminTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            setAdminTab(tab.id as any);
+                            setIsMobileSidebarOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold tracking-wider transition-all duration-150 cursor-pointer ${
+                            isActive
+                              ? "bg-stone-900 text-amber-300 font-bold border-l-4 border-amber-400"
+                              : "text-stone-700 hover:bg-stone-100 hover:text-stone-950"
+                          }`}
+                        >
+                          <Icon className={`h-4 w-4 ${isActive ? "text-amber-400" : "text-stone-400"}`} />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-stone-200 text-center">
+                <span className="text-[10px] text-stone-400 font-mono">Lodonex Executive v2.4</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2-Column Responsive Layout: Modern Sidebar + Main Workspace */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Desktop Modern Sidebar Navigation */}
+          <aside className="hidden lg:block lg:col-span-3 xl:col-span-3 sticky top-24 bg-white border border-stone-200/90 shadow-xs p-3 space-y-4">
+            <div className="px-3 py-2 border-b border-stone-100">
+              <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-amber-700 block">
+                {isSuperAdmin ? "EXECUTIVE CONSOLE" : "OPERATIONS DESK"}
+              </span>
+              <p className="font-serif font-bold text-sm text-stone-900 mt-0.5">
+                {isEn ? "Academy Navigation" : "একাডেমি নেভিগেশন"}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              {[
+                { id: "overview", label: isEn ? "Dashboard" : "ড্যাশবোর্ড", icon: ShieldCheck, show: true },
+                { id: "students", label: isEn ? "Students" : "শিক্ষার্থী তালিকা", icon: Users, show: hasPermission("students.view"), count: filteredUsers.filter((u) => u.role === "student").length },
+                { id: "courses", label: isEn ? "Courses" : "কোর্সসমূহ", icon: BookOpen, show: hasPermission("courses.view"), count: courses.length },
+                { id: "enrollments", label: isEn ? "Enrollments" : "ভর্তি আবেদন", icon: UserCheck, show: hasPermission("enrollments.view"), count: filteredEnrollments.filter((e) => ["applied", "under_review", "pending_payment"].includes(e.status)).length, alert: true },
+                { id: "schedule", label: isEn ? "Schedule" : "ক্লাস সিডিউল", icon: Clock, show: hasPermission("courses.view") },
+                { id: "batches", label: isEn ? "Batches" : "ব্যাচসমূহ", icon: Calendar, show: hasPermission("courses.view"), count: batchesList.length },
+                { id: "attendance", label: isEn ? "Attendance" : "হাজিরা খাতা", icon: CheckCircle, show: hasPermission("attendance.view") },
+                { id: "assignments", label: isEn ? "Assignments" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view"), count: assignmentsList.length },
+                { id: "results", label: isEn ? "Results" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
+                { id: "payments", label: isEn ? "Payments" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view"), count: filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length, alert: true },
+                { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view"), count: filteredCertificates.length },
+                { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin, count: filteredUsers.filter((u) => ["admin", "superadmin", "super_admin", "staff", "trainer"].includes(u.role || "")).length },
+                { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
+                { id: "email_logs", label: isEn ? "Email Logs" : "ইমেল লগ", icon: Mail, show: isSuperAdmin },
+                { id: "settings", label: isEn ? "Settings" : "সেটিংস", icon: Settings, show: isSuperAdmin },
+              ]
+                .filter((t) => t.show)
+                .map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = adminTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setAdminTab(tab.id as any)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-150 cursor-pointer ${
+                        isActive
+                          ? "bg-stone-900 text-amber-300 font-bold border-l-4 border-amber-400 shadow-xs"
+                          : "text-stone-600 hover:text-stone-950 hover:bg-stone-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-amber-400" : "text-stone-400"}`} />
+                        <span className="truncate">{tab.label}</span>
+                      </div>
+                      {typeof tab.count === "number" && tab.count > 0 && (
+                        <span
+                          className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 shrink-0 ${
+                            tab.alert
+                              ? "bg-amber-100 text-amber-900 border border-amber-300"
+                              : isActive
+                              ? "bg-stone-800 text-amber-300"
+                              : "bg-stone-100 text-stone-600"
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
+
+            {/* Quick Live System Health Badge */}
+            <div className="p-3 bg-stone-50 border border-stone-200/60 text-xs font-mono space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-stone-500 uppercase">FIRESTORE STREAM</span>
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  HEALTHY
+                </span>
+              </div>
+              <p className="text-[10px] text-stone-400 truncate">
+                Role: {userRole.toUpperCase()}
+              </p>
+            </div>
+          </aside>
+
+          {/* Main Content Workspace */}
+          <main className="lg:col-span-9 xl:col-span-9 min-w-0">
 
         {/* ========================================================
             TAB 1: REAL-TIME OVERVIEW DASHBOARD
@@ -623,24 +780,26 @@ export default function AdminPanel({
         {adminTab === "overview" && (
           <div className="space-y-8 mt-6">
             {/* Live Status & Filter Toolbar */}
-            <div className="bg-white border border-editorial-border p-4 shadow-2xs space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-editorial-border pb-3">
-                <div className="flex items-center gap-2.5">
+            <div className="bg-white border border-stone-200/90 shadow-xs p-5 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-100 pb-4">
+                <div className="flex items-center gap-3">
                   <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
                   </span>
                   <div>
-                    <span className="font-mono text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                      <span>● Live Real-Time Firestore</span>
-                      <span className="text-slate-400 font-normal">|</span>
-                      <span className="text-slate-600 font-sans font-medium">
-                        {isEn ? "Source: Firebase Database" : "উৎস: ফায়ারবেস ডেটাবেস"}
+                    <div className="flex items-center gap-2 text-xs font-mono tracking-wider">
+                      <span className="font-extrabold uppercase text-emerald-800">
+                        ● LIVE FIRESTORE STREAM
                       </span>
-                    </span>
-                    <p className="text-[11px] text-slate-500 font-mono">
-                      {isEn ? "Last updated:" : "সর্বশেষ আপডেট:"}{" "}
-                      {lastUpdated ? lastUpdated.toLocaleTimeString() : (isEn ? "Live" : "সক্রিয়")}
+                      <span className="text-stone-300" aria-hidden="true">·</span>
+                      <span className="text-stone-500 font-sans">
+                        {isEn ? "Cloud Database Synchronized" : "ফায়ারবেস ক্লাউড ডেটাবেস সক্রিয়"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-400 font-mono mt-0.5">
+                      {isEn ? "Last synced:" : "সর্বশেষ সিঙ্ক:"}{" "}
+                      {lastUpdated ? lastUpdated.toLocaleTimeString() : (isEn ? "Connecting..." : "সংযুক্ত হচ্ছে...")}
                     </p>
                   </div>
                 </div>
@@ -657,10 +816,10 @@ export default function AdminPanel({
                           .map((u) => [u.id, u.name, u.email, u.phone || "", u.role || "student", u.status, u.createdAt || ""])
                       );
                     }}
-                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    className="px-3 py-1.5 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
                     title="Export Student Roster to CSV"
                   >
-                    <Download className="h-3 w-3" />
+                    <Download className="h-3.5 w-3.5 text-stone-500" />
                     <span>{isEn ? "Export Students" : "শিক্ষার্থী এক্সপোর্ট"}</span>
                   </button>
 
@@ -681,10 +840,10 @@ export default function AdminPanel({
                         ])
                       );
                     }}
-                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    className="px-3 py-1.5 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
                     title="Export Enrollments to CSV"
                   >
-                    <Download className="h-3 w-3" />
+                    <Download className="h-3.5 w-3.5 text-stone-500" />
                     <span>{isEn ? "Export Enrollments" : "এনরোলমেন্ট এক্সপোর্ট"}</span>
                   </button>
 
@@ -704,16 +863,16 @@ export default function AdminPanel({
                         ])
                       );
                     }}
-                    className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-bold text-[10px] uppercase tracking-wider transition cursor-pointer flex items-center gap-1"
+                    className="px-3 py-1.5 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
                     title="Export Payments to CSV"
                   >
-                    <Download className="h-3 w-3" />
+                    <Download className="h-3.5 w-3.5 text-stone-500" />
                     <span>{isEn ? "Export Payments" : "পেমেন্ট এক্সপোর্ট"}</span>
                   </button>
 
                   <button
                     onClick={retry}
-                    className="p-1.5 text-slate-600 hover:text-editorial-accent border border-slate-300 hover:border-editorial-accent transition cursor-pointer"
+                    className="p-2 text-stone-500 hover:text-stone-900 border border-stone-200 hover:border-stone-400 bg-stone-50 hover:bg-white transition-all cursor-pointer"
                     title="Refresh Live Data"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
@@ -722,11 +881,11 @@ export default function AdminPanel({
               </div>
 
               {/* Dynamic Filter Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                {/* Date Filter Pills */}
-                <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex items-center gap-1">
-                    <Filter className="h-3 w-3" /> {isEn ? "Date Range:" : "তারিখ:"}
+              <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
+                {/* Date Filter Segmented Control */}
+                <div className="flex flex-wrap items-center gap-1.5 p-1 bg-stone-100/80 border border-stone-200/80">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 px-2 flex items-center gap-1">
+                    <Filter className="h-3 w-3" /> {isEn ? "Range:" : "তারিখ:"}
                   </span>
                   {[
                     { id: "all", labelEn: "All Time", labelBn: "সর্বকাল" },
@@ -739,10 +898,10 @@ export default function AdminPanel({
                     <button
                       key={f.id}
                       onClick={() => setDateFilter(f.id as any)}
-                      className={`px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition cursor-pointer ${
+                      className={`px-3 py-1 text-xs font-medium transition-all cursor-pointer ${
                         dateFilter === f.id
-                          ? "bg-editorial-accent text-white"
-                          : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                          ? "bg-white text-stone-900 font-bold shadow-xs border border-stone-200/80"
+                          : "text-stone-600 hover:text-stone-900"
                       }`}
                     >
                       {isEn ? f.labelEn : f.labelBn}
@@ -755,7 +914,7 @@ export default function AdminPanel({
                   <select
                     value={selectedCourseFilter}
                     onChange={(e) => setSelectedCourseFilter(e.target.value)}
-                    className="bg-slate-50 border border-slate-300 text-xs px-2.5 py-1 text-slate-700 focus:outline-hidden font-medium"
+                    className="bg-stone-50 border border-stone-200 text-xs px-3 py-1.5 text-stone-800 focus:outline-hidden font-medium cursor-pointer"
                   >
                     <option value="all">{isEn ? "All Courses" : "সকল কোর্স"}</option>
                     {courses.map((c) => (
@@ -768,7 +927,7 @@ export default function AdminPanel({
                   <select
                     value={selectedBatchFilter}
                     onChange={(e) => setSelectedBatchFilter(e.target.value)}
-                    className="bg-slate-50 border border-slate-300 text-xs px-2.5 py-1 text-slate-700 focus:outline-hidden font-medium"
+                    className="bg-stone-50 border border-stone-200 text-xs px-3 py-1.5 text-stone-800 focus:outline-hidden font-medium cursor-pointer"
                   >
                     <option value="all">{isEn ? "All Batches" : "সকল ব্যাচ"}</option>
                     {batchesList.map((b) => (
@@ -783,20 +942,20 @@ export default function AdminPanel({
 
             {/* Loading Skeleton */}
             {isLoading && (
-              <div className="p-8 bg-white border border-editorial-border text-center space-y-3">
-                <RefreshCw className="h-6 w-6 animate-spin text-editorial-accent mx-auto" />
-                <p className="font-serif font-bold text-slate-700 text-base">
+              <div className="p-12 bg-white border border-stone-200/80 text-center space-y-3 shadow-xs">
+                <RefreshCw className="h-6 w-6 animate-spin text-amber-600 mx-auto" />
+                <p className="font-serif font-bold text-stone-800 text-base">
                   {isEn ? "Loading real-time data from Firebase..." : "ফায়ারবেস থেকে রিয়েল-টাইম তথ্য লোড হচ্ছে..."}
                 </p>
-                <p className="text-xs text-slate-500">
-                  {isEn ? "Establishing live document listeners..." : "লাইভ ডেটা স্ট্রীম যুক্ত হচ্ছে..."}
+                <p className="text-xs text-stone-500 font-mono">
+                  {isEn ? "Synchronizing live document listeners..." : "লাইভ ডেটা স্ট্রীম যুক্ত হচ্ছে..."}
                 </p>
               </div>
             )}
 
             {/* Error Banner */}
             {error && (
-              <div className="p-4 bg-red-50 border-2 border-red-300 flex items-center justify-between gap-4">
+              <div className="p-4 bg-red-50 border border-red-200 flex items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
                   <p className="text-xs text-red-800 font-medium">
@@ -805,7 +964,7 @@ export default function AdminPanel({
                 </div>
                 <button
                   onClick={retry}
-                  className="px-3 py-1 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase cursor-pointer shrink-0 transition"
                 >
                   {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
                 </button>
@@ -814,128 +973,136 @@ export default function AdminPanel({
 
             {/* Super Admin & Admin Complete Metrics Grid */}
             {!isLoading && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {/* 1. Students Metric */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-stone-900"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Total Students" : "মোট শিক্ষার্থী"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-editorial-dark">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                     {filteredUsers.filter((u) => u.role === "student").length}
                   </div>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
-                    <span className="text-emerald-700 font-bold">
+                  <div className="text-[11px] text-stone-500 flex items-center gap-1.5 flex-wrap font-mono pt-1 border-t border-stone-100">
+                    <span className="text-emerald-700 font-semibold">
                       {filteredUsers.filter((u) => u.role === "student" && (u.status === "active" || u.status === "approved")).length} active
                     </span>
-                    <span>•</span>
+                    <span className="text-stone-300">·</span>
                     <span className="text-amber-700">
                       {filteredUsers.filter((u) => u.role === "student" && u.status === "pending").length} pending
                     </span>
-                    <span>•</span>
-                    <span className="text-red-700">
+                    <span className="text-stone-300">·</span>
+                    <span className="text-stone-400">
                       {filteredUsers.filter((u) => u.role === "student" && (u.status === "suspended" || u.status === "blocked")).length} susp
                     </span>
                   </div>
                 </div>
 
                 {/* 2. Admin & Staff Team */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-amber-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Administrative Staff" : "প্রশাসনিক কর্মী"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-indigo-700">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                     {filteredUsers.filter((u) => ["super_admin", "superadmin", "admin", "staff"].includes(u.role || "")).length}
                   </div>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
-                    <span>
+                  <div className="text-[11px] text-stone-500 flex items-center gap-1.5 flex-wrap font-mono pt-1 border-t border-stone-100">
+                    <span className="text-stone-700">
                       {filteredUsers.filter((u) => u.role === "admin" || u.role === "super_admin" || u.role === "superadmin").length} admins
                     </span>
-                    <span>•</span>
-                    <span>{filteredUsers.filter((u) => u.role === "staff").length} staff</span>
+                    <span className="text-stone-300">·</span>
+                    <span className="text-stone-500">{filteredUsers.filter((u) => u.role === "staff").length} staff</span>
                   </div>
                 </div>
 
                 {/* 3. Trainers / Chefs */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {isEn ? "Total Trainers" : "মোট ট্রেইনার"}
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-teal-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
+                    {isEn ? "Culinary Faculty" : "অনুষদ ও প্রশিক্ষক"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-teal-700">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-teal-800">
                     {filteredUsers.filter((u) => u.role === "trainer").length}
                   </div>
-                  <p className="text-[10px] text-teal-600 font-medium">
-                    {isEn ? "Executive Culinary Faculty" : "অনুষদ ও শেফ প্রশিক্ষক"}
+                  <p className="text-[11px] text-teal-700 font-medium pt-1 border-t border-stone-100">
+                    {isEn ? "Executive Mentors" : "অনুষদ ও শেফ প্রশিক্ষক"}
                   </p>
                 </div>
 
                 {/* 4. Active Courses */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-editorial-accent"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Courses & Batches" : "কোর্স ও ব্যাচ"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-editorial-accent">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                     {courses.length}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    <span className="text-blue-700 font-bold">{batchesList.filter((b) => b.status === "active").length} active</span>
-                    <span> / {batchesList.length} batches</span>
+                  <div className="text-[11px] text-stone-500 font-mono pt-1 border-t border-stone-100">
+                    <span className="text-blue-700 font-semibold">{batchesList.filter((b) => b.status === "active").length} active</span>
+                    <span className="text-stone-400"> / {batchesList.length} batches</span>
                   </div>
                 </div>
 
                 {/* 5. Enrollments */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Total Enrollments" : "মোট ভর্তি আবেদন"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-slate-900">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                     {filteredEnrollments.length}
                   </div>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap font-mono">
-                    <span className="text-amber-700 font-bold">
+                  <div className="text-[11px] text-stone-500 flex items-center gap-1.5 flex-wrap font-mono pt-1 border-t border-stone-100">
+                    <span className="text-amber-700 font-semibold">
                       {filteredEnrollments.filter((e) => ["applied", "under_review", "pending_payment", "payment_submitted"].includes(e.status)).length} pending
                     </span>
-                    <span>•</span>
-                    <span className="text-emerald-700">
+                    <span className="text-stone-300">·</span>
+                    <span className="text-emerald-700 font-semibold">
                       {filteredEnrollments.filter((e) => e.status === "active" || e.status === "approved").length} active
                     </span>
                   </div>
                 </div>
 
                 {/* 6. Total Revenue */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-emerald-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Total Revenue" : "মোট সংগৃহীত ফি"}
                   </span>
-                  <div className="font-serif text-xl font-extrabold text-slate-900 truncate">
+                  <div className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 truncate">
                     {formatPrice(filteredPayments.filter((p) => p.status === "verified").reduce((a, b) => a + b.amount, 0))}
                   </div>
-                  <p className="text-[10px] text-emerald-700 font-semibold">
+                  <p className="text-[11px] text-emerald-700 font-medium pt-1 border-t border-stone-100">
                     {filteredPayments.filter((p) => p.status === "verified").length} {isEn ? "Verified Receipts" : "যাচাইকৃত রসিদ"}
                   </p>
                 </div>
 
                 {/* 7. Pending Payments */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-amber-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Pending Payments" : "অমীমাংসিত ফি"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-amber-800">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-amber-800">
                     {filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length}
                   </div>
-                  <p className="text-[10px] text-slate-500 font-mono">
+                  <p className="text-[11px] text-stone-400 font-mono pt-1 border-t border-stone-100">
                     {filteredPayments.filter((p) => p.status === "rejected").length} rejected
                   </p>
                 </div>
 
                 {/* 8. Digital Certificates */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-purple-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                     {isEn ? "Certificates Issued" : "ইস্যুকৃত সনদ"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-purple-700">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-purple-900">
                     {filteredCertificates.length}
                   </div>
-                  <p className="text-[10px] text-purple-600 font-medium">
+                  <p className="text-[11px] text-purple-700 font-medium pt-1 border-t border-stone-100">
                     {filteredCertificates.filter((c) => c.isValid).length} {isEn ? "Verifiable Online" : "যাচাইযোগ্য সনদ"}
                   </p>
                 </div>
@@ -944,32 +1111,34 @@ export default function AdminPanel({
                 {(() => {
                   const attM = calculateAttendanceMetrics(filteredAttendance);
                   return (
-                    <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                      <div className="absolute top-0 inset-x-0 h-1 bg-emerald-500"></div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                         {isEn ? "Attendance Health" : "হাজিরা পরিসংখ্যান"}
                       </span>
-                      <div className="font-serif text-2xl font-extrabold text-emerald-700">
+                      <div className="font-serif text-3xl font-bold tracking-tight text-emerald-800">
                         {attM.total > 0 ? `${attM.rate}%` : "0%"}
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        {attM.total > 0 ? `${attM.present}P • ${attM.absent}A • ${attM.late}L` : (isEn ? "No records yet" : "রেকর্ড নেই")}
+                      <div className="text-[11px] text-stone-500 font-mono pt-1 border-t border-stone-100">
+                        {attM.total > 0 ? `${attM.present}P · ${attM.absent}A · ${attM.late}L` : (isEn ? "No records yet" : "রেকর্ড নেই")}
                       </div>
                     </div>
                   );
                 })()}
 
                 {/* 10. Academic Work & Exams */}
-                <div className="bg-white border border-editorial-border p-3.5 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {isEn ? "Assignments & Work" : "অ্যাসাইনমেন্ট ও পরীক্ষা"}
+                <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-blue-600"></div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
+                    {isEn ? "Academic Work" : "অ্যাসাইনমেন্ট ও পরীক্ষা"}
                   </span>
-                  <div className="font-serif text-2xl font-extrabold text-slate-800">
+                  <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                     {assignmentsList.length}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
+                  <div className="text-[11px] text-stone-500 font-mono pt-1 border-t border-stone-100">
                     <span>{submissionsList.length} subs</span>
-                    <span> • </span>
-                    <span className="text-emerald-700 font-bold">{resultsList.length} grades</span>
+                    <span className="text-stone-300"> · </span>
+                    <span className="text-emerald-700 font-semibold">{resultsList.length} grades</span>
                   </div>
                 </div>
               </div>
@@ -979,39 +1148,39 @@ export default function AdminPanel({
             {!isLoading && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Chart 1: Enrollment Distribution by Course */}
-                <div className="bg-white border border-editorial-border p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-editorial-accent" />
+                <div className="bg-white border border-stone-200/90 shadow-xs p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-amber-600" />
                       <span>{isEn ? "Course Popularity & Enrollments" : "কোর্স অনুযায়ী আবেদন বন্টন"}</span>
                     </h3>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                      {isEn ? "Real-time" : "লাইভ"}
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                      {isEn ? "● Live Stream" : "● লাইভ"}
                     </span>
                   </div>
 
                   {filteredEnrollments.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                    <div className="p-8 text-center text-xs text-stone-400 italic">
                       {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
                     </div>
                   ) : (
-                    <div className="space-y-2.5 pt-2">
+                    <div className="space-y-3 pt-1">
                       {courses.map((course) => {
                         const count = filteredEnrollments.filter((e) => e.courseId === course.id).length;
                         const pct = filteredEnrollments.length > 0 ? Math.round((count / filteredEnrollments.length) * 100) : 0;
                         return (
-                          <div key={course.id} className="space-y-1">
+                          <div key={course.id} className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium text-slate-800 truncate max-w-[220px]">
+                              <span className="font-medium text-stone-800 truncate max-w-[240px]">
                                 {isEn ? course.titleEn : course.titleBn}
                               </span>
-                              <span className="font-mono text-slate-600 font-bold">
-                                {count} ({pct}%)
+                              <span className="font-mono text-stone-600 font-semibold">
+                                {count} <span className="text-stone-400 font-normal">({pct}%)</span>
                               </span>
                             </div>
-                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
+                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
                               <div
-                                className="h-full bg-editorial-accent transition-all duration-300"
+                                className="h-full bg-amber-600 transition-all duration-300"
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
@@ -1023,23 +1192,23 @@ export default function AdminPanel({
                 </div>
 
                 {/* Chart 2: Revenue Trend & Payment Verification Health */}
-                <div className="bg-white border border-editorial-border p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                <div className="bg-white border border-stone-200/90 shadow-xs p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-emerald-700" />
                       <span>{isEn ? "Payment Breakdown & Financial Health" : "পেমেন্ট অবস্থা ও রসিদ যাচাই"}</span>
                     </h3>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                      {isEn ? "Real-time" : "লাইভ"}
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                      {isEn ? "● Live Stream" : "● লাইভ"}
                     </span>
                   </div>
 
                   {filteredPayments.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                    <div className="p-8 text-center text-xs text-stone-400 italic">
                       {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
                     </div>
                   ) : (
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-4 pt-1">
                       {(() => {
                         const verifiedCount = filteredPayments.filter((p) => p.status === "verified").length;
                         const pendingCount = filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length;
@@ -1052,24 +1221,27 @@ export default function AdminPanel({
 
                         return (
                           <>
-                            <div className="flex h-4 w-full overflow-hidden bg-slate-100">
+                            <div className="flex h-3.5 w-full overflow-hidden bg-stone-100">
                               <div style={{ width: `${verifiedPct}%` }} className="bg-emerald-600" title={`Verified: ${verifiedCount}`} />
                               <div style={{ width: `${pendingPct}%` }} className="bg-amber-500" title={`Pending: ${pendingCount}`} />
                               <div style={{ width: `${rejectedPct}%` }} className="bg-red-500" title={`Rejected: ${rejectedCount}`} />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-2">
-                              <div className="p-2 bg-emerald-50 border border-emerald-200">
-                                <span className="text-[10px] text-emerald-800 uppercase font-bold block">{isEn ? "Verified" : "যাচাইকৃত"}</span>
-                                <span className="font-extrabold text-emerald-900 text-sm">{verifiedCount} ({verifiedPct}%)</span>
+                            <div className="grid grid-cols-3 gap-3 text-center text-xs font-mono pt-1">
+                              <div className="p-3 bg-emerald-50/60 border border-emerald-200/80">
+                                <span className="text-[10px] text-emerald-800 uppercase font-semibold block">{isEn ? "Verified" : "যাচাইকৃত"}</span>
+                                <span className="font-extrabold text-emerald-950 text-base">{verifiedCount}</span>
+                                <span className="text-[10px] text-emerald-700 block">{verifiedPct}%</span>
                               </div>
-                              <div className="p-2 bg-amber-50 border border-amber-200">
-                                <span className="text-[10px] text-amber-800 uppercase font-bold block">{isEn ? "Pending" : "অমীমাংসিত"}</span>
-                                <span className="font-extrabold text-amber-900 text-sm">{pendingCount} ({pendingPct}%)</span>
+                              <div className="p-3 bg-amber-50/60 border border-amber-200/80">
+                                <span className="text-[10px] text-amber-800 uppercase font-semibold block">{isEn ? "Pending" : "অমীমাংসিত"}</span>
+                                <span className="font-extrabold text-amber-950 text-base">{pendingCount}</span>
+                                <span className="text-[10px] text-amber-700 block">{pendingPct}%</span>
                               </div>
-                              <div className="p-2 bg-red-50 border border-red-200">
-                                <span className="text-[10px] text-red-800 uppercase font-bold block">{isEn ? "Rejected" : "বাতিল"}</span>
-                                <span className="font-extrabold text-red-900 text-sm">{rejectedCount} ({rejectedPct}%)</span>
+                              <div className="p-3 bg-red-50/60 border border-red-200/80">
+                                <span className="text-[10px] text-red-800 uppercase font-semibold block">{isEn ? "Rejected" : "বাতিল"}</span>
+                                <span className="font-extrabold text-red-950 text-base">{rejectedCount}</span>
+                                <span className="text-[10px] text-red-700 block">{rejectedPct}%</span>
                               </div>
                             </div>
                           </>
@@ -1080,23 +1252,23 @@ export default function AdminPanel({
                 </div>
 
                 {/* Chart 3: Grade Distribution from Real Assessments */}
-                <div className="bg-white border border-editorial-border p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
+                <div className="bg-white border border-stone-200/90 shadow-xs p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
                       <Award className="h-4 w-4 text-purple-700" />
                       <span>{isEn ? "Academic Performance & Grade Distribution" : "শিক্ষার্থীদের ফলাফল ও গ্রেড বিন্যাস"}</span>
                     </h3>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                      {isEn ? "Real-time" : "লাইভ"}
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                      {isEn ? "● Live Stream" : "● লাইভ"}
                     </span>
                   </div>
 
                   {resultsList.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                    <div className="p-8 text-center text-xs text-stone-400 italic">
                       {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
                     </div>
                   ) : (
-                    <div className="space-y-2 pt-2">
+                    <div className="space-y-3 pt-1">
                       {[
                         { grade: "Grade A+ (Distinction)", label: "A+ Distinction", color: "bg-purple-600" },
                         { grade: "Grade A (Excellent)", label: "A Excellent", color: "bg-emerald-600" },
@@ -1106,12 +1278,12 @@ export default function AdminPanel({
                         const count = resultsList.filter((r) => r.grade?.includes(g.grade.split(" ")[0])).length;
                         const pct = resultsList.length > 0 ? Math.round((count / resultsList.length) * 100) : 0;
                         return (
-                          <div key={g.grade} className="space-y-1">
+                          <div key={g.grade} className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-medium text-slate-800">{g.label}</span>
-                              <span className="font-mono text-slate-600 font-bold">{count} ({pct}%)</span>
+                              <span className="font-medium text-stone-800">{g.label}</span>
+                              <span className="font-mono text-stone-600 font-semibold">{count} <span className="text-stone-400 font-normal">({pct}%)</span></span>
                             </div>
-                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
+                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
                               <div className={`h-full ${g.color}`} style={{ width: `${pct}%` }} />
                             </div>
                           </div>
@@ -1122,23 +1294,23 @@ export default function AdminPanel({
                 </div>
 
                 {/* Chart 4: Attendance Health Breakdown */}
-                <div className="bg-white border border-editorial-border p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-serif font-bold text-base text-editorial-dark flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-editorial-accent" />
+                <div className="bg-white border border-stone-200/90 shadow-xs p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                    <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-emerald-700" />
                       <span>{isEn ? "Attendance Health Log" : "হাজিরা পরিস্থিতি"}</span>
                     </h3>
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                      {isEn ? "Real-time" : "লাইভ"}
+                    <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                      {isEn ? "● Live Stream" : "● লাইভ"}
                     </span>
                   </div>
 
                   {filteredAttendance.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-slate-400 italic">
+                    <div className="p-8 text-center text-xs text-stone-400 italic">
                       {isEn ? "No data available yet." : "এখনও কোনো তথ্য নেই।"}
                     </div>
                   ) : (
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-3 pt-1">
                       {(() => {
                         const total = filteredAttendance.length;
                         const present = filteredAttendance.filter((a) => a.status === "present").length;
@@ -1147,25 +1319,25 @@ export default function AdminPanel({
                         const excused = filteredAttendance.filter((a) => a.status === "excused").length;
 
                         return (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-mono">
-                            <div className="p-3 bg-emerald-50 border border-emerald-200">
-                              <span className="text-[10px] text-emerald-800 uppercase font-bold block">{isEn ? "Present" : "উপস্থিত"}</span>
-                              <span className="font-extrabold text-emerald-900 text-lg">{present}</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs font-mono">
+                            <div className="p-3 bg-emerald-50/60 border border-emerald-200/80">
+                              <span className="text-[10px] text-emerald-800 uppercase font-semibold block">{isEn ? "Present" : "উপস্থিত"}</span>
+                              <span className="font-extrabold text-emerald-950 text-lg">{present}</span>
                               <span className="text-[10px] text-emerald-700 block">{Math.round((present / total) * 100)}%</span>
                             </div>
-                            <div className="p-3 bg-red-50 border border-red-200">
-                              <span className="text-[10px] text-red-800 uppercase font-bold block">{isEn ? "Absent" : "অনুপস্থিত"}</span>
-                              <span className="font-extrabold text-red-900 text-lg">{absent}</span>
+                            <div className="p-3 bg-red-50/60 border border-red-200/80">
+                              <span className="text-[10px] text-red-800 uppercase font-semibold block">{isEn ? "Absent" : "অনুপস্থিত"}</span>
+                              <span className="font-extrabold text-red-950 text-lg">{absent}</span>
                               <span className="text-[10px] text-red-700 block">{Math.round((absent / total) * 100)}%</span>
                             </div>
-                            <div className="p-3 bg-amber-50 border border-amber-200">
-                              <span className="text-[10px] text-amber-800 uppercase font-bold block">{isEn ? "Late" : "দেরি"}</span>
-                              <span className="font-extrabold text-amber-900 text-lg">{late}</span>
+                            <div className="p-3 bg-amber-50/60 border border-amber-200/80">
+                              <span className="text-[10px] text-amber-800 uppercase font-semibold block">{isEn ? "Late" : "দেরি"}</span>
+                              <span className="font-extrabold text-amber-950 text-lg">{late}</span>
                               <span className="text-[10px] text-amber-700 block">{Math.round((late / total) * 100)}%</span>
                             </div>
-                            <div className="p-3 bg-blue-50 border border-blue-200">
-                              <span className="text-[10px] text-blue-800 uppercase font-bold block">{isEn ? "Excused" : "ছুটি"}</span>
-                              <span className="font-extrabold text-blue-900 text-lg">{excused}</span>
+                            <div className="p-3 bg-blue-50/60 border border-blue-200/80">
+                              <span className="text-[10px] text-blue-800 uppercase font-semibold block">{isEn ? "Excused" : "ছুটি"}</span>
+                              <span className="font-extrabold text-blue-950 text-lg">{excused}</span>
                               <span className="text-[10px] text-blue-700 block">{Math.round((excused / total) * 100)}%</span>
                             </div>
                           </div>
@@ -1178,35 +1350,36 @@ export default function AdminPanel({
             )}
 
             {/* Quick Review Applications Queue */}
-            <div className="bg-white border border-editorial-border p-6 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="bg-white border border-stone-200/90 shadow-xs p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
                 <div>
-                  <h3 className="font-serif font-bold text-lg text-editorial-dark">
+                  <h3 className="font-serif font-bold text-lg text-stone-900">
                     {isEn ? "Immediate Admission Review Queue" : "তাৎক্ষণিক ভর্তি আবেদন রিভিউ তালিকা"}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-stone-500 font-sans mt-0.5">
                     {isEn
-                      ? "Review applicant TrxID and click 'Approve & Unlock' to grant instant classroom and lesson access."
+                      ? "Review applicant TrxID and grant instant classroom and lesson access."
                       : "পেমেন্ট TrxID চেক করে সরাসরি অনুমোদন দিয়ে ক্লাসরুম উন্মুক্ত করুন।"}
                   </p>
                 </div>
                 <button
                   onClick={() => setAdminTab("enrollments")}
-                  className="text-xs font-bold text-editorial-accent hover:underline uppercase"
+                  className="text-xs font-bold text-editorial-accent hover:text-red-900 transition flex items-center gap-1 uppercase tracking-wider"
                 >
-                  {isEn ? "View All Enrollments" : "সকল আবেদন দেখুন"} →
+                  <span>{isEn ? "View All Enrollments" : "সকল আবেদন দেখুন"}</span>
+                  <span>→</span>
                 </button>
               </div>
 
               {filteredEnrollments.length === 0 ? (
-                <div className="p-8 text-center text-xs text-slate-400 italic">
+                <div className="p-8 text-center text-xs text-stone-400 italic">
                   {isEn ? "No data available yet. No pending enrollment applications." : "এখনও কোনো আবেদন জমা পড়েনি।"}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
+                      <tr className="bg-stone-50/80 border-b border-stone-200 uppercase font-semibold text-[10px] text-stone-600 tracking-wider">
                         <th className="p-3">Applicant Name</th>
                         <th className="p-3">Course / Level</th>
                         <th className="p-3">Payment TrxID</th>
@@ -1214,28 +1387,28 @@ export default function AdminPanel({
                         <th className="p-3 text-right">Quick Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-stone-100">
                       {filteredEnrollments.slice(0, 5).map((app) => (
-                        <tr key={app.id} className="hover:bg-slate-50">
+                        <tr key={app.id} className="hover:bg-amber-50/20 transition-colors">
                           <td className="p-3">
-                            <span className="font-bold text-slate-900 block">{app.studentName}</span>
-                            <span className="text-[11px] text-slate-500">{app.studentEmail} • {app.studentPhone}</span>
+                            <span className="font-bold text-stone-900 block">{app.studentName}</span>
+                            <span className="text-[11px] text-stone-500 font-mono">{app.studentEmail} • {app.studentPhone}</span>
                           </td>
-                          <td className="p-3 font-medium text-slate-700">{app.courseTitle}</td>
+                          <td className="p-3 font-medium text-stone-700">{app.courseTitle}</td>
                           <td className="p-3">
                             {app.transactionId ? (
-                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[11px] font-bold">
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-mono text-[11px] font-bold">
                                 {app.paymentMethod}: {app.transactionId}
                               </span>
                             ) : (
-                              <span className="text-slate-400 italic">No TrxID submitted</span>
+                              <span className="text-stone-400 italic">No TrxID submitted</span>
                             )}
                           </td>
                           <td className="p-3">
-                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
                               app.status === "active" || app.status === "approved"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-800"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200/80"
+                                : "bg-amber-50 text-amber-800 border-amber-200/80"
                             }`}>
                               {app.status}
                             </span>
@@ -1244,7 +1417,7 @@ export default function AdminPanel({
                             {app.status !== "active" && app.status !== "approved" ? (
                               <button
                                 onClick={() => handleApproveEnrollment(app.id)}
-                                className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase tracking-wider transition cursor-pointer"
+                                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase tracking-wider transition cursor-pointer shadow-xs"
                               >
                                 {isEn ? "Approve & Unlock" : "অনুমোদন করুন"}
                               </button>
@@ -2337,6 +2510,8 @@ export default function AdminPanel({
             </div>
           </div>
         )}
+          </main>
+        </div>
       </div>
 
       {/* ========================================================

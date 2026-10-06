@@ -327,42 +327,43 @@ export default function StudentPortal({
   return (
     <div id="lodonex-student-portal" className="font-sans text-slate-900 pb-16">
       {/* Top Banner */}
-      <div className="bg-[#111111] text-white border-b-2 border-editorial-accent py-8 px-4 sm:px-6 lg:px-8 shadow-xs">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-[#0F1014] text-white border-b border-amber-500/20 py-8 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-32 bg-amber-500/5 blur-3xl pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 bg-white/10 border-2 border-white/20 p-1 flex items-center justify-center shrink-0">
+            <div className="h-16 w-16 bg-stone-900 border border-amber-500/30 p-1 flex items-center justify-center shrink-0 shadow-md">
               {currentUser.photoUrl ? (
                 <img src={currentUser.photoUrl} alt={currentUser.name} className="h-full w-full object-cover" />
               ) : (
-                <User className="h-8 w-8 text-white/80" />
+                <User className="h-8 w-8 text-amber-400/80" />
               )}
             </div>
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold uppercase tracking-wider">
-                  {isEn ? "Authorized Apprentice" : "অনুমোদিত শিক্ষার্থী"}
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="text-amber-400 font-bold uppercase tracking-wider">
+                  {isEn ? "AUTHORIZED APPRENTICE" : "অনুমোদিত শিক্ষার্থী"}
                 </span>
-                <span className="text-white/40 text-xs">•</span>
-                <span className="text-xs text-white/70 font-mono">UID: {currentUser.id}</span>
+                <span className="text-stone-600" aria-hidden="true">·</span>
+                <span className="text-stone-400 font-sans">UID: {currentUser.id}</span>
               </div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                {isEn ? `Welcome, ${currentUser.name}` : `স্বাগতম, ${currentUser.name}`}
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-50">
+                {isEn ? `Welcome back, ${currentUser.name}` : `স্বাগতম, ${currentUser.name}`}
               </h1>
-              <p className="text-xs text-white/60">
-                {currentUser.assignedBatchId ? `Enrolled in ${currentUser.assignedBatchId}` : "Lodonex Culinary Arts Cohort"}
+              <p className="text-xs text-stone-400 font-sans">
+                {isEn ? "Continue your learning journey." : "আপনার শিক্ষা যাত্রা অব্যাহত রাখুন।"}
               </p>
             </div>
           </div>
 
           {/* Real-time Indicator & Actions */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 text-xs font-mono">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 border border-stone-800 text-xs font-mono">
               <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
               <span className="text-emerald-400 font-bold uppercase text-[10px] tracking-wider">
                 {isLive ? "● LIVE" : "CONNECTING..."}
               </span>
               {lastUpdated && (
-                <span className="text-white/50 text-[10px]">
+                <span className="text-stone-400 text-[10px]">
                   {lastUpdated.toLocaleTimeString()}
                 </span>
               )}
@@ -370,16 +371,16 @@ export default function StudentPortal({
 
             <button
               onClick={() => setActiveTab("courses")}
-              className="px-3.5 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-md border border-red-500/30"
             >
               <Play className="h-3.5 w-3.5" />
               <span>{isEn ? "My Courses" : "আমার কোর্স"}</span>
             </button>
             <button
               onClick={() => setIsPaymentModalOpen(true)}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-amber-300 hover:text-white border border-amber-500/30 font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm"
             >
-              <DollarSign className="h-3.5 w-3.5" />
+              <DollarSign className="h-3.5 w-3.5 text-amber-400" />
               <span>{isEn ? "Submit Payment" : "পেমেন্ট জমা দিন"}</span>
             </button>
           </div>
@@ -388,7 +389,7 @@ export default function StudentPortal({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {/* Navigation Tabs Bar */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-editorial-border pb-px text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-stone-200 pb-2 text-xs font-semibold tracking-wider scrollbar-none">
           {[
             { id: "overview", label: isEn ? "Dashboard" : "ড্যাশবোর্ড", icon: BookOpen },
             { id: "courses", label: isEn ? "My Courses" : "আমার কোর্স", icon: GraduationCap },
@@ -408,13 +409,13 @@ export default function StudentPortal({
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap border-b-2 transition cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? "border-editorial-accent text-editorial-accent font-extrabold bg-red-50/50"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                    ? "bg-stone-900 text-amber-300 font-bold shadow-xs border border-stone-800"
+                    : "bg-white text-stone-600 hover:text-stone-900 hover:bg-stone-100 border border-stone-200/60"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-stone-400"}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -423,14 +424,14 @@ export default function StudentPortal({
 
         {/* Action Notifications */}
         {paymentSuccessMsg && (
-          <div className="my-4 p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
+          <div className="my-4 p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
             <span>{paymentSuccessMsg}</span>
           </div>
         )}
         {assignmentSuccess && (
-          <div className="my-4 p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
+          <div className="my-4 p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
             <span>{isEn ? "Assignment coursework submitted to instructor successfully!" : "অ্যাসাইনমেন্ট সফলভাবে জমা দেওয়া হয়েছে!"}</span>
           </div>
         )}
@@ -439,7 +440,7 @@ export default function StudentPortal({
         {isLoading && (
           <div className="py-12 text-center space-y-3">
             <RefreshCw className="h-6 w-6 text-editorial-accent animate-spin mx-auto" />
-            <p className="text-xs text-slate-500 font-mono">
+            <p className="text-xs text-stone-500 font-mono">
               {isEn ? "Loading real-time student records from Firebase..." : "ফায়ারবেস থেকে লাইভ রেকর্ড লোড হচ্ছে..."}
             </p>
           </div>
@@ -447,14 +448,14 @@ export default function StudentPortal({
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="my-6 p-4 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between">
+          <div className="my-6 p-4 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <span>{error}</span>
             </div>
             <button
               onClick={retry}
-              className="px-3 py-1 bg-red-700 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-red-800"
+              className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
             >
               {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
             </button>
@@ -466,52 +467,56 @@ export default function StudentPortal({
           <div className="space-y-8 mt-6">
             {/* KPI Cards: Derived Strictly from Firebase */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-stone-900"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Active Courses" : "সক্রিয় কোর্স"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-slate-900">
+                <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                   {enrolledCourses.length}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold">
+                <p className="text-[11px] text-emerald-700 font-medium pt-1 border-t border-stone-100">
                   {enrolledCourses.length > 0 ? (isEn ? "Verified Enrolled" : "অনুমোদিত") : (isEn ? "No enrollments yet" : "ভর্তি হননি")}
                 </p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-editorial-accent"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Attendance Rate" : "হাজিরার হার"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-editorial-accent">
+                <div className="font-serif text-3xl font-bold tracking-tight text-editorial-accent">
                   {attendanceMetrics.total > 0 ? `${attendanceMetrics.rate}%` : "0%"}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-stone-500 font-mono pt-1 border-t border-stone-100">
                   {attendanceMetrics.total > 0
                     ? `${attendanceMetrics.present} of ${attendanceMetrics.total} classes attended`
                     : (isEn ? "No classes logged yet" : "হাজিরা রেকর্ড নেই")}
                 </p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Pending Assignments" : "বাকি অ্যাসাইনমেন্ট"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-amber-700">
+                <div className="font-serif text-3xl font-bold tracking-tight text-amber-800">
                   {pendingAssignments.length}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-amber-700 font-medium pt-1 border-t border-stone-100">
                   {pendingAssignments.length > 0 ? (isEn ? "Action required" : "জমা দিতে হবে") : (isEn ? "All up to date" : "সব সম্পন্ন")}
                 </p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-purple-600"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Accredited Diplomas" : "অর্জিত সনদ"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-slate-800">
+                <div className="font-serif text-3xl font-bold tracking-tight text-purple-900">
                   {studentCerts.length}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold">
+                <p className="text-[11px] text-purple-700 font-medium pt-1 border-t border-stone-100">
                   {studentCerts.length > 0 ? (isEn ? "Verifiable Online" : "অনলাইনে যাচাইযোগ্য") : (isEn ? "Not issued yet" : "ইস্যু হয়নি")}
                 </p>
               </div>
@@ -553,50 +558,62 @@ export default function StudentPortal({
                   <div className="space-y-4">
                     {enrolledCourses.map((course) => {
                       const prog = calculateStudentCourseProgress(course, completedLessonIds);
+                      const nextLesson = course.lessons.find((l) => !completedLessonIds.includes(l.id)) || course.lessons[0];
                       return (
                         <div
                           key={course.id}
-                          className="bg-white border border-editorial-border p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:shadow-xs transition"
+                          className="group bg-white border border-stone-200/90 hover:border-stone-400 p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between shadow-xs hover:shadow-md transition-all duration-300"
                         >
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={course.image}
-                              alt={course.titleEn}
-                              className="h-16 w-20 object-cover border border-editorial-border shrink-0"
-                            />
-                            <div className="space-y-1">
-                              <span className="text-[10px] uppercase font-bold text-editorial-accent tracking-wider">
-                                {course.levelEn} • {course.duration}
-                              </span>
-                              <h4 className="font-serif font-bold text-base text-slate-900">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="h-20 w-24 overflow-hidden border border-stone-200 shrink-0 bg-stone-100">
+                              <img
+                                src={course.image}
+                                alt={course.titleEn}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 text-[10px] font-mono text-stone-500 uppercase tracking-wider">
+                                <span className="font-bold text-amber-700">{course.levelEn}</span>
+                                <span>·</span>
+                                <span>{course.duration}</span>
+                              </div>
+                              <h4 className="font-serif font-bold text-base text-stone-900 truncate">
                                 {isEn ? course.titleEn : course.titleBn}
                               </h4>
-                              <p className="text-xs text-slate-500">
-                                {isEn ? "Instructor:" : "প্রশিক্ষক:"} {course.tutor}
+                              <p className="text-xs text-stone-600">
+                                {isEn ? "Chef & Mentor:" : "শেফ ও প্রশিক্ষক:"}{" "}
+                                <span className="font-medium text-stone-800">{course.tutor}</span>
                               </p>
+                              {nextLesson && (
+                                <p className="text-[11px] text-stone-400 truncate font-mono">
+                                  {isEn ? "Next:" : "পরবর্তী:"} {isEn ? nextLesson.titleEn : nextLesson.titleBn}
+                                </p>
+                              )}
                             </div>
                           </div>
 
-                          <div className="w-full sm:w-48 space-y-2 text-right">
-                            <div className="flex items-center justify-between text-xs font-semibold">
-                              <span className="text-slate-500">{prog.statusText}</span>
-                              <span className="text-editorial-accent">{prog.percentage}%</span>
+                          <div className="w-full sm:w-52 space-y-2.5 shrink-0">
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <span className="text-stone-500 text-[11px]">{prog.statusText}</span>
+                              <span className="font-bold text-amber-700">{prog.percentage}%</span>
                             </div>
-                            <div className="w-full h-2 bg-slate-100 overflow-hidden">
+                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
                               <div
-                                className="h-full bg-editorial-accent transition-all duration-300"
+                                className="h-full bg-stone-900 transition-all duration-300"
                                 style={{ width: `${prog.percentage}%` }}
                               />
                             </div>
                             <button
                               onClick={() => {
                                 setViewingCourse(course);
-                                setActiveLesson(course.lessons[0] || null);
+                                setActiveLesson(nextLesson || course.lessons[0] || null);
                                 setActiveTab("courses");
                               }}
-                              className="w-full py-1.5 bg-[#111] hover:bg-black text-white text-xs font-bold uppercase tracking-wider transition cursor-pointer"
+                              className="w-full py-2 bg-stone-900 hover:bg-black text-amber-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-stone-800"
                             >
-                              {isEn ? "Access Classroom" : "ক্লাসরুমে যান"}
+                              <Play className="h-3.5 w-3.5 text-amber-400" />
+                              <span>{isEn ? "Continue Learning" : "শিক্ষা চালিয়ে যান"}</span>
                             </button>
                           </div>
                         </div>
@@ -664,36 +681,63 @@ export default function StudentPortal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {enrolledCourses.map((c) => {
                   const prog = calculateStudentCourseProgress(c, completedLessonIds);
+                  const nextLesson = c.lessons.find((l) => !completedLessonIds.includes(l.id)) || c.lessons[0];
                   return (
-                    <div key={c.id} className="bg-white border border-editorial-border p-5 space-y-4">
-                      <div className="flex gap-4 items-center">
-                        <img src={c.image} alt={c.titleEn} className="h-16 w-20 object-cover border" />
-                        <div>
-                          <span className="text-[10px] font-bold text-editorial-accent uppercase">
-                            {c.levelEn}
-                          </span>
-                          <h3 className="font-serif font-bold text-base text-slate-900">
+                    <div
+                      key={c.id}
+                      className="group bg-white border border-stone-200/90 hover:border-stone-400 p-5 space-y-4 shadow-xs hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="flex gap-4 items-start">
+                        <div className="h-20 w-24 overflow-hidden border border-stone-200 shrink-0 bg-stone-100">
+                          <img
+                            src={c.image}
+                            alt={c.titleEn}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-stone-500 uppercase tracking-wider">
+                            <span className="font-bold text-amber-700">{c.levelEn}</span>
+                            <span>·</span>
+                            <span>{c.duration}</span>
+                          </div>
+                          <h3 className="font-serif font-bold text-base text-stone-900 truncate">
                             {isEn ? c.titleEn : c.titleBn}
                           </h3>
-                          <p className="text-xs text-slate-500">Tutor: {c.tutor}</p>
+                          <p className="text-xs text-stone-600">
+                            {isEn ? "Chef Tutor:" : "শেফ প্রশিক্ষক:"}{" "}
+                            <span className="font-medium text-stone-800">{c.tutor}</span>
+                          </p>
+                          {nextLesson && (
+                            <p className="text-[11px] text-stone-400 truncate font-mono">
+                              {isEn ? "Next:" : "পরবর্তী:"} {isEn ? nextLesson.titleEn : nextLesson.titleBn}
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs font-bold">
-                          <span>Progress</span>
-                          <span className="text-editorial-accent">{prog.percentage}%</span>
+                      <div className="space-y-1.5 pt-2 border-t border-stone-100">
+                        <div className="flex justify-between text-xs font-mono">
+                          <span className="text-stone-500 text-[11px]">{prog.statusText}</span>
+                          <span className="font-bold text-amber-700">{prog.percentage}%</span>
                         </div>
-                        <div className="w-full h-2 bg-slate-100">
-                          <div className="h-full bg-editorial-accent" style={{ width: `${prog.percentage}%` }} />
+                        <div className="w-full h-2 bg-stone-100 overflow-hidden">
+                          <div
+                            className="h-full bg-stone-900 transition-all duration-300"
+                            style={{ width: `${prog.percentage}%` }}
+                          />
                         </div>
                       </div>
 
                       <button
-                        onClick={() => onSelectCourse(c)}
-                        className="w-full py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider"
+                        onClick={() => {
+                          setViewingCourse(c);
+                          setActiveLesson(nextLesson || c.lessons[0] || null);
+                        }}
+                        className="w-full py-2.5 bg-stone-900 hover:bg-black text-amber-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-stone-800"
                       >
-                        {isEn ? "Open Course Modules" : "কোর্স মডিউলে যান"}
+                        <Play className="h-3.5 w-3.5 text-amber-400" />
+                        <span>{isEn ? "Continue Learning" : "শিক্ষা চালিয়ে যান"}</span>
                       </button>
                     </div>
                   );

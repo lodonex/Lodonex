@@ -71,50 +71,62 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
   const isEn = lang === "en";
 
   return (
-    <div className="relative overflow-hidden border border-editorial-border bg-[#F7F5F0] min-h-[380px] sm:min-h-[440px] flex items-center">
-      {/* Background Decorative Accents */}
-      <div className="absolute top-0 right-0 h-40 w-40 bg-radial from-editorial-accent/10 to-transparent pointer-events-none"></div>
+    <div className="relative overflow-hidden border border-stone-800 bg-[#121212] text-stone-100 min-h-[420px] sm:min-h-[460px] flex items-center shadow-xl">
+      {/* Background Subtle Gradient & Champagne Accents */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-500/10 via-red-950/20 to-transparent pointer-events-none blur-3xl"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-stone-900 to-transparent pointer-events-none"></div>
       
       {/* Slide Container */}
-      <div className="w-full h-full px-4 sm:px-10 py-8 relative z-10">
+      <div className="w-full h-full px-6 sm:px-12 py-10 relative z-10">
         <AnimatePresence mode="wait">
           {slides.map((slide, idx) => {
             if (idx !== currentIndex) return null;
             return (
               <motion.div
                 key={slide.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
-                className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center"
               >
                 {/* Left Side: Content */}
                 <div className="md:col-span-7 text-left space-y-4 sm:space-y-6">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-editorial-accent/10 text-editorial-accent border border-editorial-accent/20 text-xs font-bold uppercase tracking-widest rounded-none">
-                    <Sparkles className="h-3 w-3 animate-pulse" />
-                    {isEn ? slide.badgeEn : slide.badgeBn}
-                  </span>
+                  {/* Clean unboxed metadata with dot separators (Zero-Pill Discipline) */}
+                  <div className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase text-amber-400">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-amber-400" />
+                      {isEn ? slide.badgeEn : slide.badgeBn}
+                    </span>
+                    <span className="text-stone-600" aria-hidden="true">·</span>
+                    <span className="text-stone-400 font-sans font-medium lowercase">
+                      {isEn ? "international certification" : "আন্তর্জাতিক সার্টিফিকেশন"}
+                    </span>
+                  </div>
                   
-                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-light leading-[1.1] text-editorial-dark tracking-tight">
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold leading-[1.15] text-stone-50 tracking-tight">
                     {isEn ? slide.titleEn : slide.titleBn}
                   </h1>
                   
-                  <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-xl font-sans">
+                  <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-xl font-sans">
                     {isEn ? slide.subtitleEn : slide.subtitleBn}
                   </p>
                   
-                  <div className="pt-2 flex items-center gap-4">
+                  <div className="pt-2 flex flex-wrap items-center gap-4">
                     <button
                       onClick={onExplore}
-                      className="bg-editorial-dark text-white px-5 sm:px-6 py-3 rounded-none text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors cursor-pointer"
+                      className="bg-editorial-accent hover:bg-red-800 text-white px-6 sm:px-7 py-3.5 text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg border border-red-500/30 cursor-pointer flex items-center gap-2"
                     >
-                      {isEn ? slide.ctaEn : slide.ctaBn}
+                      <BookOpen className="h-3.5 w-3.5" />
+                      <span>{isEn ? slide.ctaEn : slide.ctaBn}</span>
                     </button>
                     {slide.id === "chef-tawhid" && (
-                      <span className="text-[10px] sm:text-xs font-mono text-slate-400 uppercase tracking-widest">
-                        ⭐ 4.9 {isEn ? "Instructor Rating" : "প্রশিক্ষক রেটিং"}
-                      </span>
+                      <div className="flex items-center gap-1.5 text-xs font-mono text-stone-400 tracking-wider">
+                        <span className="text-amber-400 font-bold flex items-center gap-1">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 4.9
+                        </span>
+                        <span>{isEn ? "Instructor Rating" : "প্রশিক্ষক রেটিং"}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -122,15 +134,23 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
                 {/* Right Side: Chef Portrait or Course Showcase */}
                 <div className="md:col-span-5 flex justify-center md:justify-end">
                   <div className="relative group max-w-[280px] sm:max-w-[320px]">
-                    {/* Editorial double borders */}
-                    <div className="absolute -inset-2 border border-dashed border-editorial-accent/30 pointer-events-none translate-x-1 translate-y-1"></div>
-                    <div className="border border-editorial-border p-1 bg-white">
+                    {/* Double Luxury Accent Border */}
+                    <div className="absolute -inset-2 border border-amber-500/30 pointer-events-none translate-x-1.5 translate-y-1.5"></div>
+                    <div className="border border-stone-700 bg-stone-900 p-1.5 shadow-2xl relative">
                       <img
                         src={slide.image}
                         alt="Culinary Instructor"
-                        className="w-full aspect-square object-cover grayscale-20 group-hover:grayscale-0 transition-all duration-500 shadow-md"
+                        className="w-full aspect-square object-cover grayscale-10 group-hover:grayscale-0 transition-all duration-500"
                         referrerPolicy="no-referrer"
                       />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 text-left">
+                        <span className="text-[10px] font-mono text-amber-300 font-semibold tracking-wider uppercase block">
+                          {isEn ? "Lodonex Faculty" : "লোডোনেক্স ফ্যাকাল্টি"}
+                        </span>
+                        <span className="text-xs font-bold text-white block">
+                          {slide.id === "chef-tawhid" ? "Executive Chef Tawhid Shekh" : slide.id === "baking-secrets" ? "Pastry Chef Robert Gomes" : "Sous Chef Tanvir Ahmed"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -143,14 +163,14 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
       {/* Navigation Arrows */}
       <button
         onClick={handlePrev}
-        className="absolute left-2 sm:left-4 p-1.5 sm:p-2 bg-white/90 hover:bg-editorial-dark hover:text-white border border-editorial-border text-editorial-dark transition rounded-none z-20 cursor-pointer"
+        className="absolute left-3 sm:left-5 p-2 bg-stone-900/80 hover:bg-stone-800 text-stone-200 hover:text-white border border-stone-700 transition z-20 cursor-pointer shadow-md"
         aria-label="Previous Slide"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
       <button
         onClick={handleNext}
-        className="absolute right-2 sm:right-4 p-1.5 sm:p-2 bg-white/90 hover:bg-editorial-dark hover:text-white border border-editorial-border text-editorial-dark transition rounded-none z-20 cursor-pointer"
+        className="absolute right-3 sm:right-5 p-2 bg-stone-900/80 hover:bg-stone-800 text-stone-200 hover:text-white border border-stone-700 transition z-20 cursor-pointer shadow-md"
         aria-label="Next Slide"
       >
         <ChevronRight className="h-4 w-4" />
@@ -162,10 +182,10 @@ export default function HomeSlider({ lang, onExplore }: HomeSliderProps) {
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`w-2 h-2 transition-all rounded-none ${
+            className={`h-1.5 transition-all duration-300 ${
               idx === currentIndex
-                ? "bg-editorial-dark w-6"
-                : "bg-slate-300 hover:bg-slate-400"
+                ? "bg-amber-400 w-8"
+                : "bg-stone-600 hover:bg-stone-500 w-2.5"
             }`}
             aria-label={`Go to slide ${idx + 1}`}
           />

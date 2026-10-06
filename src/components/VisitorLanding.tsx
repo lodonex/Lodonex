@@ -85,13 +85,14 @@ export default function VisitorLanding({
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-editorial-accent/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-8 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 bg-editorial-accent text-white font-mono text-[9px] uppercase tracking-widest font-extrabold flex items-center gap-1">
-                <Briefcase className="h-3 w-3" />
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono tracking-wider">
+              <span className="text-amber-400 font-bold uppercase flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-amber-400" />
                 {isEn ? "Dubai & European Job Relocation" : "দুবাই ও ইউরোপে শেফ নিয়োগ ও আবাসন"}
               </span>
-              <span className="px-2.5 py-0.5 bg-stone-800 text-stone-300 font-mono text-[9px] uppercase tracking-wider font-bold">
-                {isEn ? "100% Housing Included" : "১০০% ফার্নিশড আবাসন নিশ্চিত"}
+              <span className="text-stone-600" aria-hidden="true">·</span>
+              <span className="text-stone-300 font-sans">
+                {isEn ? "100% Furnished Housing Guaranteed" : "১০০% ফার্নিশড আবাসন নিশ্চিত"}
               </span>
             </div>
 

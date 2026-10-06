@@ -9,7 +9,7 @@
         "name": { "type": "string" },
         "email": { "type": "string" },
         "phone": { "type": "string" },
-        "role": { "type": "string", "enum": ["super_admin", "superadmin", "admin", "trainer", "student"] },
+        "role": { "type": "string", "enum": ["super_admin", "superadmin", "admin", "trainer", "staff", "student"] },
         "status": { "type": "string", "enum": ["pending", "active", "approved", "suspended", "blocked"] },
         "assignedBatchId": { "type": "string" },
         "city": { "type": "string" },

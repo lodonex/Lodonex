@@ -1,5 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeFirestore, getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const env = (import.meta as any).env || {};
@@ -13,11 +13,27 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID || "1:441735947007:web:406bc280026a122efde2ca"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize Firestore with the specific database ID
+// Use experimentalForceLongPolling to ensure reliable connectivity in proxied/iframe environments
+// and prevent the "Could not reach Cloud Firestore backend. Backend didn't respond within 10 seconds" error.
 const databaseId = env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || "ai-studio-professionalcook-b3d74d44-6ee1-4eda-acd8-42a9ef2fa8dd";
-export const db = getFirestore(app, databaseId);
+
+let dbInstance;
+try {
+  dbInstance = initializeFirestore(
+    app,
+    {
+      experimentalForceLongPolling: true,
+    },
+    databaseId
+  );
+} catch {
+  dbInstance = getFirestore(app, databaseId);
+}
+
+export const db = dbInstance;
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 

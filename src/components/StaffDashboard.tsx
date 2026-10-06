@@ -102,36 +102,37 @@ export default function StaffDashboard({
   return (
     <div id="lodonex-staff-dashboard" className="font-sans text-slate-900 pb-16">
       {/* Top Banner */}
-      <div className="bg-[#111111] text-white border-b-2 border-editorial-accent py-6 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-amber-500/20 border border-amber-400 text-amber-400 flex items-center justify-center font-bold">
-              <Users className="h-6 w-6" />
+      <div className="bg-[#0F1014] text-white border-b border-amber-500/20 py-7 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-32 bg-amber-500/5 blur-3xl pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="h-13 w-13 bg-stone-900 border border-amber-400/40 text-amber-400 flex items-center justify-center shadow-inner shrink-0">
+              <Users className="h-6 w-6 text-amber-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  STAFF • ADMISSIONS & OPERATIONS
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="text-amber-400 tracking-widest uppercase font-bold">
+                  STAFF · ADMISSIONS & OPERATIONS
                 </span>
-                <span className="text-white/40 text-xs">•</span>
-                <span className="text-xs text-white/90 font-mono font-bold">
+                <span className="text-stone-600" aria-hidden="true">·</span>
+                <span className="text-stone-400 font-sans">
                   {currentUser.name}
                 </span>
               </div>
-              <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-white">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-50 mt-0.5">
                 {isEn ? "Lodonex Staff Operations Console" : "লোডোনেক্স স্টাফ অপারেশনাল কনসোল"}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 border border-white/10 text-xs font-mono">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 border border-stone-800 text-xs font-mono">
               <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
               <span className="text-emerald-400 font-bold uppercase text-[10px] tracking-wider">
                 {isLive ? "● LIVE" : "CONNECTING..."}
               </span>
               {lastUpdated && (
-                <span className="text-white/50 text-[10px]">
+                <span className="text-stone-400 text-[10px]">
                   {lastUpdated.toLocaleTimeString()}
                 </span>
               )}
@@ -142,7 +143,7 @@ export default function StaffDashboard({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-editorial-border pb-px text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-stone-200 pb-2 text-xs font-semibold tracking-wider scrollbar-none">
           {[
             { id: "tasks", label: isEn ? "Pending Task Queue" : "অপেক্ষমাণ কাজের তালিকা", icon: Clock },
             { id: "applications", label: isEn ? "Admissions" : "ভর্তি আবেদন", icon: Users },
@@ -155,13 +156,13 @@ export default function StaffDashboard({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 whitespace-nowrap border-b-2 transition cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2 whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? "border-amber-600 text-amber-700 font-extrabold bg-amber-50/50"
-                    : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                    ? "bg-stone-900 text-amber-300 font-bold shadow-xs border border-stone-800"
+                    : "bg-white text-stone-600 hover:text-stone-900 hover:bg-stone-100 border border-stone-200/60"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-amber-400" : "text-stone-400"}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -169,8 +170,8 @@ export default function StaffDashboard({
         </div>
 
         {actionSuccess && (
-          <div className="my-4 p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
+          <div className="my-4 p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
             <span>{actionSuccess}</span>
           </div>
         )}
@@ -179,7 +180,7 @@ export default function StaffDashboard({
         {isLoading && (
           <div className="py-12 text-center space-y-3">
             <RefreshCw className="h-6 w-6 text-amber-600 animate-spin mx-auto" />
-            <p className="text-xs text-slate-500 font-mono">
+            <p className="text-xs text-stone-500 font-mono">
               {isEn ? "Loading real-time operational records..." : "ফায়ারবেস থেকে লাইভ রেকর্ড লোড হচ্ছে..."}
             </p>
           </div>
@@ -187,14 +188,14 @@ export default function StaffDashboard({
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="my-6 p-4 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between">
+          <div className="my-6 p-4 bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <span>{error}</span>
             </div>
             <button
               onClick={retry}
-              className="px-3 py-1 bg-red-700 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-red-800"
+              className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
             >
               {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
             </button>
@@ -205,34 +206,37 @@ export default function StaffDashboard({
         {!isLoading && activeTab === "tasks" && (
           <div className="space-y-6 mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Applications Requiring Review" : "রিভিউ বাকি আবেদন"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-amber-700">
+                <div className="font-serif text-3xl font-bold tracking-tight text-amber-800">
                   {pendingApplications.length}
                 </div>
-                <p className="text-[10px] text-amber-600">{isEn ? "New Admissions" : "নতুন আবেদনকারী"}</p>
+                <p className="text-[11px] text-amber-700 font-medium pt-1 border-t border-stone-100">{isEn ? "New Admissions" : "নতুন আবেদনকারী"}</p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-emerald-600"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Payments to Verify" : "যাচাইযোগ্য পেমেন্ট"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-blue-700">
+                <div className="font-serif text-3xl font-bold tracking-tight text-emerald-800">
                   {pendingPayments.length}
                 </div>
-                <p className="text-[10px] text-blue-600">{isEn ? "TrxIDs to Match" : "ট্রানজেকশন আইডি"}</p>
+                <p className="text-[11px] text-emerald-700 font-medium pt-1 border-t border-stone-100">{isEn ? "TrxIDs to Match" : "ট্রানজেকশন আইডি"}</p>
               </div>
 
-              <div className="bg-white border border-editorial-border p-4 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white border border-stone-200/90 hover:border-stone-300 transition-all duration-200 p-4 relative overflow-hidden shadow-xs hover:shadow-md space-y-2">
+                <div className="absolute top-0 inset-x-0 h-1 bg-stone-900"></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
                   {isEn ? "Active Training Cohorts" : "চলমান কোহর্ট"}
                 </span>
-                <div className="font-serif text-2xl font-extrabold text-slate-900">
+                <div className="font-serif text-3xl font-bold tracking-tight text-stone-900">
                   {batches.filter((b) => b.status === "active").length}
                 </div>
-                <p className="text-[10px] text-slate-500">{isEn ? "Batches Running" : "সক্রিয় ব্যাচ"}</p>
+                <p className="text-[11px] text-stone-500 font-mono pt-1 border-t border-stone-100">{batches.length} {isEn ? "Total Batches" : "মোট ব্যাচ"}</p>
               </div>
             </div>
 
