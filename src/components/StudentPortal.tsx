@@ -118,6 +118,7 @@ export default function StudentPortal({
 
   // Active navigation tab
   const getValidTab = (tabName?: string): any => {
+    if (!tabName || tabName === "dashboard") return "overview";
     const valid = [
       "overview",
       "courses",
@@ -133,7 +134,7 @@ export default function StudentPortal({
       "profile",
       "support"
     ];
-    if (tabName && valid.includes(tabName)) return tabName;
+    if (valid.includes(tabName)) return tabName;
     return "overview";
   };
 

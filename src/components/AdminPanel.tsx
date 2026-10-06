@@ -129,8 +129,34 @@ export default function AdminPanel({
     userId: currentUser.id
   });
 
+  // Helper to determine initial tab from URL
+  const getInitialAdminTab = () => {
+    const path = window.location.pathname || "";
+    const sub = path.replace(/^\/admin\/?/, "").trim();
+    const validTabs = [
+      "overview",
+      "students",
+      "enrollments",
+      "courses",
+      "batches",
+      "schedule",
+      "attendance",
+      "assignments",
+      "results",
+      "certificates",
+      "payments",
+      "staff",
+      "audit_logs",
+      "email_logs",
+      "settings"
+    ];
+    if (sub === "dashboard" || sub === "") return "overview";
+    if (validTabs.includes(sub)) return sub as any;
+    return "overview";
+  };
+
   // Tab State
-  const [adminTab, setAdminTab] = useState<
+  const [adminTab, setAdminTabState] = useState<
     | "overview"
     | "students"
     | "enrollments"
@@ -146,7 +172,23 @@ export default function AdminPanel({
     | "audit_logs"
     | "email_logs"
     | "settings"
-  >("overview");
+  >(getInitialAdminTab);
+
+  const setAdminTab = (tab: any) => {
+    setAdminTabState(tab);
+    const targetUrl = tab === "overview" ? "/admin/dashboard" : `/admin/${tab}`;
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({}, "", targetUrl);
+    }
+  };
+
+  React.useEffect(() => {
+    const handlePop = () => {
+      setAdminTabState(getInitialAdminTab());
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Stores (strictly zero mock data, updated continuously via useRealtimeDashboard)

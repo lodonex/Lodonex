@@ -70,7 +70,20 @@ export default function App() {
   // URL and Navigation state
   const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname || "/");
   const [redirectNotice, setRedirectNotice] = useState<string>("");
-  const [currentTab, setCurrentTab] = useState<string>("dashboard");
+  const [currentTab, setCurrentTab] = useState<string>(() => {
+    const p = window.location.pathname || "/";
+    if (p === "/recipes") return "recipes";
+    if (p === "/courses") return "courses";
+    if (p === "/verify-cert") return "verify-cert";
+    if (p === "/chefs" || p === "/our-team") return "chefs";
+    if (p === "/jobs" || p === "/jobs-accommodation" || p === "/job-and-accommodation") return "jobs";
+    if (p === "/gallery") return "gallery";
+    if (p === "/about") return "about";
+    if (p === "/refund") return "refund";
+    if (p === "/privacy") return "privacy";
+    if (p === "/terms" || p === "/policies") return "terms";
+    return "dashboard";
+  });
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   // Shopping Cart state
@@ -154,6 +167,21 @@ export default function App() {
     return null;
   });
 
+  // Helper to map pathname to currentTab
+  const getTabFromPath = (path: string): string => {
+    if (path === "/recipes") return "recipes";
+    if (path === "/courses") return "courses";
+    if (path === "/verify-cert") return "verify-cert";
+    if (path === "/chefs" || path === "/our-team") return "chefs";
+    if (path === "/jobs" || path === "/jobs-accommodation" || path === "/job-and-accommodation") return "jobs";
+    if (path === "/gallery") return "gallery";
+    if (path === "/about") return "about";
+    if (path === "/refund") return "refund";
+    if (path === "/privacy") return "privacy";
+    if (path === "/terms" || path === "/policies") return "terms";
+    return "dashboard";
+  };
+
   // Navigation router function
   const navigate = (path: string, notice?: string) => {
     if (notice) {
@@ -163,13 +191,16 @@ export default function App() {
     }
     window.history.pushState({}, "", path);
     setCurrentPath(path);
+    setCurrentTab(getTabFromPath(path));
     setSelectedCourse(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname || "/");
+      const p = window.location.pathname || "/";
+      setCurrentPath(p);
+      setCurrentTab(getTabFromPath(p));
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -433,7 +464,9 @@ export default function App() {
     const userRole = effectiveUser.role || "";
     if (userRole === "trainer") {
       navigate("/trainer/dashboard");
-    } else if (["super_admin", "superadmin", "admin", "staff"].includes(userRole)) {
+    } else if (userRole === "staff") {
+      navigate("/staff/dashboard");
+    } else if (["super_admin", "superadmin", "admin"].includes(userRole)) {
       navigate("/admin/dashboard");
     } else {
       navigate("/student/dashboard");
@@ -654,7 +687,7 @@ export default function App() {
             }}
             onNavigate={navigate}
           />
-        ) : currentPath === "/portal/login" ? (
+        ) : (currentPath === "/portal/login" || currentPath === "/student/login") ? (
           <PortalLoginPage
             lang={lang}
             onLoginSuccess={(user) => handleAuthSuccess(user, false)}
@@ -663,9 +696,9 @@ export default function App() {
             existingUsers={users}
           />
         ) : /* ========================================================
-            DEDICATED ROUTE 2: /portal/register & /portal/signup (STUDENT ONLY)
+            DEDICATED ROUTE 2: /portal/register & /portal/signup & /student/register (STUDENT ONLY)
            ======================================================== */
-        (currentPath === "/portal/register" || currentPath === "/portal/signup") ? (
+        (currentPath === "/portal/register" || currentPath === "/portal/signup" || currentPath === "/student/register" || currentPath === "/student/signup") ? (
           <StudentRegisterPage
             lang={lang}
             onRegisterSuccess={(user) => handleAuthSuccess(user, true)}
@@ -843,20 +876,59 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <AdminPanel
+            <TrainerDashboard
               lang={lang}
               currentUser={currentUser}
-              courses={INITIAL_COURSES}
-              initialEnrollments={enrollmentsList}
-              onApproveEnrollmentGlobal={handleApproveEnrollment}
+              onNavigate={navigate}
               onSelectCourse={(course) => {
                 setSelectedCourse(course);
                 navigate(`/courses/${course.id}`);
               }}
-              onUpdateUserAccount={(u) =>
-                setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+            />
+          )
+        ) : /* ========================================================
+            DEDICATED ROUTE 6.5: /staff/* (STAFF ADMISSIONS & OPS RBAC)
+           ======================================================== */
+        currentPath.startsWith("/staff") ? (
+          !currentUser ? (
+            <AdminLoginPage
+              lang={lang}
+              onLoginSuccess={(user) => handleAuthSuccess(user, false)}
+              onNavigate={navigate}
+              existingUsers={users}
+              redirectMessage={
+                lang === "en"
+                  ? "Please sign in with your staff credentials to access operations and admissions."
+                  : "অপারেশন ও ভর্তির কাজ পরিচালনা করার জন্য স্টাফ আইডি দিয়ে সাইন ইন করুন।"
               }
-              initialUsers={users}
+            />
+          ) : currentUser.role === "student" ? (
+            <div className="max-w-xl mx-auto my-12 p-8 bg-red-50 border-2 border-red-300 text-center space-y-4 shadow-sm">
+              <div className="h-14 w-14 bg-red-100 text-red-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold font-mono">
+                403
+              </div>
+              <h2 className="font-serif font-extrabold text-2xl text-red-900">
+                {lang === "en" ? "403 Forbidden: Access Denied" : "৪০৩ নিষিদ্ধ: অ্যাক্সেস অস্বীকৃত"}
+              </h2>
+              <p className="text-xs text-red-700 leading-relaxed">
+                {lang === "en"
+                  ? "Student apprentice accounts cannot access staff operations consoles."
+                  : "শিক্ষার্থী অ্যাকাউন্ট দিয়ে স্টাফ কনসোলে প্রবেশ নিষিদ্ধ।"}
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => navigate("/student/dashboard")}
+                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                >
+                  {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <StaffDashboard
+              lang={lang}
+              currentUser={currentUser}
+              onNavigate={navigate}
             />
           )
         ) : /* ========================================================
