@@ -29,7 +29,7 @@ import AboutUs from "./AboutUs";
 import StudentTestimonials from "./StudentTestimonials";
 import { formatPrice } from "../utils/price";
 import { MOCK_BLOGS } from "../data/mockData";
-import ebookMockupImage from "../assets/images/lodonex_culinary_ebook_1791353198956.jpg";
+import ebookMockupImage from "../assets/images/regenerated_image_1791355418210.png";
 
 interface VisitorLandingProps {
   lang: Language;

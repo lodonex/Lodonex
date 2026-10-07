@@ -34,7 +34,7 @@ import {
   KITCHEN_CONVERSIONS,
   EBookCategoryInfo
 } from "../data/ebookData";
-import ebookMockupImage from "../assets/images/lodonex_culinary_ebook_1791353198956.jpg";
+import ebookMockupImage from "../assets/images/regenerated_image_1791355418210.png";
 
 interface CulinaryEBookPageProps {
   lang: Language;

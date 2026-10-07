@@ -36,7 +36,7 @@ import {
   RefreshCw,
   BookMarked
 } from "lucide-react";
-import ebookMockupImage from "../assets/images/lodonex_culinary_ebook_1791353198956.jpg";
+import ebookMockupImage from "../assets/images/regenerated_image_1791355418210.png";
 import { EBOOK_METADATA, EBOOK_CATEGORIES, EBOOK_RECIPES } from "../data/ebookData";
 import {
   Language,
