@@ -92,6 +92,7 @@ export default function Header({
           }
         ]),
     { id: "courses", label: t.ourCourses },
+    { id: "culinary-ebook", label: lang === "en" ? "Culinary E-Book" : "রন্ধন ই-বুক", badge: "$199" },
     { id: "verify-cert", label: lang === "en" ? "Verify Certificate" : "সার্টিফিকেট যাচাই", badge: "VERIFY" },
     { id: "recipes", label: t.myRecipes },
     { id: "chefs", label: lang === "en" ? "Our Team" : "আমাদের টিম" },
@@ -167,6 +168,8 @@ export default function Header({
                   onClick={() => {
                     if (item.id === "courses" && onNavigate) {
                       onNavigate("/courses");
+                    } else if (item.id === "culinary-ebook" && onNavigate) {
+                      onNavigate("/culinary-ebook");
                     } else if (item.id === "verify-cert" && onNavigate) {
                       onNavigate("/verify-cert");
                     } else if (item.id === "dashboard" && onNavigate) {
@@ -403,6 +406,8 @@ export default function Header({
                 onClick={() => {
                   if (item.id === "courses" && onNavigate) {
                     onNavigate("/courses");
+                  } else if (item.id === "culinary-ebook" && onNavigate) {
+                    onNavigate("/culinary-ebook");
                   } else if (item.id === "verify-cert" && onNavigate) {
                     onNavigate("/verify-cert");
                   } else if (item.id === "dashboard" && onNavigate) {

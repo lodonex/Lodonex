@@ -29,6 +29,7 @@ import AboutUs from "./AboutUs";
 import StudentTestimonials from "./StudentTestimonials";
 import { formatPrice } from "../utils/price";
 import { MOCK_BLOGS } from "../data/mockData";
+import ebookMockupImage from "../assets/images/lodonex_culinary_ebook_1791353198956.jpg";
 
 interface VisitorLandingProps {
   lang: Language;
@@ -337,6 +338,155 @@ export default function VisitorLanding({
           </div>
         </div>
       </div>
+
+      {/* ========================================================
+          PREMIUM PRODUCT SECTION: LODONEX CULINARY E-BOOK FOR STUDENTS
+          ======================================================== */}
+      <section
+        id="culinary-ebook-showcase"
+        className="relative overflow-hidden bg-gradient-to-br from-[#0B251B] via-[#081E15] to-[#04120D] text-white border-2 border-amber-500/30 rounded-xl p-6 sm:p-10 shadow-2xl transition duration-500 hover:border-amber-400/50"
+      >
+        {/* Luxury background ambient aura */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* PRODUCT IMAGE SIDE (Left on desktop) */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="relative group max-w-sm w-full">
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-400/40 via-emerald-400/20 to-amber-400/40 rounded-xl blur-lg opacity-70 group-hover:opacity-100 transition duration-500"></div>
+              
+              <div className="relative bg-[#071912] border-2 border-amber-400/50 rounded-lg p-2.5 shadow-2xl overflow-hidden cursor-pointer"
+                   onClick={() => {
+                     onSelectTab("culinary-ebook");
+                     window.scrollTo({ top: 0, behavior: "smooth" });
+                   }}>
+                <img
+                  src={ebookMockupImage}
+                  alt="LODONEX CULINARY E-BOOK FOR STUDENTS"
+                  className="w-full h-auto object-cover rounded-sm transform transition duration-500 group-hover:scale-102"
+                  referrerPolicy="no-referrer"
+                />
+                
+                <div className="absolute top-4 right-4 bg-stone-950/90 backdrop-blur-md border border-amber-400/60 text-amber-300 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest rounded-xs shadow-md">
+                  OFFICIAL EDITION
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PRODUCT INFORMATION SIDE (Right on desktop) */}
+          <div className="lg:col-span-7 space-y-5 text-left">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-amber-400/15 border border-amber-400/40 text-amber-300 text-[11px] font-mono font-extrabold uppercase tracking-widest rounded-full flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-amber-400" />
+                <span>OFFICIAL DIGITAL CURRICULUM</span>
+              </span>
+              <span className="text-stone-400 text-xs font-mono">•</span>
+              <span className="text-emerald-400 text-xs font-mono font-bold tracking-wide">
+                2026 Student Masterclass
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="font-serif font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
+                LODONEX CULINARY E-BOOK <br />
+                <span className="text-amber-300 italic font-serif font-medium">
+                  FOR STUDENTS
+                </span>
+              </h2>
+              <p className="text-xs sm:text-sm font-mono text-stone-300 tracking-wider uppercase">
+                Recipes • Cuisines • Practical Culinary Skills
+              </p>
+            </div>
+
+            <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-xl font-sans">
+              Master essential culinary knowledge with the Lodonex Culinary E-Book — a practical digital resource designed for aspiring and professional culinary students.
+            </p>
+
+            {/* Product Highlights Badges */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
+                <span className="font-serif font-black text-amber-400 text-base sm:text-lg block">
+                  131+
+                </span>
+                <span className="text-[10px] font-mono text-stone-300 block uppercase">
+                  Recipes
+                </span>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
+                <span className="font-serif font-black text-amber-400 text-base sm:text-lg block">
+                  22
+                </span>
+                <span className="text-[10px] font-mono text-stone-300 block uppercase">
+                  Categories
+                </span>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
+                <span className="font-serif font-black text-emerald-400 text-base sm:text-lg block">
+                  PDF
+                </span>
+                <span className="text-[10px] font-mono text-stone-300 block uppercase">
+                  Digital E-Book
+                </span>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
+                <span className="font-serif font-black text-amber-300 text-base sm:text-lg block">
+                  $199
+                </span>
+                <span className="text-[10px] font-mono text-stone-300 block uppercase">
+                  USD Price
+                </span>
+              </div>
+            </div>
+
+            {/* Price & Primary CTA Strip */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              <button
+                id="landing-buy-ebook-btn"
+                onClick={() => {
+                  onSelectTab("culinary-ebook");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="w-full sm:w-auto py-3.5 px-8 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>BUY NOW — $199</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+
+              <button
+                onClick={() => {
+                  onSelectTab("culinary-ebook");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="w-full sm:w-auto py-3.5 px-6 bg-white/10 hover:bg-white/20 border border-stone-600 text-white font-mono text-xs font-bold uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-stone-300" />
+                <span>EXPLORE SYLLABUS & PREVIEW</span>
+              </button>
+            </div>
+
+            {/* Secondary trust information */}
+            <div className="pt-2 border-t border-stone-800/80 flex flex-wrap items-center gap-4 text-[11px] font-mono text-stone-400">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Secure Payment</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-amber-400" />
+                <span>Instant Access After Payment Verification</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Digital PDF Download</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Featured Masterclass Tracks */}
       <div className="space-y-6">

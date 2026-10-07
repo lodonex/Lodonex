@@ -471,4 +471,52 @@ export interface AuditLogEntry {
   timestamp: string;
 }
 
+/* =========================================================
+   LODONEX CULINARY E-BOOK DIGITAL PRODUCT TYPES
+   ========================================================= */
+
+export type EBookPaymentStatus = "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
+export type EBookAccessStatus = "ACTIVE" | "PENDING" | "REVOKED";
+
+export interface EBookPurchaseRecord {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  userPhone?: string;
+  productId: "lodonex-culinary-ebook";
+  productName: string;
+  amount: number; // 199
+  currency: "USD";
+  paymentProvider: "bkash" | "nagad" | "rocket" | "bank" | "card" | "stripe" | "sslcommerz";
+  paymentTransactionId: string;
+  paymentStatus: EBookPaymentStatus;
+  accessStatus: EBookAccessStatus;
+  purchasedAt: string;
+  updatedAt: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  notes?: string;
+}
+
+export interface EBookRecipeIngredient {
+  name: string;
+  quantity: string;
+}
+
+export interface EBookRecipe {
+  id: string;
+  title: string;
+  cuisine: string;
+  category: string;
+  pageNumber?: number;
+  components?: {
+    componentName?: string;
+    ingredients: EBookRecipeIngredient[];
+  }[];
+  procedure: string[];
+  notes?: string[];
+}
+
+
 

@@ -1845,6 +1845,52 @@ app.get("/api/payments/transactions", (_req, res) => {
 });
 
 // ==========================================
+// 8.1. CULINARY E-BOOK DIGITAL ORDERS APIS
+// ==========================================
+
+const ebookOrdersStore: any[] = [];
+
+// POST submit new E-Book purchase order
+app.post("/api/ebook/purchase", (req, res) => {
+  const order = req.body;
+  if (!order || !order.userEmail) {
+    return res.status(400).json({ success: false, error: "Buyer email is required." });
+  }
+
+  const existingIndex = ebookOrdersStore.findIndex((o) => o.id === order.id);
+  if (existingIndex >= 0) {
+    ebookOrdersStore[existingIndex] = { ...ebookOrdersStore[existingIndex], ...order };
+  } else {
+    ebookOrdersStore.unshift(order);
+  }
+
+  res.json({
+    success: true,
+    message: "Culinary E-Book order registered successfully.",
+    order,
+  });
+});
+
+// GET query E-Book orders (Admin or public lookup with email/key)
+app.get("/api/ebook/orders", (req, res) => {
+  const { email, key } = req.query;
+  if (email || key) {
+    const matched = ebookOrdersStore.filter(
+      (o) =>
+        (email && o.userEmail?.toLowerCase() === String(email).toLowerCase()) ||
+        (key && (o.id === key || o.paymentTransactionId === key))
+    );
+    return res.json({ success: true, count: matched.length, orders: matched });
+  }
+
+  res.json({
+    success: true,
+    count: ebookOrdersStore.length,
+    orders: ebookOrdersStore,
+  });
+});
+
+// ==========================================
 // 8. TRANSACTIONAL EMAIL APIS (LODONEX GMAIL)
 // ==========================================
 

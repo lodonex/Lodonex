@@ -33,8 +33,11 @@ import {
   CreditCard,
   MapPin,
   X,
-  RefreshCw
+  RefreshCw,
+  BookMarked
 } from "lucide-react";
+import ebookMockupImage from "../assets/images/lodonex_culinary_ebook_1791353198956.jpg";
+import { EBOOK_METADATA, EBOOK_CATEGORIES, EBOOK_RECIPES } from "../data/ebookData";
 import {
   Language,
   Course,
@@ -130,6 +133,7 @@ export default function StudentPortal({
       "results",
       "payments",
       "certificates",
+      "ebook",
       "notifications",
       "profile",
       "support"
@@ -401,6 +405,7 @@ export default function StudentPortal({
             { id: "results", label: isEn ? "Results / Grades" : "ফলাফল ও গ্রেড", icon: Award },
             { id: "payments", label: isEn ? "Payments" : "পেমেন্ট", icon: DollarSign },
             { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: ShieldCheck },
+            { id: "ebook", label: isEn ? "Culinary E-Book" : "রন্ধন ই-বুক", icon: BookMarked },
             { id: "notifications", label: isEn ? "Notifications" : "নোটিফিকেশন", icon: Bell },
             { id: "profile", label: isEn ? "Profile" : "প্রোফাইল", icon: User },
           ].map((tab) => {
@@ -1081,6 +1086,129 @@ export default function StudentPortal({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 8.5: CULINARY E-BOOK DIGITAL HUB */}
+        {!isLoading && activeTab === "ebook" && (
+          <div className="space-y-6 mt-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-editorial-border pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[9px] font-mono font-bold uppercase tracking-wider">
+                    Official Student Masterclass Textbook
+                  </span>
+                </div>
+                <h2 className="font-serif font-extrabold text-2xl text-slate-900 mt-1">
+                  {isEn ? "Lodonex Culinary E-Book for Students" : "লোডোনেক্স রন্ধন ই-বুক শিক্ষার্থী সংস্করণ"}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {EBOOK_METADATA.subtitle}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-3.5 py-2 bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 font-mono text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="h-3.5 w-3.5 text-stone-500" />
+                  <span>{isEn ? "Print / Save PDF" : "প্রিন্ট / পিডিএফ"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Showcase Banner */}
+            <div className="bg-gradient-to-br from-[#0B251B] to-[#04140D] text-white p-6 sm:p-8 rounded-lg border-2 border-amber-500/30 shadow-xl grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="md:col-span-4 flex justify-center">
+                <div className="relative max-w-[220px] w-full border-2 border-amber-400/50 rounded-md overflow-hidden shadow-2xl">
+                  <img
+                    src={ebookMockupImage}
+                    alt="Lodonex Culinary E-Book"
+                    className="w-full h-auto object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute top-2 right-2 bg-stone-900/90 text-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded-xs">
+                    OFFICIAL
+                  </div>
+                </div>
+              </div>
+
+              <div className="md:col-span-8 space-y-4 text-left">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold block">
+                    {EBOOK_METADATA.badge}
+                  </span>
+                  <h3 className="font-serif font-black text-2xl text-white">
+                    {EBOOK_METADATA.title}
+                  </h3>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    {EBOOK_METADATA.description}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center">
+                  <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
+                    <span className="font-bold text-amber-300 text-sm block">131+</span>
+                    <span className="text-[9px] text-stone-400 uppercase font-mono">Recipes</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
+                    <span className="font-bold text-amber-300 text-sm block">22</span>
+                    <span className="text-[9px] text-stone-400 uppercase font-mono">Categories</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
+                    <span className="font-bold text-emerald-400 text-sm block">Active</span>
+                    <span className="text-[9px] text-stone-400 uppercase font-mono">Student License</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
+                    <span className="font-bold text-amber-300 text-sm block">$199</span>
+                    <span className="text-[9px] text-stone-400 uppercase font-mono">Value</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <a
+                    href="/culinary-ebook"
+                    className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-bold text-xs uppercase tracking-wider rounded-xs shadow-md transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>Open Masterclass Reader & Syllabus</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Categories Preview */}
+            <div className="space-y-4">
+              <h3 className="font-serif font-bold text-lg text-stone-900">
+                {isEn ? "Curriculum Categories & Recipes Overview" : "সিলেবাস ক্যাটাগরি ও রেসিপি ওভারভিউ"}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {EBOOK_CATEGORIES.slice(0, 12).map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="p-3 bg-white border border-editorial-border rounded-xs space-y-1 hover:border-amber-400/80 transition"
+                  >
+                    <span className="text-[10px] font-mono text-emerald-800 font-bold uppercase block">
+                      {cat.recipeCount} {cat.recipeCount === 1 ? "Recipe" : "Recipes"}
+                    </span>
+                    <h4 className="font-serif font-bold text-xs text-stone-900 leading-tight">
+                      {cat.name}
+                    </h4>
+                    <p className="text-[10px] text-stone-500 line-clamp-1">{cat.description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="text-right">
+                <a
+                  href="/culinary-ebook"
+                  className="text-xs font-mono font-bold text-emerald-800 hover:text-emerald-950 uppercase tracking-wider inline-flex items-center gap-1"
+                >
+                  <span>View All 22 Categories & Full 131+ Recipes</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
           </div>
         )}
 

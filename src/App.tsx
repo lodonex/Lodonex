@@ -36,6 +36,7 @@ import Policies from "./components/Policies";
 import AboutUs from "./components/AboutUs";
 import ChefJobAccommodation from "./components/ChefJobAccommodation";
 import Gallery from "./components/Gallery";
+import CulinaryEBookPage from "./components/CulinaryEBookPage";
 
 // Dedicated Strict Authentication Pages (No guest bypass)
 import PortalLoginPage from "./components/PortalLoginPage";
@@ -74,6 +75,7 @@ export default function App() {
     const p = window.location.pathname || "/";
     if (p === "/recipes") return "recipes";
     if (p === "/courses") return "courses";
+    if (p === "/culinary-ebook" || p === "/ebook" || p === "/culinary-e-book") return "culinary-ebook";
     if (p === "/verify-cert") return "verify-cert";
     if (p === "/chefs" || p === "/our-team") return "chefs";
     if (p === "/jobs" || p === "/jobs-accommodation" || p === "/job-and-accommodation") return "jobs";
@@ -171,6 +173,7 @@ export default function App() {
   const getTabFromPath = (path: string): string => {
     if (path === "/recipes") return "recipes";
     if (path === "/courses") return "courses";
+    if (path === "/culinary-ebook" || path === "/ebook" || path === "/culinary-e-book") return "culinary-ebook";
     if (path === "/verify-cert") return "verify-cert";
     if (path === "/chefs" || path === "/our-team") return "chefs";
     if (path === "/jobs" || path === "/jobs-accommodation" || path === "/job-and-accommodation") return "jobs";
@@ -994,6 +997,16 @@ export default function App() {
               }
             }}
           />
+        ) : /* ========================================================
+            DEDICATED ROUTE 8.5: /culinary-ebook & /ebook
+           ======================================================== */
+        currentPath === "/culinary-ebook" || currentPath === "/ebook" || currentPath === "/culinary-e-book" ? (
+          <CulinaryEBookPage
+            lang={lang}
+            currentUser={currentUser}
+            onNavigate={navigate}
+            onOpenAuth={() => navigate("/portal/login")}
+          />
         ) : selectedCourse ? (
           <CourseDetails
             lang={lang}
@@ -1136,6 +1149,15 @@ export default function App() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }
                 }}
+              />
+            )}
+
+            {currentTab === "culinary-ebook" && (
+              <CulinaryEBookPage
+                lang={lang}
+                currentUser={currentUser}
+                onNavigate={navigate}
+                onOpenAuth={() => navigate("/portal/login")}
               />
             )}
 

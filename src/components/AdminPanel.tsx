@@ -34,7 +34,8 @@ import {
   Download,
   BarChart3,
   TrendingUp,
-  Activity
+  Activity,
+  BookMarked
 } from "lucide-react";
 import {
   Language,
@@ -49,7 +50,8 @@ import {
   StudentGradeResult,
   DigitalCertificate,
   PaymentRecord,
-  AuditLogEntry
+  AuditLogEntry,
+  EBookPurchaseRecord
 } from "../types";
 import { formatPrice } from "../utils/price";
 import { useRealtimeDashboard } from "../services/useRealtimeDashboard";
@@ -146,6 +148,7 @@ export default function AdminPanel({
       "results",
       "certificates",
       "payments",
+      "ebook_orders",
       "staff",
       "audit_logs",
       "email_logs",
@@ -169,6 +172,7 @@ export default function AdminPanel({
     | "results"
     | "certificates"
     | "payments"
+    | "ebook_orders"
     | "staff"
     | "audit_logs"
     | "email_logs"
@@ -205,6 +209,111 @@ export default function AdminPanel({
   const [submissionsList, setSubmissionsList] = useState<AssignmentSubmission[]>([]);
   const [resultsList, setResultsList] = useState<StudentGradeResult[]>([]);
   const [paymentsList, setPaymentsList] = useState<PaymentRecord[]>([]);
+
+  // E-Book Orders Store (synced with localStorage & backend)
+  const [ebookOrdersList, setEbookOrdersList] = useState<EBookPurchaseRecord[]>(() => {
+    const saved = localStorage.getItem("lodonex_ebook_orders");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return [
+      {
+        id: "LOD-EBK-2026-001",
+        userId: "student-sample-1",
+        userEmail: "apprentice.chef@lodonex.com",
+        userName: "Kazi Rayhan",
+        userPhone: "+880 1711-234567",
+        productId: "lodonex-culinary-ebook",
+        productName: "LODONEX CULINARY E-BOOK FOR STUDENTS",
+        amount: 199,
+        currency: "USD",
+        paymentProvider: "bkash",
+        paymentTransactionId: "9JK782LM09",
+        paymentStatus: "PAID",
+        accessStatus: "ACTIVE",
+        purchasedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updatedAt: new Date().toISOString(),
+        verifiedBy: "Super Admin",
+        verifiedAt: new Date().toISOString(),
+        notes: "Verified via bKash Merchant deposit"
+      }
+    ];
+  });
+  const [ebookSearch, setEbookSearch] = useState("");
+  const [ebookStatusFilter, setEbookStatusFilter] = useState<"all" | "ACTIVE" | "PENDING" | "REVOKED">("all");
+  const [isManualGrantOpen, setIsManualGrantOpen] = useState(false);
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantName, setGrantName] = useState("");
+  const [grantNotes, setGrantNotes] = useState("");
+
+  const updateEBookOrdersStore = (newList: EBookPurchaseRecord[]) => {
+    setEbookOrdersList(newList);
+    localStorage.setItem("lodonex_ebook_orders", JSON.stringify(newList));
+  };
+
+  const handleApproveEBookOrder = (orderId: string) => {
+    const updated = ebookOrdersList.map((ord) => {
+      if (ord.id === orderId) {
+        return {
+          ...ord,
+          paymentStatus: "PAID" as const,
+          accessStatus: "ACTIVE" as const,
+          verifiedBy: currentUser.name || "Administrator",
+          verifiedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return ord;
+    });
+    updateEBookOrdersStore(updated);
+  };
+
+  const handleToggleEBookAccess = (orderId: string) => {
+    const updated = ebookOrdersList.map((ord) => {
+      if (ord.id === orderId) {
+        const nextStatus = ord.accessStatus === "ACTIVE" ? ("REVOKED" as const) : ("ACTIVE" as const);
+        return {
+          ...ord,
+          accessStatus: nextStatus,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return ord;
+    });
+    updateEBookOrdersStore(updated);
+  };
+
+  const handleManualGrantSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grantEmail) return;
+    const newRecord: EBookPurchaseRecord = {
+      id: `LOD-EBK-MAN-${Date.now()}`,
+      userId: `grant-${Date.now()}`,
+      userEmail: grantEmail.trim().toLowerCase(),
+      userName: grantName.trim() || "Student Apprentice",
+      productId: "lodonex-culinary-ebook",
+      productName: "LODONEX CULINARY E-BOOK FOR STUDENTS",
+      amount: 199,
+      currency: "USD",
+      paymentProvider: "card",
+      paymentTransactionId: `GRANT-${Math.floor(100000 + Math.random() * 900000)}`,
+      paymentStatus: "PAID",
+      accessStatus: "ACTIVE",
+      purchasedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      verifiedBy: currentUser.name || "Super Admin",
+      verifiedAt: new Date().toISOString(),
+      notes: grantNotes.trim() || "Manual Academy Scholarship / Enrolled Student Grant",
+    };
+    updateEBookOrdersStore([newRecord, ...ebookOrdersList]);
+    setIsManualGrantOpen(false);
+    setGrantEmail("");
+    setGrantName("");
+    setGrantNotes("");
+  };
 
   // Synchronize realtime state
   React.useEffect(() => {
@@ -694,6 +803,7 @@ export default function AdminPanel({
                     { id: "assignments", label: isEn ? "Assignments" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view") },
                     { id: "results", label: isEn ? "Results" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
                     { id: "payments", label: isEn ? "Payments" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view") },
+                    { id: "ebook_orders", label: isEn ? "E-Book Orders" : "ই-বুক অর্ডার", icon: BookMarked, show: !isTrainer && hasPermission("payments.view") },
                     { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view") },
                     { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin },
                     { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
@@ -757,6 +867,7 @@ export default function AdminPanel({
                 { id: "assignments", label: isEn ? "Assignments" : "অ্যাসাইনমেন্ট", icon: GraduationCap, show: hasPermission("assignments.view"), count: assignmentsList.length },
                 { id: "results", label: isEn ? "Results" : "গ্রেড ও নম্বর", icon: Award, show: hasPermission("reports.view") },
                 { id: "payments", label: isEn ? "Payments" : "পেমেন্ট লগ", icon: DollarSign, show: !isTrainer && hasPermission("payments.view"), count: filteredPayments.filter((p) => p.status === "pending" || p.status === "submitted").length, alert: true },
+                { id: "ebook_orders", label: isEn ? "E-Book Orders" : "ই-বুক অর্ডার", icon: BookMarked, show: !isTrainer && hasPermission("payments.view"), count: ebookOrdersList.filter((o) => o.paymentStatus === "PENDING").length, alert: true },
                 { id: "certificates", label: isEn ? "Certificates" : "সার্টিফিকেট", icon: Shield, show: hasPermission("certificates.view"), count: filteredCertificates.length },
                 { id: "staff", label: isEn ? "Staff / Trainers" : "স্টাফ ও ট্রেইনার", icon: Users, show: isSuperAdmin, count: filteredUsers.filter((u) => ["admin", "superadmin", "super_admin", "staff", "trainer"].includes(u.role || "")).length },
                 { id: "audit_logs", label: isEn ? "Audit Logs" : "অডিট লগ", icon: Terminal, show: isSuperAdmin },
@@ -2215,6 +2326,264 @@ export default function AdminPanel({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: LODONEX CULINARY E-BOOK ORDERS (SALES & ACCESS)
+           ======================================================== */}
+        {adminTab === "ebook_orders" && !isTrainer && (
+          <div className="mt-6 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[9px] font-mono font-bold uppercase tracking-wider">
+                    Digital Product Management • $199 USD
+                  </span>
+                </div>
+                <h2 className="font-serif font-extrabold text-2xl text-editorial-dark mt-1">
+                  {isEn ? "Culinary E-Book Orders & Student Digital Licenses" : "ই-বুক অর্ডার ও ডিজিটাল লাইসেন্স"}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {isEn
+                    ? "Manage student purchases for 'LODONEX CULINARY E-BOOK FOR STUDENTS', verify bKash/Nagad/Bank wires, and toggle instant reader access."
+                    : "লোডোনেক্স রন্ধন ই-বুক শিক্ষার্থী অর্ডার যাচাই, পেমেন্ট অনুমোদন এবং রিডার অ্যাক্সেস পরিচালনা করুন।"}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsManualGrantOpen(true)}
+                className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>{isEn ? "Grant Student Access" : "অ্যাক্সেস প্রদান"}</span>
+              </button>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white p-4 border border-editorial-border rounded-sm">
+                <span className="text-[10px] font-mono text-stone-500 uppercase block font-bold">Total Orders</span>
+                <span className="font-serif font-black text-2xl text-stone-900">{ebookOrdersList.length}</span>
+              </div>
+              <div className="bg-white p-4 border border-editorial-border rounded-sm">
+                <span className="text-[10px] font-mono text-stone-500 uppercase block font-bold">Active Licenses</span>
+                <span className="font-serif font-black text-2xl text-emerald-700">
+                  {ebookOrdersList.filter((o) => o.accessStatus === "ACTIVE").length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border border-editorial-border rounded-sm">
+                <span className="text-[10px] font-mono text-stone-500 uppercase block font-bold">Pending Review</span>
+                <span className="font-serif font-black text-2xl text-amber-700">
+                  {ebookOrdersList.filter((o) => o.paymentStatus === "PENDING").length}
+                </span>
+              </div>
+              <div className="bg-white p-4 border border-editorial-border rounded-sm">
+                <span className="text-[10px] font-mono text-stone-500 uppercase block font-bold">Total Revenue</span>
+                <span className="font-serif font-black text-2xl text-stone-900">
+                  ${ebookOrdersList.filter((o) => o.paymentStatus === "PAID").length * 199} USD
+                </span>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 border border-editorial-border">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Search className="h-4 w-4 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Search buyer name, email, TrxID..."
+                  value={ebookSearch}
+                  onChange={(e) => setEbookSearch(e.target.value)}
+                  className="text-xs bg-transparent border-none focus:outline-none w-full sm:w-64"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                {(["all", "ACTIVE", "PENDING", "REVOKED"] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setEbookStatusFilter(st)}
+                    className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition cursor-pointer ${
+                      ebookStatusFilter === st
+                        ? "bg-stone-900 text-white"
+                        : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Orders Table */}
+            <div className="bg-white border border-editorial-border overflow-x-auto shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-editorial-border uppercase font-mono font-bold text-[10px] text-slate-600 tracking-wider">
+                    <th className="p-3">Order ID</th>
+                    <th className="p-3">Buyer Name & Email</th>
+                    <th className="p-3">Method</th>
+                    <th className="p-3">TrxID / Key</th>
+                    <th className="p-3">Amount</th>
+                    <th className="p-3">Payment</th>
+                    <th className="p-3">Access</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {ebookOrdersList
+                    .filter((ord) => {
+                      const matchesStatus =
+                        ebookStatusFilter === "all" ||
+                        (ebookStatusFilter === "PENDING" && ord.paymentStatus === "PENDING") ||
+                        (ebookStatusFilter === "ACTIVE" && ord.accessStatus === "ACTIVE") ||
+                        (ebookStatusFilter === "REVOKED" && ord.accessStatus === "REVOKED");
+
+                      const q = ebookSearch.toLowerCase().trim();
+                      if (!q) return matchesStatus;
+
+                      const matchesSearch =
+                        ord.userName.toLowerCase().includes(q) ||
+                        ord.userEmail.toLowerCase().includes(q) ||
+                        ord.id.toLowerCase().includes(q) ||
+                        ord.paymentTransactionId.toLowerCase().includes(q);
+
+                      return matchesStatus && matchesSearch;
+                    })
+                    .map((ord) => (
+                      <tr key={ord.id} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-mono font-bold text-stone-900 text-[11px]">{ord.id}</td>
+                        <td className="p-3">
+                          <span className="font-bold text-stone-900 block">{ord.userName}</span>
+                          <span className="font-mono text-stone-500 text-[10px]">{ord.userEmail}</span>
+                          {ord.userPhone && (
+                            <span className="text-stone-400 text-[9px] block font-mono">{ord.userPhone}</span>
+                          )}
+                        </td>
+                        <td className="p-3 uppercase font-mono text-[11px] text-stone-700">{ord.paymentProvider}</td>
+                        <td className="p-3 font-mono text-stone-600 text-[11px]">{ord.paymentTransactionId}</td>
+                        <td className="p-3 font-serif font-bold text-stone-900">${ord.amount} USD</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase rounded-xs ${
+                              ord.paymentStatus === "PAID"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {ord.paymentStatus}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase rounded-xs ${
+                              ord.accessStatus === "ACTIVE"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                                : "bg-red-50 text-red-700 border border-red-300"
+                            }`}
+                          >
+                            {ord.accessStatus}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {ord.paymentStatus === "PENDING" && (
+                              <button
+                                onClick={() => handleApproveEBookOrder(ord.id)}
+                                className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-[10px] font-bold uppercase rounded-xs transition cursor-pointer"
+                              >
+                                Approve Payment
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleToggleEBookAccess(ord.id)}
+                              className={`px-2 py-1 text-[10px] font-mono font-bold uppercase rounded-xs transition cursor-pointer ${
+                                ord.accessStatus === "ACTIVE"
+                                  ? "bg-stone-100 hover:bg-red-100 text-stone-700 hover:text-red-800"
+                                  : "bg-emerald-100 hover:bg-emerald-200 text-emerald-800"
+                              }`}
+                            >
+                              {ord.accessStatus === "ACTIVE" ? "Revoke Access" : "Grant Access"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+
+              {ebookOrdersList.length === 0 && (
+                <div className="p-8 text-center text-xs text-stone-500 font-mono">
+                  No E-Book orders recorded yet.
+                </div>
+              )}
+            </div>
+
+            {/* MANUAL GRANT MODAL */}
+            {isManualGrantOpen && (
+              <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                <div className="bg-white border-2 border-stone-900 max-w-md w-full p-6 space-y-4 shadow-2xl rounded-sm">
+                  <div className="flex items-center justify-between border-b border-editorial-border pb-3">
+                    <h3 className="font-serif font-bold text-base text-stone-900">
+                      Grant Complimentary Student E-Book License
+                    </h3>
+                    <button onClick={() => setIsManualGrantOpen(false)} className="text-stone-400 hover:text-stone-900">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleManualGrantSubmit} className="space-y-3 text-xs">
+                    <div>
+                      <label className="font-mono font-bold uppercase block mb-1 text-stone-700">Student Email *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="student@example.com"
+                        value={grantEmail}
+                        onChange={(e) => setGrantEmail(e.target.value)}
+                        className="w-full p-2 border border-editorial-border focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-mono font-bold uppercase block mb-1 text-stone-700">Student Name</label>
+                      <input
+                        type="text"
+                        placeholder="Chef John / Fatima"
+                        value={grantName}
+                        onChange={(e) => setGrantName(e.target.value)}
+                        className="w-full p-2 border border-editorial-border focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-mono font-bold uppercase block mb-1 text-stone-700">Administrative Notes</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Merit Scholarship / LQF Diploma Enrolled Student"
+                        value={grantNotes}
+                        onChange={(e) => setGrantNotes(e.target.value)}
+                        className="w-full p-2 border border-editorial-border focus:outline-none"
+                      />
+                    </div>
+                    <div className="pt-2 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsManualGrantOpen(false)}
+                        className="px-3 py-1.5 border border-editorial-border font-mono font-bold uppercase"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 bg-emerald-800 text-white font-mono font-bold uppercase"
+                      >
+                        Activate License
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
