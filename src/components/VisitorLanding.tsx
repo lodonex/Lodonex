@@ -37,6 +37,7 @@ interface VisitorLandingProps {
   courses: Course[];
   onSelectTab: (tab: string) => void;
   onSelectCourse: (course: Course) => void;
+  onNavigate?: (path: string) => void;
 }
 
 export default function VisitorLanding({
@@ -45,6 +46,7 @@ export default function VisitorLanding({
   courses,
   onSelectTab,
   onSelectCourse,
+  onNavigate,
 }: VisitorLandingProps) {
   const isEn = lang === "en";
 
@@ -79,7 +81,16 @@ export default function VisitorLanding({
   return (
     <div id="visitor-landing" className="space-y-12 py-4 text-left font-sans">
       {/* Interactive Home Slider with Lead Chef Portrait */}
-      <HomeSlider lang={lang} onExplore={onOpenAuth} />
+      <HomeSlider
+        lang={lang}
+        onExplore={onOpenAuth}
+        onNavigate={onNavigate ? onNavigate : (path) => {
+          if (path === "/culinary-ebook" || path === "/ebook") {
+            onSelectTab("culinary-ebook");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        }}
+      />
 
       {/* GLOBAL CHEF JOB & ACCOMMODATION SPOTLIGHT BANNER */}
       <div className="bg-[#1A1A1A] border border-stone-800 text-white p-6 sm:p-8 relative overflow-hidden">
@@ -435,7 +446,7 @@ export default function VisitorLanding({
 
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
                 <span className="font-serif font-black text-amber-300 text-base sm:text-lg block">
-                  $199
+                  $1,099
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
                   USD Price
@@ -453,7 +464,7 @@ export default function VisitorLanding({
                 }}
                 className="w-full sm:w-auto py-3.5 px-8 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>BUY NOW — $199</span>
+                <span>BUY NOW — $1,099</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
 

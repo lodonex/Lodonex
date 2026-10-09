@@ -486,7 +486,8 @@ export interface EBookPurchaseRecord {
   userPhone?: string;
   productId: "lodonex-culinary-ebook";
   productName: string;
-  amount: number; // 199
+  amount: number; // 1099
+  amountInCents?: number; // 109900
   currency: "USD";
   paymentProvider: "bkash" | "nagad" | "rocket" | "bank" | "card" | "stripe" | "sslcommerz";
   paymentTransactionId: string;

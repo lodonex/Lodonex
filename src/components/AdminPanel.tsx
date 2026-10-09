@@ -228,7 +228,7 @@ export default function AdminPanel({
         userPhone: "+880 1711-234567",
         productId: "lodonex-culinary-ebook",
         productName: "LODONEX CULINARY E-BOOK FOR STUDENTS",
-        amount: 199,
+        amount: 1099,
         currency: "USD",
         paymentProvider: "bkash",
         paymentTransactionId: "9JK782LM09",
@@ -296,7 +296,7 @@ export default function AdminPanel({
       userName: grantName.trim() || "Student Apprentice",
       productId: "lodonex-culinary-ebook",
       productName: "LODONEX CULINARY E-BOOK FOR STUDENTS",
-      amount: 199,
+      amount: 1099,
       currency: "USD",
       paymentProvider: "card",
       paymentTransactionId: `GRANT-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -2338,7 +2338,7 @@ export default function AdminPanel({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 text-[9px] font-mono font-bold uppercase tracking-wider">
-                    Digital Product Management • $199 USD
+                    Digital Product Management • $1,099 USD
                   </span>
                 </div>
                 <h2 className="font-serif font-extrabold text-2xl text-editorial-dark mt-1">
@@ -2381,7 +2381,7 @@ export default function AdminPanel({
               <div className="bg-white p-4 border border-editorial-border rounded-sm">
                 <span className="text-[10px] font-mono text-stone-500 uppercase block font-bold">Total Revenue</span>
                 <span className="font-serif font-black text-2xl text-stone-900">
-                  ${ebookOrdersList.filter((o) => o.paymentStatus === "PAID").length * 199} USD
+                  ${ebookOrdersList.filter((o) => o.paymentStatus === "PAID").reduce((sum, o) => sum + (o.amount || 1099), 0).toLocaleString()} USD
                 </span>
               </div>
             </div>

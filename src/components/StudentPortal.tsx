@@ -1161,7 +1161,7 @@ export default function StudentPortal({
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Student License</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
-                    <span className="font-bold text-amber-300 text-sm block">$199</span>
+                    <span className="font-bold text-amber-300 text-sm block">$1,099</span>
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Value</span>
                   </div>
                 </div>

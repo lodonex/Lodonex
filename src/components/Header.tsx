@@ -92,7 +92,7 @@ export default function Header({
           }
         ]),
     { id: "courses", label: t.ourCourses },
-    { id: "culinary-ebook", label: lang === "en" ? "Culinary E-Book" : "রন্ধন ই-বুক", badge: "$199" },
+    { id: "culinary-ebook", label: lang === "en" ? "Culinary E-Book" : "রন্ধন ই-বুক", badge: "$1,099" },
     { id: "verify-cert", label: lang === "en" ? "Verify Certificate" : "সার্টিফিকেট যাচাই", badge: "VERIFY" },
     { id: "recipes", label: t.myRecipes },
     { id: "chefs", label: lang === "en" ? "Our Team" : "আমাদের টিম" },

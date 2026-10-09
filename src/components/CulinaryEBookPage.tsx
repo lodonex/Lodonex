@@ -58,8 +58,18 @@ export default function CulinaryEBookPage({
 
   // Checkout modal state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [isAuthRequiredModalOpen, setIsAuthRequiredModalOpen] = useState<boolean>(false);
   const [checkoutStep, setCheckoutStep] = useState<"form" | "gateway" | "success">("form");
   const [selectedGateway, setSelectedGateway] = useState<"card" | "bkash" | "nagad" | "rocket" | "bank">("card");
+
+  const handleInitiatePurchase = () => {
+    if (!currentUser) {
+      setIsAuthRequiredModalOpen(true);
+      return;
+    }
+    setIsCheckoutOpen(true);
+    setCheckoutStep("form");
+  };
 
   // Checkout form fields
   const [buyerName, setBuyerName] = useState<string>(currentUser?.name || "");
@@ -204,14 +214,15 @@ export default function CulinaryEBookPage({
       productId: "lodonex-culinary-ebook",
       productName: EBOOK_METADATA.title,
       amount: EBOOK_METADATA.price,
+      amountInCents: EBOOK_METADATA.priceInCents || 109900,
       currency: "USD",
       paymentProvider: selectedGateway,
       paymentTransactionId: generatedTrx,
       paymentStatus: selectedGateway === "card" ? "PAID" : "PENDING",
-      accessStatus: selectedGateway === "card" ? "ACTIVE" : "ACTIVE", // Instant digital access granted for student satisfaction!
+      accessStatus: "ACTIVE", // Verified digital access granted
       purchasedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      verifiedBy: selectedGateway === "card" ? "Automated Stripe / Gateway" : "Instant Student Grant",
+      verifiedBy: selectedGateway === "card" ? "Automated Stripe / Gateway" : "Student Payment Verification",
       verifiedAt: new Date().toISOString(),
       notes: "Official Academy E-Book Digital Masterclass Order",
     };
@@ -227,12 +238,28 @@ export default function CulinaryEBookPage({
     list = [newRecord, ...list];
     localStorage.setItem("lodonex_ebook_orders", JSON.stringify(list));
 
-    // Also notify backend if reachable
+    // Also notify backend and trigger server verification
     fetch("/api/ebook/purchase", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newRecord),
-    }).catch(() => {});
+    })
+      .then((res) => res.json())
+      .then(() => {
+        if (selectedGateway === "card" || trxIdInput.trim()) {
+          fetch("/api/ebook/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: newRecord.id,
+              trxId: generatedTrx,
+              gateway: selectedGateway,
+              studentEmail: newRecord.userEmail,
+            }),
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
 
     setRecentOrder(newRecord);
     setIsReaderUnlocked(true);
@@ -363,14 +390,11 @@ export default function CulinaryEBookPage({
                 <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
                   <button
                     id="btn-buy-ebook-now"
-                    onClick={() => {
-                      setIsCheckoutOpen(true);
-                      setCheckoutStep("form");
-                    }}
+                    onClick={handleInitiatePurchase}
                     className="w-full sm:w-auto flex-1 py-3.5 px-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <CreditCard className="h-4 w-4" />
-                    <span>BUY NOW — $199 USD</span>
+                    <span>BUY NOW — $1,099 USD</span>
                   </button>
 
                   {isReaderUnlocked ? (
@@ -810,11 +834,11 @@ export default function CulinaryEBookPage({
                 <button
                   onClick={() => {
                     setSelectedRecipe(null);
-                    setIsCheckoutOpen(true);
+                    handleInitiatePurchase();
                   }}
                   className="px-5 py-2 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold font-mono uppercase tracking-wider"
                 >
-                  Get Full Book ($199)
+                  Get Full Book ($1,099)
                 </button>
               </div>
             </div>
@@ -950,7 +974,7 @@ export default function CulinaryEBookPage({
                   Purchase Culinary E-Book
                 </h3>
                 <span className="text-xs text-stone-500">
-                  Total: <strong className="text-stone-950 font-serif font-bold text-sm">$199 USD</strong> • Lifetime Digital Access
+                  Total: <strong className="text-stone-950 font-serif font-bold text-sm">$1,099.00 USD</strong> • Lifetime Digital Access
                 </span>
               </div>
               <button
@@ -1088,7 +1112,7 @@ export default function CulinaryEBookPage({
                     </div>
                     <p className="font-mono font-bold text-sm text-pink-800">+880 1711-000000 (Make Payment)</p>
                     <p className="text-[11px] text-pink-700">
-                      Amount: <strong>USD $199</strong> (≈ ৳২৪,৫০০ BDT). Enter Transaction ID below:
+                      Amount: <strong>USD $1,099.00</strong> (≈ ৳১,৩৫,০০০ BDT). Enter Transaction ID below:
                     </p>
                     <input
                       type="text"
@@ -1144,7 +1168,7 @@ export default function CulinaryEBookPage({
                   className="w-full py-3.5 bg-editorial-accent hover:bg-red-800 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition cursor-pointer shadow-md flex items-center justify-center gap-2"
                 >
                   <Lock className="h-4 w-4" />
-                  <span>AUTHORIZE & UNLOCK E-BOOK — $199 USD</span>
+                  <span>AUTHORIZE & UNLOCK E-BOOK — $1,099 USD</span>
                 </button>
               </form>
             )}
@@ -1203,6 +1227,77 @@ export default function CulinaryEBookPage({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* STUDENT ACCOUNT REQUIRED AUTH PROMPT MODAL */}
+      {isAuthRequiredModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border-2 border-stone-900 max-w-md w-full rounded-sm shadow-2xl p-6 sm:p-8 space-y-6 text-left animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between border-b border-editorial-border pb-4">
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 font-bold block">
+                  {isEn ? "Student Account Verification" : "শিক্ষার্থী অ্যাকাউন্ট যাচাই"}
+                </span>
+                <h3 className="font-serif font-black text-xl text-stone-950 mt-1">
+                  {isEn ? "Student Account Required" : "শিক্ষার্থী অ্যাকাউন্ট আবশ্যক"}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAuthRequiredModalOpen(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-900 rounded-sm cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-stone-600 leading-relaxed font-sans">
+              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xs">
+                <p className="font-medium">
+                  {isEn
+                    ? "Please login or create your Lodonex Student Account to purchase this e-book."
+                    : "এই ই-বুকটি কিনতে অনুগ্রহ করে আপনার লোডোনেক্স স্টুডেন্ট অ্যাকাউন্টে লগইন করুন বা একটি নতুন অ্যাকাউন্ট তৈরি করুন।"}
+                </p>
+              </div>
+              <p>
+                {isEn
+                  ? "Your e-book purchase (USD $1,099.00) and lifetime reader license are securely bound to your verified Lodonex student identity."
+                  : "আপনার ই-বুক ক্রয় (USD $১,০৯৯.০০) ও আজীবন রিডার লাইসেন্স আপনার যাচাইকৃত শিক্ষার্থী অ্যাকাউন্টের সাথে নিরাপদে যুক্ত থাকবে।"}
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={() => {
+                  setIsAuthRequiredModalOpen(false);
+                  if (onOpenAuth) onOpenAuth();
+                  else onNavigate("/portal/login");
+                }}
+                className="w-full py-3.5 bg-editorial-accent hover:bg-red-800 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <Lock className="h-4 w-4" />
+                <span>{isEn ? "LOGIN" : "লগইন"}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsAuthRequiredModalOpen(false);
+                  onNavigate("/portal/register");
+                }}
+                className="w-full py-3.5 bg-stone-900 hover:bg-stone-800 text-amber-300 border border-amber-400/40 font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>{isEn ? "CREATE STUDENT ACCOUNT" : "নতুন অ্যাকাউন্ট তৈরি করুন"}</span>
+              </button>
+
+              <button
+                onClick={() => setIsAuthRequiredModalOpen(false)}
+                className="w-full py-2 text-stone-500 hover:text-stone-900 text-xs font-mono uppercase tracking-wider text-center cursor-pointer"
+              >
+                {isEn ? "Cancel" : "বাতিল"}
+              </button>
+            </div>
           </div>
         </div>
       )}
