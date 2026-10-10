@@ -379,7 +379,7 @@ export default function VisitorLanding({
                   referrerPolicy="no-referrer"
                 />
                 
-                <div className="absolute top-4 right-4 bg-stone-950/90 backdrop-blur-md border border-amber-400/60 text-amber-300 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest rounded-xs shadow-md">
+                <div className="absolute top-4 right-4 bg-stone-950/90 backdrop-blur-md border border-[#E7000B]/60 text-red-400 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest rounded-xs shadow-md">
                   OFFICIAL EDITION
                 </div>
               </div>
@@ -389,8 +389,8 @@ export default function VisitorLanding({
           {/* PRODUCT INFORMATION SIDE (Right on desktop) */}
           <div className="lg:col-span-7 space-y-5 text-left">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 bg-amber-400/15 border border-amber-400/40 text-amber-300 text-[11px] font-mono font-extrabold uppercase tracking-widest rounded-full flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-amber-400" />
+              <span className="px-3 py-1 bg-[#E7000B]/15 border border-[#E7000B]/40 text-red-400 text-[11px] font-mono font-extrabold uppercase tracking-widest rounded-full flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-[#E7000B]" />
                 <span>OFFICIAL DIGITAL CURRICULUM</span>
               </span>
               <span className="text-stone-400 text-xs font-mono">•</span>
@@ -402,7 +402,7 @@ export default function VisitorLanding({
             <div className="space-y-2">
               <h2 className="font-serif font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
                 LODONEX CULINARY E-BOOK <br />
-                <span className="text-amber-300 italic font-serif font-medium">
+                <span className="text-red-400 italic font-serif font-medium">
                   FOR STUDENTS
                 </span>
               </h2>
@@ -418,7 +418,7 @@ export default function VisitorLanding({
             {/* Product Highlights Badges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-amber-400 text-base sm:text-lg block">
+                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
                   131+
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -427,7 +427,7 @@ export default function VisitorLanding({
               </div>
 
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-amber-400 text-base sm:text-lg block">
+                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
                   22
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -445,7 +445,7 @@ export default function VisitorLanding({
               </div>
 
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-amber-300 text-base sm:text-lg block">
+                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
                   $1,099
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -462,7 +462,7 @@ export default function VisitorLanding({
                   onSelectTab("culinary-ebook");
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="w-full sm:w-auto py-3.5 px-8 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto py-3.5 px-8 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-red-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-950"
               >
                 <span>BUY NOW — $1,099</span>
                 <ChevronRight className="h-4 w-4" />

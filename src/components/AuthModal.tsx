@@ -580,7 +580,7 @@ export default function AuthModal({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer shadow-xs"
+              className="w-full py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer shadow-xs disabled:bg-stone-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2"
             >
               {loading
                 ? (isEn ? "Processing..." : "প্রক্রিয়াধীন...")

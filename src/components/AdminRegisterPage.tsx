@@ -627,7 +627,7 @@ export default function AdminRegisterPage({
                 id="team-register-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-editorial-accent hover:bg-red-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition shadow-md"
+                className="w-full py-3 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition shadow-md focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2"
               >
                 {loading ? (
                   <span>{isEn ? "Creating Team Account..." : "অ্যাকাউন্ট তৈরি হচ্ছে..."}</span>

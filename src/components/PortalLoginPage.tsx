@@ -457,10 +457,10 @@ export default function PortalLoginPage({
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 ${
+              className={`w-full py-3 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2 mt-2 disabled:bg-stone-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 activeTab === "admin"
-                  ? "bg-slate-950 hover:bg-slate-800"
-                  : "bg-editorial-accent hover:bg-red-800"
+                  ? "bg-slate-950 hover:bg-slate-800 focus:ring-slate-900"
+                  : "bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] focus:ring-[#E7000B]"
               }`}
             >
               {loading ? (

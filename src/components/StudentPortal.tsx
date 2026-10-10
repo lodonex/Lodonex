@@ -1119,16 +1119,16 @@ export default function StudentPortal({
             </div>
 
             {/* Showcase Banner */}
-            <div className="bg-gradient-to-br from-[#0B251B] to-[#04140D] text-white p-6 sm:p-8 rounded-lg border-2 border-amber-500/30 shadow-xl grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="bg-gradient-to-br from-[#0B251B] to-[#04140D] text-white p-6 sm:p-8 rounded-lg border-2 border-[#E7000B]/30 shadow-xl grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
               <div className="md:col-span-4 flex justify-center">
-                <div className="relative max-w-[220px] w-full border-2 border-amber-400/50 rounded-md overflow-hidden shadow-2xl">
+                <div className="relative max-w-[220px] w-full border-2 border-[#E7000B]/50 rounded-md overflow-hidden shadow-2xl">
                   <img
                     src={ebookMockupImage}
                     alt="Lodonex Culinary E-Book"
                     className="w-full h-auto object-cover"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-2 right-2 bg-stone-900/90 text-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded-xs">
+                  <div className="absolute top-2 right-2 bg-stone-900/90 text-red-400 text-[9px] font-mono font-bold px-2 py-0.5 rounded-xs">
                     OFFICIAL
                   </div>
                 </div>
@@ -1136,7 +1136,7 @@ export default function StudentPortal({
 
               <div className="md:col-span-8 space-y-4 text-left">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold block">
+                  <span className="text-[10px] font-mono text-[#E7000B] uppercase tracking-widest font-bold block">
                     {EBOOK_METADATA.badge}
                   </span>
                   <h3 className="font-serif font-black text-2xl text-white">
@@ -1149,11 +1149,11 @@ export default function StudentPortal({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center">
                   <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
-                    <span className="font-bold text-amber-300 text-sm block">131+</span>
+                    <span className="font-bold text-red-400 text-sm block">131+</span>
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Recipes</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
-                    <span className="font-bold text-amber-300 text-sm block">22</span>
+                    <span className="font-bold text-red-400 text-sm block">22</span>
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Categories</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
@@ -1161,7 +1161,7 @@ export default function StudentPortal({
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Student License</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-2 rounded-xs">
-                    <span className="font-bold text-amber-300 text-sm block">$1,099</span>
+                    <span className="font-bold text-red-400 text-sm block">$1,099</span>
                     <span className="text-[9px] text-stone-400 uppercase font-mono">Value</span>
                   </div>
                 </div>
@@ -1169,7 +1169,7 @@ export default function StudentPortal({
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <a
                     href="/culinary-ebook"
-                    className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-bold text-xs uppercase tracking-wider rounded-xs shadow-md transition flex items-center gap-2 cursor-pointer"
+                    className="px-5 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-serif font-bold text-xs uppercase tracking-wider rounded-xs shadow-md transition flex items-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-900"
                   >
                     <BookOpen className="h-4 w-4" />
                     <span>Open Masterclass Reader & Syllabus</span>

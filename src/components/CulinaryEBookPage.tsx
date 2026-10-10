@@ -278,7 +278,7 @@ export default function CulinaryEBookPage({
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 font-mono tracking-wider">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-amber-300 font-bold uppercase">
+            <span className="text-red-400 font-bold uppercase">
               {EBOOK_METADATA.badge}
             </span>
             <span className="hidden sm:inline text-stone-400">•</span>
@@ -286,7 +286,7 @@ export default function CulinaryEBookPage({
           </div>
           <div className="flex items-center gap-4 text-[11px] font-mono">
             <span className="text-stone-300">ISBN: {EBOOK_METADATA.isbn}</span>
-            <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-xs border border-amber-400/30 font-bold">
+            <span className="bg-[#E7000B]/20 text-red-300 px-2 py-0.5 rounded-xs border border-[#E7000B]/40 font-bold">
               ${EBOOK_METADATA.price} USD
             </span>
           </div>
@@ -295,7 +295,7 @@ export default function CulinaryEBookPage({
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#0F2E22] via-[#0B251B] to-[#071912] text-white py-12 lg:py-20 border-b border-stone-800">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(212,175,55,0.12),transparent_50%)] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(231,0,11,0.12),transparent_50%)] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
@@ -303,10 +303,10 @@ export default function CulinaryEBookPage({
             <div className="lg:col-span-5 order-2 lg:order-1 flex justify-center">
               <div className="relative group max-w-md w-full">
                 {/* Luxury ambient glow */}
-                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 via-emerald-500/20 to-amber-500/30 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 transition duration-700"></div>
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-red-600/30 via-emerald-500/20 to-[#E7000B]/30 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 transition duration-700"></div>
                 
                 {/* Main Image Container */}
-                <div className="relative bg-[#081C14] border-2 border-amber-500/40 rounded-xl p-3 shadow-2xl overflow-hidden">
+                <div className="relative bg-[#081C14] border-2 border-[#E7000B]/40 rounded-xl p-3 shadow-2xl overflow-hidden">
                   <div className="relative overflow-hidden rounded-lg bg-stone-950">
                     <img
                       src={ebookMockupImage}
@@ -314,7 +314,7 @@ export default function CulinaryEBookPage({
                       className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-102"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-3 right-3 bg-stone-900/90 backdrop-blur-md border border-amber-400/40 text-amber-300 px-3 py-1 text-xs font-mono font-bold tracking-wider rounded-xs shadow-lg">
+                    <div className="absolute top-3 right-3 bg-stone-900/90 backdrop-blur-md border border-[#E7000B]/40 text-red-400 px-3 py-1 text-xs font-mono font-bold tracking-wider rounded-xs shadow-lg">
                       OFFICIAL PRODUCT
                     </div>
                   </div>
@@ -322,15 +322,15 @@ export default function CulinaryEBookPage({
                   {/* Quick Features strip */}
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-mono text-stone-300 pt-2 border-t border-stone-800">
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-amber-400 font-bold text-xs">{EBOOK_METADATA.recipesCount}</span>
+                      <span className="block text-red-400 font-bold text-xs">{EBOOK_METADATA.recipesCount}</span>
                       <span>Verified Recipes</span>
                     </div>
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-amber-400 font-bold text-xs">22 Cuisines</span>
+                      <span className="block text-red-400 font-bold text-xs">22 Cuisines</span>
                       <span>Master Categories</span>
                     </div>
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-amber-400 font-bold text-xs">PDF & Reader</span>
+                      <span className="block text-red-400 font-bold text-xs">PDF & Reader</span>
                       <span>Digital Access</span>
                     </div>
                   </div>
@@ -340,15 +340,15 @@ export default function CulinaryEBookPage({
 
             {/* RIGHT COLUMN: PRODUCT SPECIFICATIONS & CTA */}
             <div className="lg:col-span-7 order-1 lg:order-2 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-mono uppercase tracking-widest rounded-full">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#E7000B]/10 border border-[#E7000B]/30 text-red-400 text-xs font-mono uppercase tracking-widest rounded-full">
+                <Sparkles className="h-3.5 w-3.5 text-[#E7000B]" />
                 <span>Premium Academy Digital Curriculum</span>
               </div>
 
               <div className="space-y-2">
                 <h1 className="font-serif font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight">
                   LODONEX CULINARY E-BOOK <br />
-                  <span className="text-amber-300 italic font-serif font-normal">
+                  <span className="text-red-400 italic font-serif font-normal">
                     FOR STUDENTS
                   </span>
                 </h1>
@@ -369,7 +369,7 @@ export default function CulinaryEBookPage({
                       Lifetime Digital Student License
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-serif font-black text-3xl sm:text-4xl text-amber-300">
+                      <span className="font-serif font-black text-3xl sm:text-4xl text-red-400">
                         ${EBOOK_METADATA.price}
                       </span>
                       <span className="text-xs text-stone-400 font-mono">USD / One-time</span>
@@ -391,7 +391,7 @@ export default function CulinaryEBookPage({
                   <button
                     id="btn-buy-ebook-now"
                     onClick={handleInitiatePurchase}
-                    className="w-full sm:w-auto flex-1 py-3.5 px-6 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto flex-1 py-3.5 px-6 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-red-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-900"
                   >
                     <CreditCard className="h-4 w-4" />
                     <span>BUY NOW — $1,099 USD</span>
@@ -423,7 +423,7 @@ export default function CulinaryEBookPage({
                     <span>Secure Encrypted Payment</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-amber-400" />
+                    <Clock className="h-3.5 w-3.5 text-[#E7000B]" />
                     <span>Instant Activation</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -442,7 +442,7 @@ export default function CulinaryEBookPage({
       <section className="bg-[#F7F5F0] border-b border-editorial-border py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-editorial-dark text-amber-300 flex items-center justify-center rounded-sm">
+            <div className="h-10 w-10 bg-editorial-dark text-[#E7000B] flex items-center justify-center rounded-sm">
               <FileText className="h-5 w-5" />
             </div>
             <div>
@@ -480,7 +480,7 @@ export default function CulinaryEBookPage({
               className={`p-3 text-xs font-mono rounded-sm border ${
                 lookupNotice.success
                   ? "bg-emerald-50 border-emerald-300 text-emerald-900"
-                  : "bg-amber-50 border-amber-300 text-amber-900"
+                  : "bg-red-50 border-red-300 text-red-900"
               }`}
             >
               {lookupNotice.text}
@@ -507,9 +507,9 @@ export default function CulinaryEBookPage({
           {EBOOK_METADATA.highlights.map((highlight, idx) => (
             <div
               key={idx}
-              className="p-5 bg-white border border-editorial-border rounded-sm hover:border-amber-400/60 transition shadow-xs flex items-start gap-3"
+              className="p-5 bg-white border border-editorial-border rounded-sm hover:border-[#E7000B]/60 transition shadow-xs flex items-start gap-3"
             >
-              <div className="h-6 w-6 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="h-6 w-6 rounded-full bg-red-100 text-[#E7000B] flex items-center justify-center shrink-0 mt-0.5">
                 <Check className="h-3.5 w-3.5 stroke-[3]" />
               </div>
               <p className="text-xs text-stone-800 font-medium leading-relaxed">
@@ -525,7 +525,7 @@ export default function CulinaryEBookPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-editorial-accent font-bold">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#E7000B] font-bold">
                 Complete Table of Contents
               </span>
               <h2 className="font-serif font-bold text-2xl sm:text-3xl text-stone-900 mt-1">
@@ -559,7 +559,7 @@ export default function CulinaryEBookPage({
                   onClick={() => setSelectedCategory(cat.name)}
                   className={`p-3.5 text-left border rounded-sm transition duration-200 cursor-pointer flex flex-col justify-between min-h-[100px] ${
                     isSelected
-                      ? "bg-[#0B251B] text-white border-amber-400/80 shadow-md ring-2 ring-amber-400/30"
+                      ? "bg-[#0B251B] text-white border-[#E7000B]/80 shadow-md ring-2 ring-[#E7000B]/30"
                       : "bg-white text-stone-900 border-editorial-border hover:border-stone-400 hover:bg-[#FDFCF9]"
                   }`}
                 >
@@ -570,7 +570,7 @@ export default function CulinaryEBookPage({
                     <span
                       className={`text-[9px] px-1.5 py-0.5 font-mono font-bold rounded-xs ${
                         isSelected
-                          ? "bg-amber-400 text-stone-950"
+                          ? "bg-[#E7000B] text-white"
                           : "bg-stone-100 text-stone-700"
                       }`}
                     >
@@ -622,7 +622,7 @@ export default function CulinaryEBookPage({
           {filteredRecipes.map((recipe) => (
             <div
               key={recipe.id}
-              className="bg-white border border-editorial-border hover:border-amber-400/80 transition shadow-xs rounded-sm p-5 flex flex-col justify-between space-y-4"
+              className="bg-white border border-editorial-border hover:border-[#E7000B]/80 transition shadow-xs rounded-sm p-5 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-[10px] font-mono">
@@ -731,7 +731,7 @@ export default function CulinaryEBookPage({
               </thead>
               <tbody className="divide-y divide-editorial-border font-sans">
                 {KITCHEN_CONVERSIONS.map((conv, idx) => (
-                  <tr key={idx} className="hover:bg-amber-50/50 transition">
+                  <tr key={idx} className="hover:bg-red-50/40 transition">
                     <td className="p-3.5 font-bold text-stone-900">{conv.unit}</td>
                     <td className="p-3.5 text-stone-700 font-mono">{conv.usStandard}</td>
                     <td className="p-3.5 text-emerald-800 font-mono font-bold">{conv.metric}</td>
@@ -772,7 +772,7 @@ export default function CulinaryEBookPage({
             {/* Ingredients components */}
             {selectedRecipe.components && selectedRecipe.components.map((comp, ci) => (
               <div key={ci} className="space-y-2">
-                <h4 className="font-mono text-xs uppercase font-extrabold text-amber-800 tracking-wider">
+                <h4 className="font-mono text-xs uppercase font-extrabold text-[#E7000B] tracking-wider">
                   {comp.componentName || "Ingredients"}
                 </h4>
                 <div className="bg-[#F7F5F0] border border-editorial-border p-3.5 rounded-sm">
@@ -791,7 +791,7 @@ export default function CulinaryEBookPage({
             {/* Step by step procedure */}
             <div className="space-y-3">
               <h4 className="font-mono text-xs uppercase font-extrabold text-stone-900 tracking-wider flex items-center gap-2">
-                <Flame className="h-4 w-4 text-editorial-accent" />
+                <Flame className="h-4 w-4 text-[#E7000B]" />
                 <span>Commercial Kitchen Procedure</span>
               </h4>
               <ol className="space-y-2 text-xs text-stone-700 leading-relaxed font-sans">
@@ -808,12 +808,12 @@ export default function CulinaryEBookPage({
 
             {/* Chef tips or notes */}
             {selectedRecipe.notes && selectedRecipe.notes.length > 0 && (
-              <div className="bg-amber-50 border border-amber-300 p-3.5 rounded-sm space-y-1">
-                <span className="font-mono font-bold text-[10px] text-amber-900 uppercase block">
+              <div className="bg-red-50 border border-red-200 p-3.5 rounded-sm space-y-1">
+                <span className="font-mono font-bold text-[10px] text-red-900 uppercase block">
                   Executive Chef Advisory
                 </span>
                 {selectedRecipe.notes.map((note, idx) => (
-                  <p key={idx} className="text-xs text-amber-800 italic">
+                  <p key={idx} className="text-xs text-red-800 italic">
                     &ldquo;{note}&rdquo;
                   </p>
                 ))}
@@ -836,7 +836,7 @@ export default function CulinaryEBookPage({
                     setSelectedRecipe(null);
                     handleInitiatePurchase();
                   }}
-                  className="px-5 py-2 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold font-mono uppercase tracking-wider"
+                  className="px-5 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-xs font-bold font-mono uppercase tracking-wider cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   Get Full Book ($1,099)
                 </button>
@@ -850,9 +850,9 @@ export default function CulinaryEBookPage({
       {isFullReaderOpen && (
         <div className="fixed inset-0 z-50 bg-[#071912]/95 backdrop-blur-md flex flex-col p-2 sm:p-6 text-white overflow-hidden animate-in fade-in duration-200">
           {/* Reader Top Bar */}
-          <div className="bg-[#0B251B] border border-amber-500/40 p-3 sm:p-4 rounded-t-lg flex items-center justify-between shadow-xl">
+          <div className="bg-[#0B251B] border border-[#E7000B]/40 p-3 sm:p-4 rounded-t-lg flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-3">
-              <BookOpen className="h-5 w-5 text-amber-400" />
+              <BookOpen className="h-5 w-5 text-[#E7000B]" />
               <div>
                 <h3 className="font-serif font-bold text-sm sm:text-base text-white">
                   Lodonex Culinary Student E-Book Reader
@@ -947,7 +947,7 @@ export default function CulinaryEBookPage({
                     </div>
 
                     {r.notes && r.notes.length > 0 && (
-                      <div className="p-3 bg-amber-50/70 border border-amber-200 text-xs text-amber-900 italic">
+                      <div className="p-3 bg-red-50/70 border border-red-200 text-xs text-red-900 italic">
                         Tip: {r.notes.join("; ")}
                       </div>
                     )}
@@ -1165,7 +1165,7 @@ export default function CulinaryEBookPage({
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-editorial-accent hover:bg-red-800 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition cursor-pointer shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition cursor-pointer shadow-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   <Lock className="h-4 w-4" />
                   <span>AUTHORIZE & UNLOCK E-BOOK — $1,099 USD</span>
@@ -1214,7 +1214,7 @@ export default function CulinaryEBookPage({
                     }}
                     className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <BookOpen className="h-4 w-4 text-amber-300" />
+                    <BookOpen className="h-4 w-4 text-[#E7000B]" />
                     <span>OPEN INTERACTIVE E-BOOK NOW</span>
                   </button>
 
@@ -1237,7 +1237,7 @@ export default function CulinaryEBookPage({
           <div className="bg-white border-2 border-stone-900 max-w-md w-full rounded-sm shadow-2xl p-6 sm:p-8 space-y-6 text-left animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between border-b border-editorial-border pb-4">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 font-bold block">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#E7000B] font-bold block">
                   {isEn ? "Student Account Verification" : "শিক্ষার্থী অ্যাকাউন্ট যাচাই"}
                 </span>
                 <h3 className="font-serif font-black text-xl text-stone-950 mt-1">
@@ -1253,7 +1253,7 @@ export default function CulinaryEBookPage({
             </div>
 
             <div className="space-y-4 text-xs text-stone-600 leading-relaxed font-sans">
-              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xs">
+              <div className="p-3 bg-red-50 border border-red-200 text-red-900 rounded-xs">
                 <p className="font-medium">
                   {isEn
                     ? "Please login or create your Lodonex Student Account to purchase this e-book."
@@ -1274,7 +1274,7 @@ export default function CulinaryEBookPage({
                   if (onOpenAuth) onOpenAuth();
                   else onNavigate("/portal/login");
                 }}
-                className="w-full py-3.5 bg-editorial-accent hover:bg-red-800 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className="w-full py-3.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
               >
                 <Lock className="h-4 w-4" />
                 <span>{isEn ? "LOGIN" : "লগইন"}</span>
@@ -1285,9 +1285,9 @@ export default function CulinaryEBookPage({
                   setIsAuthRequiredModalOpen(false);
                   onNavigate("/portal/register");
                 }}
-                className="w-full py-3.5 bg-stone-900 hover:bg-stone-800 text-amber-300 border border-amber-400/40 font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 bg-stone-900 hover:bg-stone-800 text-white border border-stone-700 font-mono font-bold text-xs uppercase tracking-wider rounded-sm transition flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4 text-[#E7000B]" />
                 <span>{isEn ? "CREATE STUDENT ACCOUNT" : "নতুন অ্যাকাউন্ট তৈরি করুন"}</span>
               </button>
 

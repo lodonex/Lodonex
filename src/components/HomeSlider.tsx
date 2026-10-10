@@ -179,7 +179,7 @@ export default function HomeSlider({ lang, onExplore, onNavigate }: HomeSliderPr
                           e.preventDefault();
                           handleSlideAction(slide);
                         }}
-                        className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 px-6 sm:px-8 py-3.5 text-xs font-black uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-amber-500/20 border border-amber-400/40 cursor-pointer flex items-center gap-2"
+                        className="bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white px-6 sm:px-8 py-3.5 text-xs font-black uppercase tracking-widest transition-all duration-200 shadow-lg hover:shadow-red-600/30 border border-red-500/40 cursor-pointer flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-950"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>{isEn ? slide.ctaEn : slide.ctaBn}</span>
@@ -188,7 +188,7 @@ export default function HomeSlider({ lang, onExplore, onNavigate }: HomeSliderPr
                     ) : (
                       <button
                         onClick={() => handleSlideAction(slide)}
-                        className="bg-editorial-accent hover:bg-red-800 text-white px-6 sm:px-7 py-3.5 text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg border border-red-500/30 cursor-pointer flex items-center gap-2"
+                        className="bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white px-6 sm:px-7 py-3.5 text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg border border-red-500/30 cursor-pointer flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-900"
                       >
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>{isEn ? slide.ctaEn : slide.ctaBn}</span>

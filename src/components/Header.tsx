@@ -189,7 +189,7 @@ export default function Header({
                 >
                   <span>{item.label}</span>
                   {item.badge && (
-                    <span className="px-1.5 py-0.5 bg-amber-100/90 text-amber-900 text-[8px] font-mono font-bold tracking-wider border border-amber-300/50">
+                    <span className="px-1.5 py-0.5 bg-red-100 text-[#E7000B] text-[8px] font-mono font-bold tracking-wider border border-red-200">
                       {item.badge}
                     </span>
                   )}
@@ -222,7 +222,7 @@ export default function Header({
               {cart.length > 0 && (
                 <span
                   id="cart-count-badge"
-                  className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center bg-editorial-accent text-[9px] font-bold text-white shadow-xs"
+                  className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center bg-[#E7000B] text-[9px] font-bold text-white shadow-xs"
                 >
                   {cart.length}
                 </span>
@@ -240,9 +240,9 @@ export default function Header({
                     onOpenAuth();
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-stone-900 hover:bg-black text-amber-300 hover:text-white border border-stone-800 text-[11px] font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-xs"
+                className="flex items-center gap-2 px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white border border-red-500/30 text-[11px] font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2"
               >
-                <User className="h-3.5 w-3.5 text-amber-400" />
+                <User className="h-3.5 w-3.5 text-white" />
                 <span>{lang === "en" ? "Portal Login" : "লগইন"}</span>
               </button>
             ) : (
@@ -428,7 +428,7 @@ export default function Header({
               >
                 <span>{item.label}</span>
                 {item.badge && (
-                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-900 text-[9px] font-mono font-bold border border-amber-300">
+                  <span className="px-1.5 py-0.5 bg-red-100 text-[#E7000B] text-[9px] font-mono font-bold border border-red-200">
                     {item.badge}
                   </span>
                 )}

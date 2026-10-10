@@ -468,7 +468,7 @@ export default function AdminLoginPage({
               id="admin-login-submit-btn"
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-lg flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+              className="w-full py-3 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-lg flex items-center justify-center gap-2 mt-4 disabled:bg-stone-700 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2"
             >
               {loading ? (
                 <span>{isEn ? "Authenticating..." : "যাচাই করা হচ্ছে..."}</span>
