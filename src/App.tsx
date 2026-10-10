@@ -613,7 +613,18 @@ export default function App() {
 
   // Active student progress helper or empty default for visitors
   const activeProgress: StudentProgress = currentUser
-    ? currentUser.progress
+    ? {
+        enrolledCourses: Array.from(
+          new Set([
+            ...(currentUser.assignedCourseIds || []),
+            ...(currentUser.progress?.enrolledCourses || []),
+          ])
+        ),
+        completedLessons: currentUser.progress?.completedLessons || [],
+        quizScores: currentUser.progress?.quizScores || {},
+        customRecipes: currentUser.progress?.customRecipes || [],
+        badges: currentUser.progress?.badges || [],
+      }
     : {
         enrolledCourses: [],
         completedLessons: [],
@@ -816,7 +827,7 @@ export default function App() {
               <div className="pt-2">
                 <button
                   onClick={() => navigate("/student/dashboard")}
-                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                  className="px-6 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
                 </button>
@@ -872,7 +883,7 @@ export default function App() {
               <div className="pt-2">
                 <button
                   onClick={() => navigate("/student/dashboard")}
-                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                  className="px-6 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
                 </button>
@@ -921,7 +932,7 @@ export default function App() {
               <div className="pt-2">
                 <button
                   onClick={() => navigate("/student/dashboard")}
-                  className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs"
+                  className="px-6 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   {lang === "en" ? "Return to Student Dashboard" : "শিক্ষার্থী ড্যাশবোর্ডে ফিরুন"}
                 </button>
@@ -1115,7 +1126,7 @@ export default function App() {
                   </p>
                   <button
                     onClick={() => navigate("/student/dashboard")}
-                    className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider cursor-pointer transition shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                   >
                     Return to Student Dashboard
                   </button>
@@ -1193,7 +1204,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => setIsAuthOpen(true)}
-                      className="px-5 py-2.5 bg-editorial-accent hover:bg-red-800 text-white text-[11px] font-bold uppercase tracking-wider transition cursor-pointer"
+                      className="px-5 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-[11px] font-bold uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                     >
                       {lang === "en" ? "Sign Up / Log In" : "সাইন আপ / লগইন"}
                     </button>

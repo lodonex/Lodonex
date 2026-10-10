@@ -140,7 +140,7 @@ export default function ForgotPasswordPage({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-editorial-accent hover:bg-red-800 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
               >
                 {loading ? (
                   <span>{isEn ? "Sending Link..." : "লিংক পাঠানো হচ্ছে..."}</span>

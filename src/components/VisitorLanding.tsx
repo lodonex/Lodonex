@@ -142,7 +142,7 @@ export default function VisitorLanding({
                 onSelectTab("jobs");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="w-full py-3.5 px-6 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              className="w-full py-3.5 px-6 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
             >
               <Briefcase className="h-4 w-4" />
               <span>{isEn ? "Explore Job & Accommodation" : "চাকরি ও আবাসন পোর্টাল দেখুন"}</span>

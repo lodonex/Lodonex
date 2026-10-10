@@ -78,7 +78,7 @@ export default function FooterContactForm({ lang }: FooterContactFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-editorial-accent hover:bg-red-800 disabled:bg-neutral-800 text-white font-bold uppercase tracking-widest text-[10px] transition duration-200 cursor-pointer"
+        className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] disabled:bg-neutral-800 text-white font-bold uppercase tracking-widest text-[10px] transition duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
       >
         {loading ? (
           <span className="animate-pulse">{lang === "en" ? "Sending..." : "পাঠানো হচ্ছে..."}</span>

@@ -314,7 +314,7 @@ export default function CulinaryEBookPage({
                       className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-102"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-3 right-3 bg-stone-900/90 backdrop-blur-md border border-[#E7000B]/40 text-red-400 px-3 py-1 text-xs font-mono font-bold tracking-wider rounded-xs shadow-lg">
+                    <div className="absolute top-3 right-3 bg-stone-900/90 backdrop-blur-md border border-[#E7000B]/40 text-white px-3 py-1 text-xs font-mono font-bold tracking-wider rounded-xs shadow-lg">
                       OFFICIAL PRODUCT
                     </div>
                   </div>
@@ -322,15 +322,15 @@ export default function CulinaryEBookPage({
                   {/* Quick Features strip */}
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-mono text-stone-300 pt-2 border-t border-stone-800">
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-red-400 font-bold text-xs">{EBOOK_METADATA.recipesCount}</span>
+                      <span className="block text-white font-bold text-xs">{EBOOK_METADATA.recipesCount}</span>
                       <span>Verified Recipes</span>
                     </div>
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-red-400 font-bold text-xs">22 Cuisines</span>
+                      <span className="block text-white font-bold text-xs">22 Cuisines</span>
                       <span>Master Categories</span>
                     </div>
                     <div className="bg-white/5 py-1.5 px-1 rounded-xs">
-                      <span className="block text-red-400 font-bold text-xs">PDF & Reader</span>
+                      <span className="block text-white font-bold text-xs">PDF & Reader</span>
                       <span>Digital Access</span>
                     </div>
                   </div>
@@ -340,15 +340,15 @@ export default function CulinaryEBookPage({
 
             {/* RIGHT COLUMN: PRODUCT SPECIFICATIONS & CTA */}
             <div className="lg:col-span-7 order-1 lg:order-2 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#E7000B]/10 border border-[#E7000B]/30 text-red-400 text-xs font-mono uppercase tracking-widest rounded-full">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#E7000B]/10 border border-[#E7000B]/30 text-white text-xs font-mono uppercase tracking-widest rounded-full">
                 <Sparkles className="h-3.5 w-3.5 text-[#E7000B]" />
-                <span>Premium Academy Digital Curriculum</span>
+                <span className="text-white">Premium Academy Digital Curriculum</span>
               </div>
 
               <div className="space-y-2">
                 <h1 className="font-serif font-black text-3xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight">
                   LODONEX CULINARY E-BOOK <br />
-                  <span className="text-red-400 italic font-serif font-normal">
+                  <span className="text-white italic font-serif font-normal">
                     FOR STUDENTS
                   </span>
                 </h1>
@@ -369,7 +369,7 @@ export default function CulinaryEBookPage({
                       Lifetime Digital Student License
                     </span>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-serif font-black text-3xl sm:text-4xl text-red-400">
+                      <span className="font-serif font-black text-3xl sm:text-4xl text-white">
                         ${EBOOK_METADATA.price}
                       </span>
                       <span className="text-xs text-stone-400 font-mono">USD / One-time</span>

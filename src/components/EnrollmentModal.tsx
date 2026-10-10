@@ -137,7 +137,7 @@ export default function EnrollmentModal({
                   <button
                     type="button"
                     onClick={onOpenAuth}
-                    className="px-4 py-1.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                    className="px-4 py-1.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                   >
                     {isEn ? "Log In / Register Now" : "লগইন / সাইন আপ করুন"}
                   </button>
@@ -318,7 +318,7 @@ export default function EnrollmentModal({
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer flex items-center gap-2 shadow-xs"
+                className="px-6 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer flex items-center gap-2 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
               >
                 <span>{isEn ? "Submit Application" : "আবেদন জমা দিন"}</span>
                 <ArrowRight className="h-4 w-4" />

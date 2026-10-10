@@ -376,7 +376,7 @@ export default function StudentPortal({
 
             <button
               onClick={() => setActiveTab("courses")}
-              className="px-4 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-md border border-red-500/30"
+              className="px-4 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-md border border-red-500/30 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
             >
               <Play className="h-3.5 w-3.5" />
               <span>{isEn ? "My Courses" : "আমার কোর্স"}</span>
@@ -461,7 +461,7 @@ export default function StudentPortal({
             </div>
             <button
               onClick={retry}
-              className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+              className="px-3.5 py-1.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
             >
               {isEn ? "Try Again" : "আবার চেষ্টা করুন"}
             </button>
@@ -554,7 +554,7 @@ export default function StudentPortal({
                     {onBrowseCourses && (
                       <button
                         onClick={onBrowseCourses}
-                        className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider"
+                        className="px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                       >
                         {isEn ? "Browse Academy Courses" : "কোর্স ক্যাটালগ দেখুন"}
                       </button>
@@ -599,26 +599,45 @@ export default function StudentPortal({
                             </div>
                           </div>
 
-                          <div className="w-full sm:w-52 space-y-2.5 shrink-0">
-                            <div className="flex items-center justify-between text-xs font-mono">
-                              <span className="text-stone-500 text-[11px]">{prog.statusText}</span>
-                              <span className="font-bold text-amber-700">{prog.percentage}%</span>
-                            </div>
-                            <div className="w-full h-2 bg-stone-100 overflow-hidden">
-                              <div
-                                className="h-full bg-stone-900 transition-all duration-300"
-                                style={{ width: `${prog.percentage}%` }}
-                              />
+                          <div className="w-full sm:w-60 space-y-2.5 shrink-0">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs font-mono">
+                                <span className="text-stone-600 text-[11px] font-medium flex items-center gap-1.5">
+                                  <span
+                                    className={`h-2 w-2 rounded-full shrink-0 ${
+                                      prog.percentage === 100
+                                        ? "bg-emerald-500 animate-pulse"
+                                        : prog.percentage > 0
+                                        ? "bg-[#E7000B]"
+                                        : "bg-slate-400"
+                                    }`}
+                                  />
+                                  <span>{prog.statusText}</span>
+                                </span>
+                                <span
+                                  className={`font-bold ${
+                                    prog.percentage === 100 ? "text-emerald-700" : "text-[#E7000B]"
+                                  }`}
+                                >
+                                  {prog.percentage}% ({prog.completedCount}/{prog.totalCount} {isEn ? "lessons" : "পাঠ"})
+                                </span>
+                              </div>
+                              <div className="w-full h-2.5 bg-stone-100 border border-stone-200/80 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 rounded-full ${
+                                    prog.percentage === 100 ? "bg-emerald-600" : "bg-[#E7000B]"
+                                  }`}
+                                  style={{ width: `${prog.percentage}%` }}
+                                />
+                              </div>
                             </div>
                             <button
                               onClick={() => {
-                                setViewingCourse(course);
-                                setActiveLesson(nextLesson || course.lessons[0] || null);
-                                setActiveTab("courses");
+                                onSelectCourse(course);
                               }}
-                              className="w-full py-2 bg-stone-900 hover:bg-black text-amber-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-stone-800"
+                              className="w-full py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-red-500/30 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                             >
-                              <Play className="h-3.5 w-3.5 text-amber-400" />
+                              <Play className="h-3.5 w-3.5 text-white" />
                               <span>{isEn ? "Continue Learning" : "শিক্ষা চালিয়ে যান"}</span>
                             </button>
                           </div>
@@ -722,14 +741,33 @@ export default function StudentPortal({
                         </div>
                       </div>
 
-                      <div className="space-y-1.5 pt-2 border-t border-stone-100">
-                        <div className="flex justify-between text-xs font-mono">
-                          <span className="text-stone-500 text-[11px]">{prog.statusText}</span>
-                          <span className="font-bold text-amber-700">{prog.percentage}%</span>
+                      <div className="space-y-2 pt-3 border-t border-stone-100">
+                        <div className="flex justify-between items-center text-xs font-mono">
+                          <span className="text-stone-600 text-[11px] font-medium flex items-center gap-1.5">
+                            <span
+                              className={`h-2 w-2 rounded-full shrink-0 ${
+                                prog.percentage === 100
+                                  ? "bg-emerald-500 animate-pulse"
+                                  : prog.percentage > 0
+                                  ? "bg-[#E7000B]"
+                                  : "bg-slate-400"
+                              }`}
+                            />
+                            <span>{prog.statusText}</span>
+                          </span>
+                          <span
+                            className={`font-bold ${
+                              prog.percentage === 100 ? "text-emerald-700" : "text-[#E7000B]"
+                            }`}
+                          >
+                            {prog.percentage}% ({prog.completedCount}/{prog.totalCount} {isEn ? "lessons" : "পাঠ"})
+                          </span>
                         </div>
-                        <div className="w-full h-2 bg-stone-100 overflow-hidden">
+                        <div className="w-full h-2.5 bg-stone-100 border border-stone-200/80 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-stone-900 transition-all duration-300"
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              prog.percentage === 100 ? "bg-emerald-600" : "bg-[#E7000B]"
+                            }`}
                             style={{ width: `${prog.percentage}%` }}
                           />
                         </div>
@@ -737,12 +775,11 @@ export default function StudentPortal({
 
                       <button
                         onClick={() => {
-                          setViewingCourse(c);
-                          setActiveLesson(nextLesson || c.lessons[0] || null);
+                          onSelectCourse(c);
                         }}
-                        className="w-full py-2.5 bg-stone-900 hover:bg-black text-amber-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-stone-800"
+                        className="w-full py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs border border-red-500/30 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                       >
-                        <Play className="h-3.5 w-3.5 text-amber-400" />
+                        <Play className="h-3.5 w-3.5 text-white" />
                         <span>{isEn ? "Continue Learning" : "শিক্ষা চালিয়ে যান"}</span>
                       </button>
                     </div>
@@ -895,7 +932,7 @@ export default function StudentPortal({
                       ) : (
                         <button
                           onClick={() => setActiveAssignmentToSubmit(a)}
-                          className="w-full py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider"
+                          className="w-full py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                         >
                           {isEn ? "Submit Coursework" : "অ্যাসাইনমেন্ট জমা দিন"}
                         </button>
@@ -973,7 +1010,7 @@ export default function StudentPortal({
               </div>
               <button
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="px-4 py-2.5 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2"
+                className="px-4 py-2.5 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
               >
                 <DollarSign className="h-4 w-4" />
                 <span>{isEn ? "Submit Payment TrxID" : "পেমেন্ট TrxID জমা দিন"}</span>
@@ -1334,7 +1371,7 @@ export default function StudentPortal({
                 <button
                   type="submit"
                   disabled={submittingAssignment}
-                  className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold uppercase text-[10px]"
+                  className="px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold uppercase text-[10px] transition cursor-pointer disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   {submittingAssignment ? "Submitting..." : "Submit to Instructor"}
                 </button>
@@ -1425,7 +1462,7 @@ export default function StudentPortal({
                 <button
                   type="submit"
                   disabled={isSubmittingPayment}
-                  className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold uppercase text-[10px]"
+                  className="px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold uppercase text-[10px] transition cursor-pointer disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                 >
                   {isSubmittingPayment ? "Submitting..." : "Submit Receipt"}
                 </button>

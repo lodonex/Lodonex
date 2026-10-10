@@ -293,13 +293,21 @@ export default function CourseDetails({
           <ArrowLeft className="h-4 w-4" />
           {t.backToDashboard}
         </button>
-        <div className="text-right">
+        <div className="text-right flex flex-col items-end gap-1">
           <span className="text-[10px] uppercase font-sans text-slate-400 block font-bold tracking-wider">
             {t.courseProgression}
           </span>
-          <span className="text-xs sm:text-sm font-bold font-mono text-editorial-accent">
+          <span className="text-xs sm:text-sm font-bold font-mono text-[#E7000B]">
             {completedCount}/{course.lessons.length} {lang === "en" ? "Modules Done" : "টি সমাপ্ত"} ({completionPct}%)
           </span>
+          <div className="w-32 sm:w-44 bg-[#E5E2D9] h-2 rounded-full overflow-hidden mt-0.5">
+            <div
+              className={`h-full transition-all duration-500 rounded-full ${
+                isCourseComplete ? "bg-emerald-600" : "bg-[#E7000B]"
+              }`}
+              style={{ width: `${completionPct}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -318,7 +326,7 @@ export default function CourseDetails({
           {onOpenAuth && (
             <button
               onClick={onOpenAuth}
-              className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex-shrink-0"
+              className="px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
             >
               {lang === "en" ? "Sign Up / Log In" : "সাইন আপ / লগইন"}
             </button>
@@ -1156,7 +1164,7 @@ export default function CourseDetails({
                   {onOpenAuth && (
                     <button
                       onClick={onOpenAuth}
-                      className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
+                      className="px-4 py-2 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                     >
                       {lang === "en" ? "Sign Up / Log In" : "সাইন আপ / লগইন"}
                     </button>

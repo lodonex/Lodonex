@@ -134,8 +134,13 @@ export default function CourseCatalog({
       ) : (
         <div id="catalog-courses-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {filteredCourses.map((course, i) => {
-            const isEnrolled = progress.enrolledCourses.includes(course.id);
+            const isEnrolled = progress?.enrolledCourses?.includes(course.id) || false;
             const isInCart = cart.some((item) => item.id === course.id);
+            const totalLessons = course.lessons?.length || 0;
+            const completedCount = course.lessons?.filter((l) => progress?.completedLessons?.includes(l.id)).length || 0;
+            const completionPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+            const isCompleted = completionPct === 100 && totalLessons > 0;
+            const hasProgress = isEnrolled || completedCount > 0;
 
             return (
               <motion.div
@@ -164,6 +169,15 @@ export default function CourseCatalog({
                       {lang === "en" ? `LQF Level ${course.lqfLevel}` : `এলকিউএফ লেভেল ${course.lqfLevel}`}
                     </div>
                   </div>
+
+                  {/* Student Enrolled Progress Badge */}
+                  {hasProgress && (
+                    <div className="absolute top-3 right-3 bg-stone-950/90 text-white border border-stone-700 px-2.5 py-1 text-[10px] font-mono font-bold rounded-none flex items-center gap-1.5 shadow-md">
+                      <span className={`h-1.5 w-1.5 rounded-full ${isCompleted ? "bg-emerald-400" : "bg-[#E7000B]"}`}></span>
+                      <span>{isCompleted ? (lang === "en" ? "COMPLETED" : "সম্পন্ন") : `${completionPct}%`}</span>
+                    </div>
+                  )}
+
                   <div className="absolute bottom-3 right-3 bg-white/95 border border-editorial-border px-2 py-0.5 rounded-none text-xs font-bold text-editorial-dark flex items-center gap-1">
                     <Star className="h-3.5 w-3.5 fill-editorial-accent text-editorial-accent" />
                     {course.rating.toFixed(1)}
@@ -221,6 +235,59 @@ export default function CourseCatalog({
                         </ul>
                       </div>
                     )}
+
+                    {/* Visual Course Completion Progress Bar */}
+                    <div className="pt-3 border-t border-editorial-border space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                          <span
+                            className={`h-2 w-2 rounded-full shrink-0 ${
+                              isCompleted
+                                ? "bg-emerald-500 animate-pulse"
+                                : hasProgress && completionPct > 0
+                                ? "bg-[#E7000B]"
+                                : hasProgress
+                                ? "bg-amber-500"
+                                : "bg-slate-300"
+                            }`}
+                          />
+                          <span>
+                            {isCompleted
+                              ? (lang === "en" ? "Course Completed" : "কোর্স সম্পন্ন")
+                              : hasProgress
+                              ? (lang === "en" ? "Course Progress" : "কোর্সের অগ্রগতি")
+                              : (lang === "en" ? "Curriculum Progress" : "কোর্স অগ্রগতি")}
+                          </span>
+                        </span>
+                        <span
+                          className={`font-bold ${
+                            isCompleted
+                              ? "text-emerald-700"
+                              : hasProgress && completionPct > 0
+                              ? "text-[#E7000B]"
+                              : hasProgress
+                              ? "text-slate-700"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {hasProgress ? (
+                            `${completionPct}% (${completedCount}/${totalLessons} ${lang === "en" ? "lessons" : "পাঠ"})`
+                          ) : (
+                            `0% (${totalLessons} ${t.lessonsCount})`
+                          )}
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#E5E2D9] h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-500 rounded-full ${
+                            isCompleted
+                              ? "bg-emerald-600"
+                              : "bg-[#E7000B]"
+                          }`}
+                          style={{ width: `${hasProgress ? completionPct : 0}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-editorial-border flex items-center justify-between gap-4">
@@ -243,13 +310,13 @@ export default function CourseCatalog({
                         {lang === "en" ? "Details" : "বিস্তারিত"}
                       </button>
 
-                      {isEnrolled ? (
+                      {hasProgress ? (
                         <button
                           id={`action-goto-${course.id}`}
                           onClick={() => onSelectCourse(course)}
-                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#F7F5F0] border border-editorial-border text-editorial-dark rounded-none hover:bg-slate-100 transition flex items-center gap-1.5 cursor-pointer"
+                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white rounded-none transition flex items-center gap-1.5 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                         >
-                          <BookOpen className="h-4 w-4 text-editorial-accent" />
+                          <BookOpen className="h-4 w-4 text-white" />
                           {t.startLearning}
                         </button>
                       ) : (
@@ -258,7 +325,7 @@ export default function CourseCatalog({
                             <button
                               id={`action-enroll-${course.id}`}
                               onClick={() => onEnrollNow(course)}
-                              className="px-3 py-2.5 text-xs font-bold uppercase tracking-widest bg-editorial-accent text-white hover:bg-red-800 transition cursor-pointer"
+                              className="px-3 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
                             >
                               {lang === "en" ? "Apply" : "ভর্তি"}
                             </button>

@@ -127,7 +127,7 @@ export default function CertificateVerification({
           <button
             type="submit"
             disabled={searchState === "loading"}
-            className="px-6 py-3 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+            className="px-6 py-3 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-widest transition cursor-pointer flex items-center justify-center gap-2 shadow-xs focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
           >
             {searchState === "loading" ? (
               <span>{isEn ? "Verifying..." : "যাচাই করা হচ্ছে..."}</span>

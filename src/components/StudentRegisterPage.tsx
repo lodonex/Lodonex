@@ -368,7 +368,7 @@ export default function StudentRegisterPage({
             <button
               id="proceed-to-login-btn"
               onClick={() => onNavigate("/portal/login")}
-              className="w-full py-3 bg-editorial-accent hover:bg-red-800 text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2"
+              className="w-full py-3 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white text-xs font-bold uppercase tracking-widest transition duration-200 cursor-pointer shadow-md flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
             >
               <span>{isEn ? "Proceed to Portal Login →" : "পোর্টাল লগইনে এগিয়ে যান →"}</span>
             </button>
