@@ -142,7 +142,7 @@ export default function VisitorLanding({
                 onSelectTab("jobs");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="w-full py-3.5 px-6 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg focus:outline-none focus:ring-2 focus:ring-[#E7000B]"
+              className="w-full py-3.5 px-6 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
             >
               <Briefcase className="h-4 w-4" />
               <span>{isEn ? "Explore Job & Accommodation" : "চাকরি ও আবাসন পোর্টাল দেখুন"}</span>
@@ -363,7 +363,7 @@ export default function VisitorLanding({
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* PRODUCT IMAGE SIDE (Left on desktop) */}
-          <div className="lg:col-span-5 flex justify-center">
+          <div className="lg:col-span-5 flex justify-center" style={{ borderColor: "#fcfcfc" }}>
             <div className="relative group max-w-sm w-full">
               <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-400/40 via-emerald-400/20 to-amber-400/40 rounded-xl blur-lg opacity-70 group-hover:opacity-100 transition duration-500"></div>
               
@@ -379,7 +379,7 @@ export default function VisitorLanding({
                   referrerPolicy="no-referrer"
                 />
                 
-                <div className="absolute top-4 right-4 bg-stone-950/90 backdrop-blur-md border border-[#E7000B]/60 text-red-400 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest rounded-xs shadow-md">
+                <div className="absolute top-4 right-4 bg-stone-950/90 backdrop-blur-md border border-[#E7000B]/60 text-white px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-widest rounded-xs shadow-md" style={{ color: "#ffffff" }}>
                   OFFICIAL EDITION
                 </div>
               </div>
@@ -391,7 +391,7 @@ export default function VisitorLanding({
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 bg-[#E7000B]/15 border border-[#E7000B]/40 text-red-400 text-[11px] font-mono font-extrabold uppercase tracking-widest rounded-full flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-[#E7000B]" />
-                <span>OFFICIAL DIGITAL CURRICULUM</span>
+                <span className="text-white" style={{ color: "#ffffff" }}>OFFICIAL DIGITAL CURRICULUM</span>
               </span>
               <span className="text-stone-400 text-xs font-mono">•</span>
               <span className="text-emerald-400 text-xs font-mono font-bold tracking-wide">
@@ -402,7 +402,7 @@ export default function VisitorLanding({
             <div className="space-y-2">
               <h2 className="font-serif font-black text-2xl sm:text-3xl lg:text-4xl text-white tracking-tight leading-tight">
                 LODONEX CULINARY E-BOOK <br />
-                <span className="text-red-400 italic font-serif font-medium">
+                <span className="text-white italic font-serif font-medium" style={{ color: "#ffffff" }}>
                   FOR STUDENTS
                 </span>
               </h2>
@@ -418,7 +418,7 @@ export default function VisitorLanding({
             {/* Product Highlights Badges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
+                <span className="font-serif font-black text-white text-base sm:text-lg block" style={{ color: "#ffffff" }}>
                   131+
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -427,7 +427,7 @@ export default function VisitorLanding({
               </div>
 
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
+                <span className="font-serif font-black text-base sm:text-lg block" style={{ borderColor: "#ffffff", color: "#fef9f9" }}>
                   22
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -445,7 +445,7 @@ export default function VisitorLanding({
               </div>
 
               <div className="bg-white/5 border border-white/10 p-2.5 rounded-sm text-center">
-                <span className="font-serif font-black text-red-400 text-base sm:text-lg block">
+                <span className="font-serif font-black text-white text-base sm:text-lg block" style={{ color: "#ffffff" }}>
                   $1,099
                 </span>
                 <span className="text-[10px] font-mono text-stone-300 block uppercase">
@@ -464,7 +464,7 @@ export default function VisitorLanding({
                 }}
                 className="w-full sm:w-auto py-3.5 px-8 bg-[#E7000B] hover:bg-[#C90009] active:bg-[#B00008] text-white font-serif font-black text-sm uppercase tracking-wider rounded-sm shadow-lg hover:shadow-red-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E7000B] focus:ring-offset-2 focus:ring-offset-stone-950"
               >
-                <span>BUY NOW — $1,099</span>
+                <span style={{ fontFamily: "Georgia", fontWeight: "bold" }}>BUY NOW — $1,099</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
 
