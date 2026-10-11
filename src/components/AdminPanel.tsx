@@ -67,6 +67,7 @@ import {
   syncInitialCoursesIfEmpty,
   calculateAttendanceMetrics
 } from "../services/dashboardService";
+import StaffTrainersManagement from "./StaffTrainersManagement";
 
 interface AdminPanelProps {
   lang: Language;
@@ -91,7 +92,10 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const isEn = lang === "en";
   const userRole = currentUser.role || "admin";
-  const isSuperAdmin = userRole === "superadmin" || userRole === "super_admin";
+  const isSuperAdmin =
+    userRole === "superadmin" ||
+    userRole === "super_admin" ||
+    currentUser.email?.toLowerCase() === "lodonexcookingacademy@gmail.com";
   const isTrainer = userRole === "trainer";
 
   // Real-time Firestore Dashboard Stream (Super Admin / Admin)
@@ -155,6 +159,7 @@ export default function AdminPanel({
       "settings"
     ];
     if (sub === "dashboard" || sub === "") return "overview";
+    if (sub === "trainers" || sub === "trainer") return "staff";
     if (validTabs.includes(sub)) return sub as any;
     return "overview";
   };
@@ -197,7 +202,7 @@ export default function AdminPanel({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Stores (strictly zero mock data, updated continuously via useRealtimeDashboard)
-  const [usersList, setUsersList] = useState<UserAccount[]>([]);
+  const [usersList, setUsersList] = useState<UserAccount[]>(initialUsers || []);
   const [enrollmentsList, setEnrollmentsList] = useState<EnrollmentApplication[]>([]);
   const [auditLogsList, setAuditLogsList] = useState<AuditLogEntry[]>([]);
   const [emailLogsList, setEmailLogsList] = useState<any[]>([]);
@@ -2588,144 +2593,15 @@ export default function AdminPanel({
         )}
 
         {/* ========================================================
-            TAB: STAFF & TRAINERS (SUPER ADMIN ONLY)
+            TAB: STAFF & TRAINERS (SUPER ADMIN MANAGEMENT CONSOLE)
            ======================================================== */}
-        {adminTab === "staff" && isSuperAdmin && (
-          <div className="mt-6 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-red-100 text-editorial-accent text-[9px] font-mono font-bold uppercase tracking-wider">
-                    Super Admin Exclusive
-                  </span>
-                </div>
-                <h2 className="font-serif font-extrabold text-2xl text-editorial-dark mt-1">
-                  {isEn ? "Faculty, Registrar & Staff Management" : "ফ্যাকাল্টি ও স্টাফ প্রশাসন"}
-                </h2>
-                <p className="text-xs text-slate-500">
-                  {isEn
-                    ? "Security Rule #8: Only the Super Admin can provision and manage administrative accounts. Random public visitors cannot register as staff."
-                    : "নিরাপত্তা বিধি: শুধুমাত্র সুপার অ্যাডমিন নতুন অ্যাডমিন ও ট্রেইনারদের অ্যাকাউন্ট তৈরি করতে পারেন।"}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setIsAddStaffOpen(true)}
-                className="px-4 py-2 bg-editorial-accent hover:bg-red-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-xs"
-              >
-                <Plus className="h-4 w-4" />
-                <span>{isEn ? "Create Staff Account" : "নতুন স্টাফ নিয়োগ"}</span>
-              </button>
-            </div>
-
-            <div className="bg-white border border-editorial-border overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-editorial-border uppercase font-bold text-[10px] text-slate-600 tracking-wider">
-                    <th className="p-3">Staff Name</th>
-                    <th className="p-3">Email & Contact</th>
-                    <th className="p-3">System Role</th>
-                    <th className="p-3">Account Status</th>
-                    <th className="p-3">Creation Date</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {usersList
-                    .filter((u) => ["super_admin", "superadmin", "admin", "trainer", "staff"].includes(u.role || ""))
-                    .map((staff) => (
-                      <tr key={staff.id} className="hover:bg-slate-50">
-                        <td className="p-3">
-                          <div className="font-bold text-slate-900">{staff.name}</div>
-                          <span className="text-[10px] font-mono text-slate-400">ID: {staff.id}</span>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-mono text-slate-700">{staff.email}</div>
-                          <div className="text-[10px] text-slate-500">{staff.phone || "—"}</div>
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
-                              staff.role === "super_admin" || staff.role === "superadmin"
-                                ? "bg-amber-100 text-amber-900 border border-amber-300 font-extrabold"
-                                : staff.role === "trainer"
-                                ? "bg-teal-100 text-teal-900 border border-teal-300"
-                                : staff.role === "staff"
-                                ? "bg-indigo-100 text-indigo-900 border border-indigo-300"
-                                : "bg-blue-100 text-blue-900 border border-blue-300"
-                            }`}
-                          >
-                            {staff.role === "super_admin" || staff.role === "superadmin"
-                              ? "SUPER ADMIN"
-                              : staff.role === "trainer"
-                              ? "TRAINER CHEF"
-                              : staff.role === "staff"
-                              ? "FACULTY STAFF"
-                              : "ADMIN / REGISTRAR"}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 text-[10px] font-bold uppercase ${
-                              staff.status === "active" || staff.status === "approved"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : staff.status === "pending"
-                                ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {staff.status === "pending" ? "PENDING" : staff.status}
-                          </span>
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-slate-500">
-                          {staff.createdAt ? staff.createdAt.split("T")[0] : "2026-01-01"}
-                        </td>
-                        <td className="p-3 text-right">
-                          {staff.role !== "superadmin" && staff.role !== "super_admin" && (
-                            <div className="flex items-center justify-end gap-1.5">
-                              {staff.status === "pending" ? (
-                                <>
-                                  <button
-                                    onClick={() => handleUpdateStudentStatus(staff.id, "active")}
-                                    className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
-                                    title="Approve Team Member"
-                                  >
-                                    <Check className="h-3 w-3" />
-                                    <span>{isEn ? "Approve" : "অনুমোদন"}</span>
-                                  </button>
-                                  <button
-                                    onClick={() => handleUpdateStudentStatus(staff.id, "blocked")}
-                                    className="px-2.5 py-1 bg-rose-700 hover:bg-rose-800 text-white font-bold text-[10px] uppercase cursor-pointer transition shadow-xs flex items-center gap-1"
-                                    title="Reject Team Member"
-                                  >
-                                    <X className="h-3 w-3" />
-                                    <span>{isEn ? "Reject" : "বাতিল"}</span>
-                                  </button>
-                                </>
-                              ) : staff.status === "active" ? (
-                                <button
-                                  onClick={() => handleUpdateStudentStatus(staff.id, "suspended")}
-                                  className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[10px] uppercase cursor-pointer"
-                                >
-                                  {isEn ? "Suspend" : "স্থগিত"}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleUpdateStudentStatus(staff.id, "active")}
-                                  className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase cursor-pointer"
-                                >
-                                  {isEn ? "Activate" : "সক্রিয়"}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {adminTab === "staff" && (
+          <StaffTrainersManagement
+            lang={lang}
+            currentUser={currentUser}
+            initialUsers={usersList.length > 0 ? usersList : initialUsers}
+            onUpdateUserAccount={onUpdateUserAccount}
+          />
         )}
 
         {/* ========================================================

@@ -172,8 +172,10 @@ export interface UserAccount {
   educationalBackground?: string;
   assignedBatchId?: string;
   assignedCourseIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  responsibilities?: string;
+  assignedResponsibilities?: string;
+  createdAt?: string | any;
+  updatedAt?: string | any;
   progress?: StudentProgress;
   permissions?: string[];
 }
