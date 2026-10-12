@@ -17,6 +17,7 @@ import RecipeManager from "./components/RecipeManager";
 import LiveClasses from "./components/LiveClasses";
 import BlogSection from "./components/BlogSection";
 import FooterContactForm from "./components/FooterContactForm";
+import SecurePaymentMethodsFooter from "./components/SecurePaymentMethodsFooter";
 import PaymentModal from "./components/PaymentModal";
 import CertificateModal from "./components/CertificateModal";
 
@@ -1559,7 +1560,10 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-10 pt-6 border-t border-editorial-border/30 text-center text-[#E5E2D9]/50 text-[10px]">
+          {/* Secure Payment Methods Section */}
+          <SecurePaymentMethodsFooter lang={lang} />
+
+          <div className="mt-8 pt-6 border-t border-editorial-border/30 text-center text-[#E5E2D9]/50 text-[10px]">
             <p>© 2026 {t.academyName}. All Rights Reserved. Aligned with Professional Culinary standards.</p>
           </div>
         </div>
